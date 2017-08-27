@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Usage: pandoc-view [PANDOC_ARGS]...
+# invoke pandoc set with a convertion to groff man pages
+# and then view the result in the terminal using man.
+
+exists man || die 'man(1) not available'
+pandoc -s -t man "$@" 2>&1 | man -l -
