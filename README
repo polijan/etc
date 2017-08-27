@@ -1,0 +1,30 @@
+Miscellaneous scripts, wrappers, and configuration files
+for commands and programs I may use.
+
+
+To bootstrap a new machine
+--------------------------
+
+0) install git
+
+1) # get my ~/etc dir
+   $ mkdir -p ~/etc && cd ~/etc && git clone https://github.com/notevenodd/etc
+
+2) # create my base directories
+   $ ~/etc/true/~-bootstrap
+
+
+After that and after installing some known programs
+---------------------------------------------------
+
+Deployement of ~/etc content into the home directory is best
+managed by the 'etc-stow' script (which is powered by GNU stow)
+
+0) make sure GNU stow is installed
+
+1) # deploy conf and scripts as symlinks into ~
+   $ ~/etc/etc-stow -R
+   solve the stow conflicts, if any.
+
+2) reload shell as there might be new aliases, etc.
+   $ exec $SHELL -l
