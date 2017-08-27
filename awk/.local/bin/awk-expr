@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Usage: awk-expr EXPRESSION
+# evaluate EXPRESSION using awk(1) and prints the result
+#
+# Note: it is notably useful as a quick calculator. Examples:
+# $ awk-expr 'sqrt(2)'  => sqrt(2)=1.41421
+# $ awk-expr '2**(1/2)' => 2**(1/2)=1.41421
+# $ awk-expr '2^(1/2)'  => 2^(1/2)=1.41421
+# $ awk-expr '20%8'     => 20%8=4
+# $ awk-expr '(1+1/2^20)^(2^20)' => (1+1/2^20)^(2^20)=2.71828
+
+# from: http://www.commandlinefu.com/commands/view/3871/command-line-calculator
+exec awk "BEGIN{ print $* }"
