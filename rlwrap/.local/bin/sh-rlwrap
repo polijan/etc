@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# usage: $0 [SH_OPTIONS]...
+# use rlwrap on sh
+#
+# Note/Rationale: sh is dash in Debian/Ubuntu and Termux. Dash is meant
+# to be used as as a fast POSIX-compliant shell interpreter, not really
+# as an interactive shell, however it can be quite useful to be able to
+# launch it interactively just for testing. In such case, dash is often
+# compiled without any line support.
+
+exec rlwrap /bin/sh "$@"

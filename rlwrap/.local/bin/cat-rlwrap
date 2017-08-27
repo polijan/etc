@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# usage: $0
+# rlwrap (provide readline's facilities) for cat
+#
+# for exmaple, this gives quick'n dirty way to add a
+# few lines to a new FILE without using a test editor.
+# $ cat-rlwrap > FILE
+
+exec rlwrap cat
