@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Usage: $0 FILE_OR_DIR_NAME
+# accepts a single file or directory name as a parameter and creates a
+# compressed tar.gz archive with the current date embedded into the resulting
+# archive file's name.
+
+# inspired by: http://www.ibm.com/developerworks/linux/library/l-backup/index.html
+
+[ $# -eq 1 ] || usage -d
+[ -e "$1" ]  || die "$1: No such file or directory"
+TARGET=${1%/} # remove trailing slash  (needed if directory) [TODO? => we should remove all, not just one]
+tar czvf "$TARGET-$(date +%Y.%m.%d_%H%M%S).tar.gz" "$TARGET"
