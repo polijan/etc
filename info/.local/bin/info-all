@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: info-all [INFO_OPTION]... [ITEM]...
+# recursively output all info's menu items and page it with less(1)
+# this makes info behave more like man(1)
+
+info --subnodes -o - "$@" | less

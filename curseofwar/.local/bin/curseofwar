@@ -1,0 +1,4 @@
+#!/bin/sh
+# Usage: curseofwar
+# breaks addiction to the game curseofwar(6)
+echo 'No.'

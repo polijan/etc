@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Usage: $0
+# forward the (IPv4) internet connection  [this is a temporary setting]
+#
+# My hosts are on a wifi network. But I have also some old computers with only
+# ethernet interfaces which I use on occasions. When using and bringing one of
+# those hosts into my network, I just use the internet connection through the
+# pi's ethernet interface. I can then connect the host with a crossover cable
+# to the pi [then if neeed, assign a static address to the host with ip(8) or
+# ifconfig(8)].
+
+sudo sysctl net.ipv4.ip_forward=1
