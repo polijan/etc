@@ -8,7 +8,7 @@ To bootstrap a new machine
 0) install git
 
 1) # get my ~/etc dir
-   $ mkdir -p ~/etc && cd ~/etc && git clone https://github.com/notevenodd/etc
+   $ mkdir -p ~/etc && cd ~/etc && git clone https://github.com/notevenodd/etc.git
 
 2) # create my base directories
    $ ~/etc/true/~-bootstrap
