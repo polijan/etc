@@ -1,0 +1,9 @@
+[user]
+	name = notevenodd
+	email = notevenodd@users.noreply.github.com
+[core]
+	editor = nano+
+[credential]
+	helper = cache
+[color]
+	ui = auto
