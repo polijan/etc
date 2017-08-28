@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# Usage: $0 [-l] [N] [PV_OPTIONS]... [FILE]...
+# use pv to "cat" (ie. concatenate and print on stdout) the
+# given FILEs (or stdin), but limits the transfer rate.
+#
+# -l : transfer rate applies to lines, not bytes
+# N  : the transfer rate in bytes or lines (with -l)
+#      by default: 10 bytes per second or 3 lines per second
+
+l=''; N=10
+[ "$1" = '-l' ] && { l='-l'; N=3; shift; }
+case "$1" in
+   ''|0*|*[!0-9]*) ;; # not valid non-zero integer, we use default values
+   *) N="$1" ; shift ;;
+esac
+
+# should we WAIT to get something before we start?
+# we could do this:
+#   if [ -n "$BASH_VERSION" ]; then
+#      IFS= read -r -n 1
+#      printf %s "$REPLY"
+#   else
+#      dd bs=1 count=1 2>/dev/null
+#   fi
+
+exec pv -q $l -L "$N" "$@"
