@@ -1,0 +1,24 @@
+#!/bin/sh
+# Usage: $0
+# screensaver based on cmatrix
+
+FLAGS='-s' # exits any keystroke
+
+if exists dice; then
+   # sometimes, use a different color than green:
+   [ "$(dice)" -eq 1 ] && case $(dice 5) in
+      1) FLAGS="$FLAGS -C red"     ;;
+      2) FLAGS="$FLAGS -C blue"    ;;
+      3) FLAGS="$FLAGS -C yellow"  ;;
+      4) FLAGS="$FLAGS -C cyan"    ;;
+      5) FLAGS="$FLAGS -C magenta" ;;
+   esac
+   # sometimes, add bold chars:
+   [ "$(dice 3)" -eq 1 ] && FLAGS="$FLAGS -b"
+   # sometimes, use asynchronous:
+   [ "$(dice 4)" -eq 1 ] && FLAGS="$FLAGS -a"
+
+fi
+
+#shellcheck disable=SC2086
+exec cmatrix $FLAGS
