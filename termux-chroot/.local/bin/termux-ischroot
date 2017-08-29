@@ -1,0 +1,7 @@
+#!/data/data/com.termux/files/usr/bin/sh
+
+# Usage: $0
+# in termux, returns 0 if shell has been launched through termux-chroot,
+# returns non-zero otherwise
+
+printf %s "$HOME" | grep -qv '^/data/data/com.termux'
