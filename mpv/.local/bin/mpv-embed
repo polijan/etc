@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Usage: $0 [MPV_ARGS]...
+# launch mpv embedded in the terminal's window (if terminal sets WINDOWID)
+# (if terminal doesn't set WINDOWID, launch mpv in the background)
+
+
+if [ -z "$WINDOWID" ]; then
+
+   # some X terminals (xterm, rxvt, ...) set up WINDOWID,
+   # some don't, in this later case, just launch mpv anyway.
+   printf '%s\n' 'cannot embed mpv here (no WINDOWID)... launching mpv...'
+   mpv "$@"
+
+else
+
+   # query geometry of the terminal (xwininfo),
+   # then uses mpv options to embed it
+   exists xwininfo || die "no xwinfo! are you sure you're using X-Window?"
+   GEOM=$(xwininfo -id "$WINDOWID" | awk '/^ *Width:|^ *Height:/ {print $2}')
+   GEOM=$(printf %s "$GEOM" | tr '\n' 'x')
+   printf '\033]2;%s\a' "mpv $*" >/dev/tty # set terminal title ...
+   mpv --wid="$WINDOWID" "$@"
+
+fi
