@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# I love juggling and it turns out xscreensaver has a juggler applet
+# which can animate some (vanilla) siteswaps, neat!
+
+
+# Usage: $0 {balls|clubs|rings|knives|bballs} PATTERN
+# use the juggler3d 'applet' from xscreensaver to juggle some siteswaps
+#
+# PATTERN is vanilla siteswap separated by spaces.
+# Any throw can be preceded with following modifier
+# -   Inside throw (default)
+# +   Outside throw
+# =   Cross Throw
+# &   Cross Catch
+# x   Cross Throw and Catch
+# _   Bounce
+#
+# For more: see man juggler3d(6x),
+#           use /usr/lib/xscreensaver/juggler3d
+
+JUGGLER=/usr/lib/xscreensaver/juggler3d
+
+[ -e "$JUGGLER" ] || die "applet '$JUGGLER' not found"
+
+case "$1" in
+   balls|clubs|rings|knives|bballs)
+      prop="$1"; shift
+      "$JUGGLER" -no-balls -no-clubs -no-rings -no-knives -no-bballs -count 300 "$prop" -pattern "$@"
+      ;;
+
+   *) usage -d ;;
+esac
