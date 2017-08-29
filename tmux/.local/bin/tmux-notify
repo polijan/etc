@@ -1,0 +1,8 @@
+#!/bin/sh
+# usage: tmux-notify MESSAGE
+# send a notification that shows in all terminal displaying tmux
+
+for i in $(tmux list-clients | cut -f 1 -d ':'); do
+    # probably we can avoid the 'cut' by passing right format (-F option)
+    tmux display-message -c "$i" "$*"
+done

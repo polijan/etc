@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Usage: tmux+ [TMUX_ARGS]...
+# when invoked with any arguments, just invoke tmux
+# when invoked with no arguments and there are already sessions, launch an
+#      interactive menu to choose whether to create a new session or attach
+#      to an existing one. (note: we also force tmux to assume 256 colors)
+
+
+exists() { command -v "$@" > /dev/null ;}
+ansi() { printf '\033[%sm' "$1" ;}
+
+[ $# -eq 0 ]   || exec tmux -2 "$@"  # with args?   => invoke tmux "$@"
+tmux has       || exec tmux -2       # no session?  => invoke tmux
+[ -z "$TMUX" ] || exec tmux -2       # TMUX is set? => invoke tmux
+exists fzf     || exec tmux -2       # no fzf?      => invoke tmux
+
+# list sessions, nicely colored, so we can choose one
+NEW=$(ansi 31)
+HIGH=$(ansi 33)
+RESET=$(ansi 0)
+S=$({ printf '%s\n' "${NEW}new session${RESET}"
+      tmux list-sessions         |
+      sed -e "s/^/${HIGH}/"      \
+          -e "s/:/${RESET}:/"
+    }                            |
+      fzf --ansi                 \
+          --prompt 'tmux > '     \
+          --tiebreak=begin       )
+
+[ -n "$S" ] || exit 0
+[ "$S" = 'new session' ] && exec tmux -2
+exec tmux -2 attach -t "$(printf %s "$S" | cut -f 1 -d ':')"

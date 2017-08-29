@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Usage: tmux-reload
+# reload the config file
+exec tmux source-file "$HOME/.tmux.conf"
