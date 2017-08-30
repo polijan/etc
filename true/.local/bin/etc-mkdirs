@@ -1,0 +1,83 @@
+#!/bin/sh
+
+# Usage: $0
+# create my base directories (useful to booststrap a new machine)
+cd "$HOME"
+
+################################################################################
+# Some essential dirs to set up                                                #
+################################################################################
+
+# ~/etc    : my config files and script. Well, I'm supposed to have it copied
+#            already, but let's try to create it anyway.
+mkdir -pv 'etc'
+
+# ~/stow   : my files are neatly organized in 'packages' which I stow
+#            ~/stow into ~ (those would create all the directories I need)
+mkdir -pv 'stow'
+
+# ~/tmp    : a temporary dir on this machine, I will not synchronize it
+mkdir -pv 'tmp/Desktop'   ; ln -sv 'tmp/Desktop'   2> /dev/null
+mkdir -pv 'tmp/Downloads' ; ln -sv 'tmp/Downloads' 2> /dev/null
+# when "sharing" something with termux from Android, it's put in ~/downloads
+[ -e /data/data/com.termux ] && ln -sv 'Downloads' 'downloads' 2> /dev/null
+
+################################################################################
+# USER Directories in XDG Base Directory spec.      (I use the default values) #
+################################################################################
+
+# ~/.cache : the default value (if XDG_CACHE_HOME isn't set) where user-specific
+#            non-essential (cached) data should be written (this isanalogous to
+#            /var/cache).      [NOTE:        for even more transient stuff, apps
+#                              might use XDG_RUNTIME_DIR but there's no defaults
+#                              and, the system can usually setup a value for it]
+mkdir -pv    '.cache'
+
+# ~/.config: many programs still put their "dotfiles" directly in $HOME, however
+#            more and more software uses XDG base dir spec, where ~/.config is
+#            the default value (if XDG_CONFIG_HOME isn't set) which indicates
+#            user-specific configuration (analogous to /etc)
+#            Note: I specifically use ~/.config/sh-includes to put scripts which
+#                  my long/interactive shells include.
+mkdir -pv    '.config/sh-includes'
+
+# ~/.local:  I install local software here (thus I need to have it analogous to
+#            /usr and /usr/local). On that topic, read the following interesting
+#            blog post: http://nullprogram.com/blog/2017/06/19/
+#            Also ~/.local/share is the default value (if XDG_DATA_HOME isn't
+#            set) where user-specific data files should be written (analogous to
+#            /usr/share)
+mkdir -pv    '.local/bin'            \
+             '.local/etc'            \
+             '.local/include'        \
+             '.local/lib'            \
+             '.local/share/doc'      \
+             '.local/share/man/man1' \
+             '.local/share/man/man2' \
+             '.local/share/man/man3' \
+             '.local/share/man/man4' \
+             '.local/share/man/man5' \
+             '.local/share/man/man6' \
+             '.local/share/man/man7' \
+             '.local/share/man/man8' \
+             '.local/src'            \
+             '.local/stow'
+ln -sv       '.local/bin' 'bin' 2> /dev/null
+( cd         '.local'
+  ln -sv     'bin' 'sbin'
+  ln -sv     'bin' 'games'
+) 2> /dev/null
+
+################################################################################
+# SYSTEM Directories in XDG Base Directory spec.          (nothing to do here) #
+################################################################################
+
+# XDG_DATA_DIRS:   list of directories separated by : (like PATH) where data
+#                  files should be searched in addition to XDG_DATA_HOME.
+#                  defaults to /usr/local/share:/user/share if not set
+
+# XDG_CONFIG_DIRS: list of directories separated by : (like PATH) where config
+#                  files should be searched in addition to XDG_CONFIG_HOME.
+#                  defaults to /etc/xdg
+
+exit 0

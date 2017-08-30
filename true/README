@@ -1,0 +1,3 @@
+Here, I put files that should always be stowed in.
+Scripts/functions/aliases that relies only on things available, everywhere (as
+per POSIX) or at least on my systems (ie available in busybox, coreutils, ...)
