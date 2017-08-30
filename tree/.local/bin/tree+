@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: tree+ [TREE_ARGS]...
+# my wrapper around tree(1)
+
+# -a         also prints hidden files
+# -I '.git'  ... but ignore the git versioning stuff
+# -F         appends an 'indicator' like ls -F does
+exec tree -aF --dirsfirst -I '.git' "$@"

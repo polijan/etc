@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: tree-full [TREE_ARGS]...
+# tree+ but using a long listing format (somewhat similar to ls -l)
+# also reports disk usage with --du (uses human-readable format for sizes)
+
+exec tree+ --du -hpugD "$@"
