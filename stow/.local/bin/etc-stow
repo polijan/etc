@@ -1,51 +1,54 @@
 #!/bin/sh
+
+# Usage: etc-stow [-STOW_FLAG]... [NAME]...
+# uses stow(1) to install 'configuration packages' from ~/etc into ~
+# if NAME(s) are given, stow command applies on those 'configuration packages'
+# otherwise stow command applies to all 'configuration packages' whose name
+# matches a command or a package installed by apt.
+
 ###############################################################################
-cd "$HOME/etc"
 
 ansi() { printf '\033[%sm' "$1"; }
-HIGH=$(ansi '1;33')
+HIGH=$(ansi '33')
 RESET=$(ansi 0)
 
 is_installed() { #args: PACKAGE
    # returns 0 if package is installed, non-zero otherwise
-   which "$1" >/dev/null ||
-   apt list --installed 2>/dev/null | grep -q "^$1/"
-}
-###############################################################################
-
-# Usage: etc-stow [-STOW_FLAG]... [PACKAGE_NAME]...
-# uses stow(1) to install 'configuration packages' from ~/etc into ~
-# when PACKAGE_NAME is given install given package
-
-
-# stow package(s) to $HOME
-# we do not stow _, so packages can have a private area they refer to
-stow_() { #args: [stow_args]... package
-   stow --ignore=README --ignore=_ -v -t "$HOME" "$@"
+   { which "$1" || dpkg -s "$1" ;} >/dev/null 2>/dev/null
 }
 
-HAS_PACKAGE_NAME=false
+xargs_stow() {
+   # we do not stow _ or READMEs
+   xargs stow -v -t "$HOME" --ignore=README --ignore=_ "$@"
+}
+
+cd "$HOME/etc"
+
+HAS_NAMES=false
 for i; do
     case "$i" in
-       --) HAS_PACKAGE_NAME=true; break ;;
+       --) HAS_NAMES=true; break ;;
        -*) ;;
-        *) HAS_PACKAGE_NAME=true; break ;;
+        *) HAS_NAMES=true; break ;;
     esac
 done
 
-if $HAS_PACKAGE_NAME; then
+if $HAS_NAMES; then
    # stow the specified packages
-   stow_ "$@"
+   printf 'stow: %s\n' "${HIGH}$*$RESET" >&2
+   : | xargs_stow "$@"
 else
    # stow all the packages for which the name
    # matches an executable in the path,
    # or an apt package name that is installed
-   find . ! -path . -type d -prune |
-   sed 's:^\./::'                  |
+   find . ! -path . -type d -prune           |
+   sed 's:^\./::'                            |
    while IFS= read -r i; do
-      if is_installed "$i"; then
-         printf '%s\n' "${HIGH}${i}${RESET}"
-         stow_ "$@" "$i" 2>&1
-      fi
-   done
+       is_installed "$i" && printf '%s ' "$i"
+   done                                      |
+   { printf 'stow: %s' "$HIGH" >/dev/tty
+     tee /dev/tty
+     printf '%s\n' "$RESET" >/dev/tty
+   }                                         |
+   xargs_stow "$@"
 fi
