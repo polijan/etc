@@ -1,0 +1,39 @@
+
+# Specify regexes for GNU stow to ignoring files
+#
+# basically, stow checks:
+# 1) the ~/.stow-global-ignore file
+# 2) a .stow-local-ignore file within any top level package directory
+# if both 1) and 2) don't exist, stow will use its own built-in default ignore
+# 3) --ignore=REGEX command line options
+#
+# for details, check the check stow's info(1) manual
+
+
+## ignoring revision control system stuff ###########
+
+RCS
+.+,v
+
+CVS
+\.\#.+       # CVS conflict files / emacs lock files
+\.cvsignore
+
+\.svn
+_darcs
+\.hg
+
+\.git
+\.gitignore
+
+#####################################################
+
+.+~          # editors backup files
+\#.*\#       # emacs autosave files
+
+^/README.*
+^/LICENSE.*
+^/CHANGELOG.*
+^/COPYING
+
+#####################################################
