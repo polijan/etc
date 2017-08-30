@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Usage: urxvt+ [URXVT_ARGS]...
+# same as urxvt, but applies a red tint
+# (if the transparency is enabled) during
+# the evening/night time (9pm till 5am)
+
+case "$(date +%H)" in
+     2[1-3]|0[0-5]) exec urxvt -tint red "$@" ;;
+                 *) exec urxvt "$@" ;;
+esac
