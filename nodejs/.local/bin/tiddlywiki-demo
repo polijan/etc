@@ -1,0 +1,19 @@
+#!/bin/sh
+
+## create a temporary tiddlywiki and start it ##
+TWTMP=/tmp/tiddlywiki
+PORT=8079
+
+if ! [ -d "$TWTMP" ]; then
+   printf '>> creating temporary tiddlywiki (tw5.com edition) in %s.\n' "$TWTMP"
+   tiddlywiki "$TWTMP" --init tw5.com
+else
+   printf '>> tiddlywiki found in %s.\n' "$TWTMP"
+fi
+
+if echo | nc localhost $PORT ; then
+   printf '>> server is already started on port %d\n' $PORT
+else
+   printf '>> starting tiddlywiki server on port %d ... \n' $PORT
+   tiddlywiki "$TWTMP" --server $PORT
+fi

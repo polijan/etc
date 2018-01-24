@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Usage: $0 [ARGS]...
+# invoke tiddlywiki
+#
+# Make sure you have installed TiddlyWiki, see:
+# https://tiddlywiki.com/#Installing%20TiddlyWiki%20on%20Node.js
+
+TW="$HOME/.local/lib/node_modules/.bin/tiddlywiki"
+
+[ -e "$TW" ] || die 'cannot find tiddlywiki'
+exec nodejs "$TW" "$@"
