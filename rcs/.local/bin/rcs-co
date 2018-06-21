@@ -1,0 +1,4 @@
+#!/bin/sh
+# Usage: rcs-co [ARGS]...
+# call co -l
+exec co -l "$@"
