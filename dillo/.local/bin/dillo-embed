@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Usage: $0 [DILLO_ARGS]...
+# launch dillo embedded in the terminal's window (if terminal sets WINDOWID)
+# (if terminal doesn't set WINDOWID, launch dillo in background)
+
+is-xwindow || die "$0 requires X-Window"
+if [ -z "$WINDOWID" ]; then
+
+   # some X terminals (xterm, rxvt, ...) set up WINDOWID, but some don't
+   # in the later case, just launch dillo (in background)
+   printf '%s\n' 'cannot embed dillo... launching it in background...' >&2
+   dillo "$@" &
+
+else
+
+   # query geometry of the terminal (xwininfo),
+   # then uses dillo options to embed it and get its size to fit
+   GEOM=$(xwininfo -id "$WINDOWID" | awk '/^ *Width:|^ *Height:/ {print $2}')
+   GEOM=$(printf %s "$GEOM" | tr '\n' 'x')
+   printf '\033]2;%s\a' 'Dillo (embedded, ctrl-q to exit)' >/dev/tty # set terminal title ...
+   dillo -x "$WINDOWID" -g "$GEOM" "$@"
+
+fi > /dev/null
+#    ^-- /dev/null because we don't need dillo to be so verbose
