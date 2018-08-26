@@ -8,5 +8,5 @@
 
 TW="$HOME/.local/lib/node_modules/.bin/tiddlywiki"
 
-[ -e "$TW" ] || die 'cannot find tiddlywiki'
+[ -e "$TW" ] || die 'cannot find tiddlywiki => to install it: cd ~/.local/lib && npm install tiddlywiki'
 exec nodejs "$TW" "$@"
