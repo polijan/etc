@@ -19,8 +19,15 @@ mkdir -pv 'stow'
 # ~/tmp    : a temporary dir on this machine, I will not synchronize it
 mkdir -pv 'tmp/Desktop'   ; ln -sv 'tmp/Desktop'   2> /dev/null
 mkdir -pv 'tmp/Downloads' ; ln -sv 'tmp/Downloads' 2> /dev/null
-# when "sharing" something with termux from Android, it's put in ~/downloads
-[ -e /data/data/com.termux ] && ln -sv 'Downloads' 'downloads' 2> /dev/null
+
+# termux
+if [ -e /data/data/com.termux ]; then
+   # when "sharing" something with termux from Android, it's put in ~/downloads
+   ln -sv 'Downloads' 'downloads'
+   # termux-widget app: scripts for the termux widget are put in ~/.shortcuts
+   # and in ~/.shortcuts/tasks (execution in the background)
+   mkdir -pv '.shortcuts/tasks'
+fi 2> /dev/null
 
 ################################################################################
 # USER Directories in XDG Base Directory spec.      (I use the default values) #
@@ -37,9 +44,15 @@ mkdir -pv    '.cache'
 #            more and more software uses XDG base dir spec, where ~/.config is
 #            the default value (if XDG_CONFIG_HOME isn't set) which indicates
 #            user-specific configuration (analogous to /etc)
+#
+#            XDG-compliant desktop environment would automatically start
+#            *.desktop files found and in XDG_CONFIG_DIRS/autostart and then
+#            in XDG_CONFIG_HOME/autostart
+#
 #            Note: I specifically use ~/.config/sh-includes to put scripts which
-#                  my long/interactive shells include.
-mkdir -pv    '.config/sh-includes'
+#                    my long/interactive shells include.
+mkdir -pv    '.config/sh-includes'       \
+             '.config/autostart'
 
 # ~/.local:  I install local software here (thus I need to have it analogous to
 #            /usr and /usr/local). On that topic, read the following interesting
@@ -47,20 +60,23 @@ mkdir -pv    '.config/sh-includes'
 #            Also ~/.local/share is the default value (if XDG_DATA_HOME isn't
 #            set) where user-specific data files should be written (analogous to
 #            /usr/share)
-mkdir -pv    '.local/bin'            \
-             '.local/etc'            \
-             '.local/include'        \
-             '.local/lib'            \
-             '.local/share/doc'      \
-             '.local/share/man/man1' \
-             '.local/share/man/man2' \
-             '.local/share/man/man3' \
-             '.local/share/man/man4' \
-             '.local/share/man/man5' \
-             '.local/share/man/man6' \
-             '.local/share/man/man7' \
-             '.local/share/man/man8' \
-             '.local/src'            \
+#            XDG-compliant desktop environment would usually looks for .desktop
+#            files in user's home in $XDG_DATA_HOME/share/applications
+mkdir -pv    '.local/bin'                \
+             '.local/etc'                \
+             '.local/include'            \
+             '.local/lib'                \
+             '.local/share/doc'          \
+             '.local/share/man/man1'     \
+             '.local/share/man/man2'     \
+             '.local/share/man/man3'     \
+             '.local/share/man/man4'     \
+             '.local/share/man/man5'     \
+             '.local/share/man/man6'     \
+             '.local/share/man/man7'     \
+             '.local/share/man/man8'     \
+             '.local/share/applications' \
+             '.local/src'                \
              '.local/stow'
 ln -sv       '.local/bin' 'bin' 2> /dev/null
 ( cd         '.local'
@@ -74,7 +90,7 @@ ln -sv       '.local/bin' 'bin' 2> /dev/null
 
 # XDG_DATA_DIRS:   list of directories separated by : (like PATH) where data
 #                  files should be searched in addition to XDG_DATA_HOME.
-#                  defaults to /usr/local/share:/user/share if not set
+#                  defaults to /usr/local/share:/usr/share if not set
 
 # XDG_CONFIG_DIRS: list of directories separated by : (like PATH) where config
 #                  files should be searched in addition to XDG_CONFIG_HOME.
