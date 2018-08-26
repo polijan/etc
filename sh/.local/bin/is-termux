@@ -1,0 +1,4 @@
+#!/bin/sh
+# Usage: $0
+# returns 0 if we run in a termux environment, non-zero otherwise
+[ -e /data/data/com.termux ]

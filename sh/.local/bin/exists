@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Usage: exists COMMAND
+# returns 0 if command exists (and thus could be executed)
+# returns non-zero otherwise
+
+# TODO: what to do in the specific case there's no argument
+# (currently returns 0), is it correct?
+
+# TODO: make it source-able
+
+command -v "$@" > /dev/null
