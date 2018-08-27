@@ -1,0 +1,4 @@
+#!/bin/sh
+# Usage: $0
+# returns zero if executed in tmux, non-zero otherwise.
+[ -n "$TMUX" ]

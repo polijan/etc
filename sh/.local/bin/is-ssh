@@ -1,0 +1,4 @@
+#!/bin/sh
+# Usage: $0
+# returns zero if we are executing in a ssh session, non-zero otherwise.
+[ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]

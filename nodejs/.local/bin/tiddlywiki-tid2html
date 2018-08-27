@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Usage: $0 FILE
+# render FILE as an HTML file and prints the name
+# FILE should be a FILE formatted with the TW language
+
+[ -f "$1" ] || exit
+
+# create a new tiddlywiki (so we can render the given tiddler), but
+# invoking tiddlywiki is painfully slow, so we cache the creation
+if [ -n "$XDG_CACHE_HOME" ]; then
+   CACHE="$XDG_CACHE_HOME/$(basename "$0")"
+elif [ -d "$HOME/.cache" ]; then
+   CACHE="$HOME/.cache/$(basename "$0")"
+else
+   CACHE="$HOME/.$(basename "$0")"
+fi
+mkdir -p "$CACHE"
+[ -e "$CACHE/tiddlywiki.info" ] || tiddlywiki "$CACHE" --init server >/dev/null
+[ -e "$CACHE/tiddlywiki.info" ] || exit
+mkdir -p "$CACHE/tiddlers" "$CACHE/output"
+
+# render file using '--rendertiddler' command
+# (note: this is deprecated in newer tiddlywiki in favor of the
+#        '--render' command, so maybe we'll have to use that later)
+TITLE="$(awk '/^title: / { print $2 }' $1)"
+if [ -n "$TITLE" ]; then
+   cp "$1" "$CACHE/tiddlers/tid.tid"
+else
+   TITLE=$(basename "$1")
+   printf "title: %s\n\n" "$TITLE" > "$CACHE/tiddlers/tid.tid"
+   cat "$1" >> "$CACHE/tiddlers/tid.tid"
+fi
+tiddlywiki "$CACHE" --rendertiddler "$TITLE" tid.html >/dev/null
+
+printf '%s\n' "$CACHE/output/tid.html"

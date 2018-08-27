@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Usage: $0
+# try to return 0 if started under x-window
+# or return 1 otherwise
+
+# (inspired by a shell at shelldorado.com)
+[ -z "$DISPLAY" ]  && exit 1
+[ -n "$WINDOWID" ] && exit 0
+case "$TERM" in
+     xterm*|rxvt*) exit 0 ;;
+esac
+exit 1

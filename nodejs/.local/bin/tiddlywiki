@@ -15,4 +15,9 @@ exists node || die 'cannot find node.js'
 TW="$HOME/.local/lib/node_modules/.bin/tiddlywiki"
 [ -e "$TW" ] || die 'cannot find tiddlywiki => to install it: cd ~/.local/lib && npm install tiddlywiki'
 
+<<<<<<< HEAD
 exec "$NODEJS" "$TW" "$@"
+=======
+[ -e "$TW" ] || die 'cannot find tiddlywiki => to install it: cd ~/.local/lib && npm install tiddlywiki'
+exec nodejs "$TW" "$@"
+>>>>>>> 4993c675818abe35d013ca94d708ff900cced27d

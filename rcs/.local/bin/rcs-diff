@@ -1,0 +1,4 @@
+#!/bin/sh
+# Usage: rcs-diff [ARGS]...
+# call rcsdiff
+exec rcsdiff "$@"

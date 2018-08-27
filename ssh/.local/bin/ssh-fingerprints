@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Usage: ssh-fingerprints
+# check ssh public key fingerprints
+#
+# When trying to connect here via ssh, ssh client may show the keys fingerprint for confirmation
+# function below is used to checking ssh public key fingerprints
+
+ansi() { printf '\033[%sm' "$1" ;}
+
+for pub in /etc/ssh/*_key.pub; do
+    ansi '1;35'; printf '%s ' "$pub"; ansi 0
+    ssh-keygen -lf "$pub"
+done | column -t | sort -r -k2

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: die [MESSAGE]...
+# prints the messages on stderr and terminates the process calling this
+
+[ -n "$*" ] && printf '%s' "$*... " >&2
+kill $PPID
