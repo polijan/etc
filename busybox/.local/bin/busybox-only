@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Usage: busybox-only
+# display list of commands that are only in busybox
+# and not available by directly calling them.
+
+exists() { command -v "$@" > /dev/null ;}
+
+for app in $(busybox --list); do
+    exists "$app" || printf %s\\n "$app"
+done

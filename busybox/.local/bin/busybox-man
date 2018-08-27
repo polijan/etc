@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# usage: busybox-man [APPLET]
+# show manual for a specific busybox applet
+# if no arg, display interactive menu
+
+exists() { command -v "$@" > /dev/null ;}
+
+app=$1
+if [ -z "$app" ]; then
+   exists menu || { man busybox; exit; }
+   app=$( { echo 'full busybox man page'; busybox --list; } | menu 'applet' ) || exit 0
+   app=$( printf %s "$app" | cut -f 1 -d ' ' )
+   busybox --list | grep -q "$app" || { man busybox; return; }
+fi
+man busybox |
+if [ ${#app} -le 3 ]
+   then less -p "^ +$app +$app"
+   else less -p "^ +$app *$"
+fi

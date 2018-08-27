@@ -1,0 +1,52 @@
+#!/bin/sh
+
+# Usage: $0 [query]...
+# interactive help browser for busybox (requires fzf)
+
+ansi()   { printf '\033[%sm' "$1" ;}
+exists() { command -v "$@" > /dev/null ;}
+COLUMNS=$(stty size < /dev/tty | cut -f 2 -d ' ')
+
+
+for app in $(busybox --list); do
+    path=$(readlink -f "$(which "$app")")
+    if [ -z "$path" ]; then
+       ansi 31 # app not found in system
+    elif printf %s "$path" | grep -q busybox; then
+       ansi 32 # app is a busybox applet
+    else
+       ansi 35 # app not linked to busybox
+    fi
+    printf '\n%s' "$app"
+    ansi 0
+done                                             |
+fzf --ansi                                       \
+    --prompt 'busybox > '                        \
+    --preview-window "right:$((COLUMNS - 18))"   \
+    --bind 'Alt-Z:toggle-preview'                \
+    --bind 'shift-left:preview-page-up'          \
+    --bind 'shift-right:preview-page-down'       \
+    --preview 'if [ -z {} ]
+                  then busybox --help 2>&1
+                  else busybox --help {} 2>&1    |
+                       tail -n +3
+               fi'                               \
+    --bind 'tab:execute(
+               if [ -z {} ]
+                  then busybox --help 2>&1
+                  else busybox --help {} 2>&1    |
+                       tail -n +3
+               fi                                |
+               LESSOPEN="" less  )'              \
+    --bind 'Alt-M:execute(
+               if [ -z {} ]; then
+                  man busybox
+               else
+                  app={}
+                  man busybox                    |
+                  if [ ${#app} -lt 3 ]
+                     then less -p "^ +$app +$app"
+                     else less -p "^ +$app *"
+                  fi
+               fi )'                             \
+    --query "$*"
