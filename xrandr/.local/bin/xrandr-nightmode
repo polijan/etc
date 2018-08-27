@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# Usage: $0 [[-o|--off|off]|BRIGHTNESS]
+# use xrandr to setup a "night mode" => red tint + decreased brightness (0.8)
+# alternatively the BRIGHTNESS can also be specified as a parameter.
+# -o|--off resets the colors to normal
+
+xrandr_all() { xrandr --prop | awk '/\<connected\>/ { print $1 }' ; }
+
+GAMMA='2.5:0.7:0.5'
+case $# in
+   0) B=0.6 ;;
+   1) case $1 in
+         -o|--off|off) B=1; GAMMA='1:1:1' ;;
+            *[!0-9.]*) usage -d ;; # not an number
+                    *) B=$1     ;;
+      esac ;;
+   *) usage -d ;;
+esac
+
+xrandr_all |
+while IFS= read -r OUTPUT; do
+      xrandr --output "$OUTPUT" --gamma "$GAMMA" --brightness "$B"
+done
