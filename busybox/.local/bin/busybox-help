@@ -5,8 +5,22 @@
 
 ansi()   { printf '\033[%sm' "$1" ;}
 exists() { command -v "$@" > /dev/null ;}
-COLUMNS=$(stty size < /dev/tty | cut -f 2 -d ' ')
+help()   {
+   ansi 33; printf 'TAB  '; ansi 0; printf ' : open in pager...\n'
+   ansi 33; printf 'Alt-M'; ansi 0; printf ' : open in busybox man page (if exists)\n\n'
+   ansi 33; printf 'color legend for availability of the applet as a command:\n'
+   ansi 42; printf ' '; ansi 0; printf ' directly callable as a shell command\n'
+   ansi 41; printf ' '; ansi 0; printf ' not directly callable (use busybox prefix)\n'
+   ansi 45; printf ' '; ansi 0; printf ' native command uses this name (busybox prefix to override)\n'
+   ansi 33; printf '____________________________________________________________'; ansi 0; printf '\n\n'
+}
 
+case $1 in
+    --help) help; exit;;
+esac
+
+exists fzf || { printf 'requires fzf.\n' >&2; exit 1; }
+COLUMNS=$(stty size < /dev/tty | cut -f 2 -d ' ')
 
 for app in $(busybox --list); do
     path=$(readlink -f "$(which "$app")")
@@ -26,10 +40,12 @@ fzf --ansi                                       \
     --bind 'Alt-Z:toggle-preview'                \
     --bind 'shift-left:preview-page-up'          \
     --bind 'shift-right:preview-page-down'       \
-    --preview 'if [ -z {} ]
-                  then busybox --help 2>&1
-                  else busybox --help {} 2>&1    |
-                       tail -n +3
+    --preview 'if [ -z {} ]; then
+                  busybox-help --help
+                  busybox --help 2>&1
+               else
+                  busybox --help {} 2>&1         |
+                  tail -n +3
                fi'                               \
     --bind 'tab:execute(
                if [ -z {} ]
