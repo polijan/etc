@@ -1,0 +1,13 @@
+#!/bin/sh
+
+NET=192.168.8
+# Grab the first 3 octets of your ip addresses
+# see: http://www.commandlinefu.com/commands/view/17714/grab-the-first-3-octets-of-your-ip-addresses
+NET=$(ifconfig | awk -F: '/inet addr:/ { sub(/\.[^.]+$/, "", $2); if (!seen[$2]++ && $2 != "127.0.0") print $2 }')
+
+# scanning...
+i=0
+while [ $i -lt 254 ]; do
+      i=$((i + 1))
+      ( ping -c 1 "$NET.$i" | grep "bytes from" | awk '{print $4}' & )
+done
