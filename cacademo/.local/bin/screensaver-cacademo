@@ -1,0 +1,9 @@
+#!/bin/sh
+# Usage: $0
+# executes libcaca's cacademo in the terminal
+#
+# Keys:
+# Enter - forces an effect transtion
+# Space - pauses and resumes the program
+# Esc   - exit
+DISPLAY= cacademo
