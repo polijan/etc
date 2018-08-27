@@ -6,7 +6,13 @@
 # Make sure you have installed TiddlyWiki, see:
 # https://tiddlywiki.com/#Installing%20TiddlyWiki%20on%20Node.js
 
-TW="$HOME/.local/lib/node_modules/.bin/tiddlywiki"
+exists() { command -v "$@" > /dev/null ; }
 
-[ -e "$TW" ] || die 'cannot find tiddlywiki'
-exec nodejs "$TW" "$@"
+NODEJS='node'
+exists node || NODEJS='nodejs'
+exists node || die 'cannot find node.js'
+
+TW="$HOME/.local/lib/node_modules/.bin/tiddlywiki"
+[ -e "$TW" ] || die 'cannot find tiddlywiki => to install it: cd ~/.local/lib && npm install tiddlywiki'
+
+exec "$NODEJS" "$TW" "$@"
