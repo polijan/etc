@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Usage: $0
+# show ps builtin help in pager
+ps --help all | less
