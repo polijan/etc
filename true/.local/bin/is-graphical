@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Usage: $0
+# return 0 if system is graphical
+# return non-zero if systme is text only
+# this many not be fully accurate
+
+if   is-windows; then  is-ssh
+elif is-termux;  then  is-ssh
+elif is-mac;     then  is-ssh
+else # assumes Unix + X
+     is-xwindow
+fi

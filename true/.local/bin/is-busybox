@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# Usage: $0 [COMMAND]
+# returns 0 if the command is symlinked to busybox utility,
+# return non-zero otherwise, more specifically:
+#     1 is command exists but is not linked to busybox
+#     non-0 and non-1 if command doesn't exists
+#
+# (with no argument, uses 'ls' as the command)
+
+APP="$1"
+[ $# -eq 0 ] && APP='ls'
+APP=$(which "$APP") || exit 100
+
+if command -v readlink > /dev/null; then
+   # readlink(1) is NOT posix (although it exists in coreutils, busybox, BSD, etc.)
+   case "$(readlink -f "$APP")" in
+      *busybox*) exit 0 ;;
+   esac
+else
+   # POSIX specifies 'ls -l' should output 'linkpath -> filepath'
+   # parsing ls sucks, but if we assume APP doesn't contains spaces,
+   # newlines, or weird stuff, then we can do this
+   # inspired by https://groups.google.com/forum/#!topic/comp.unix.shell/3s8cuwcVnTk
+   [ "$1" = 'busybox' ] && exit 0
+   case "$(LC_ALL=C ls -ld "$APP")" in
+      *" -> "*busybox*) exit 0 ;;
+   esac
+fi
+exit 1

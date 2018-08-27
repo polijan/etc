@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Usage: $0
+# returns 0 if the script runs on a Mac
+# returns non-zero otherwise
+
+case "$(uname -s)" in Darwin*) exit 0 ;; esac
+exit 1

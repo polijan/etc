@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: $0
+# returns 0 if the script runs on Windows Subsystem for Linux (WSL)
+# returns non-zero otherwise
+
+grep -q 'Microsoft' /proc/version /proc/sys/kernel/osrelease 2>/dev/null

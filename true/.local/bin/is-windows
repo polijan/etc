@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Usage: $0
+# returns 0 if the script runs on Windows
+# returns non-zero otherwise
+
+is-windows-wsl    && exit
+is-windows-cygwin && exit
+is-windows-mingw  && exit
+exit 1
+
