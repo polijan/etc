@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Usage: screensaver-ponysay [DELAY]
+# display cute ponies [using ponysay(1)] in a loop (press a key to exit)
+# you can specify a DELAY (in seconds, default is 0.7)
+
+case "$1" in
+                '') DELAY=0.7     ;;
+                 0) DELAY=0.01    ;;
+   [0-9\.][0-9\.]*) DELAY="$1"    ;;
+                 *) usage -d "$0" ;;
+esac
+
+CLEAR=$(clear) # cache it, so we don't repeat everytime
+PONY="${CLEAR}$(ponysay -o)"
+while true; do
+   printf %s "$PONY" # all I/O here
+   PONY="${CLEAR}$(ponysay -o)"
+   read -s -n 1 -t $DELAY && { printf '\n'; exit; }
+done
