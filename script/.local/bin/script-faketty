@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Usage: $0 [CMD]...
+# pretends stdout is a tty and executes the given command.
+#
+# this can be especially useful to force desired output from applications
+# which change their output (such as coloring), based on wether their output
+# to a terminal or not (pipe).
+
+# this is implemented as wrapper around the script(1) tool
+# and the idea is taken from here:
+# https://stackoverflow.com/questions/1401002/trick-an-application-into-thinking-its-stdin-is-interactive-not-a-pipe
+# AFAIK, printf %q is not POSIX (well, at least it's not accepted by dash), but it works in bash
+script --return -qfc "$(printf '%q ' "$@")" /dev/null
