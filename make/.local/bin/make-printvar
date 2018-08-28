@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Usage: make-printvar VAR_NAME
+# prints the value of variable VAR_NAME as defined in the Makefile
+
+# requires GNU make >= 3.82
+# brief explanation:
+# 1) print-% : defines a pattern-rule that matches any target in the form print-*
+# 2) @echo $*=$($*) : automatic variable $* matches the % and then $($*) gets the value of a variable whose name is stored in $*
+# more explanation : see http://blog.jgc.org/2015/04/the-one-line-you-should-add-to-every.html
+
+[ $# -eq 1 ] || { echo 'Usage: make-printvar VAR_NAME' >&2; exit 1; }
+exec make --eval="print-%: ; @echo $*=$($*)" "print-$1"

@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# Usage: colormake [MAKE_ARGS]...
+# wrapper around make to colorize output
+
+[ "$TERM" = "dumb" ] && exec make "$@"
+
+exists() { command -v "$@" > /dev/null; }
+
+# relaunch with bash if possible...
+# (so we get "PIPESTATUS" exit code, but if not, never mind)
+[ -z "$BASH_VERSION" ] && exists bash && exec bash "$0" "$@"
+
+
+# Set environment variable so that children can detect us
+export COLORMAKE=1
+
+if exists python; then
+   make "$@" 2>&1 | "$HOME/etc/make/_/colormake.py/colormake.py"
+elif exists perl; then
+   # Run with --short as the first argument to shorten each line so it fits
+   # on the screen.
+   SIZE=''
+   [ "$1" = "--short" ] && { SIZE=$(stty size); shift; }
+   make "$@" 2>&1 | "$HOME/etc/make/_/colormake.pl/colormake.pl" $SIZE
+else
+   exec make "$@"
+fi
+
+exit $PIPESTATUS  # <---(bash only: return )
