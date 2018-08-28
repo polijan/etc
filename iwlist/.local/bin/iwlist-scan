@@ -1,0 +1,18 @@
+#!/bin/sh
+# wrapper around "iwlist scan" to simplify output and just
+# show ESSID, quality, and wether network is open or not.
+
+{   echo "Quality Open ESSID"
+    sudo iwlist wlan0 scan                 \
+       | grep 'ESSID\|Encryption\|Quality' \
+       | sed -e s/\ \ \ \ //g              \
+             -e s/ESSID:\"//               \
+             -e s/Quality=//               \
+             -e s/Encryption\ key:on/N/    \
+             -e s/Encryption\ key:off/Y/   \
+             -e s/\ *Signal.*//            \
+             -e s/\ /_/g                   \
+       | tr '\n' ' '                       \
+       | tr '"' '\n'                       \
+       | sort -nr
+} | column -t
