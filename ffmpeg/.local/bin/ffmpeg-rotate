@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# ffmpeg-rotate VIDEO.mp4 [ANGLE]
+# output rotated video as VIDEO.r.mp4 (by default 270 degree) and plays it.
+
+IN=$1
+OUT=$(basename "$IN" | sed s%.mp4$%.r.mp4%)
+ANGLE=270
+[ -z "$2" ] || ANGLE="$2"
+
+
+ffmpeg -i "$IN" \
+  -c copy -metadata:s:v:0 rotate="$ANGLE" \
+  "$OUT"
+
+printf %s "$OUT"
+xdg-open "$OUT"

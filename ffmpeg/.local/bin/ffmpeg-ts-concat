@@ -1,0 +1,6 @@
+#!/bin/sh
+
+ffmpeg -i "concat:all2.mp4.ts|al3.mp4.ts" \
+-c copy -bsf:a aac_adtstoasc \
+output2.mp4
+

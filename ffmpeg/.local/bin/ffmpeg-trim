@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Usage: ffmpeg-trim VIDEO.mp4 START [DURATION]
+# outputs trimmed video as VIDEO.t.mp4 and plays it
+# (if DURATION is omitted, trim till the end of the clip)
+
+IN=$1
+OUT=$(basename "$IN" | sed s%.mp4$%.t.mp4%)
+
+START=$2
+DURATION=$3
+[ -z "$DURATION" ] &&
+     DURATION=$(ffprobe "$IN" -v error -show_format |
+                grep '^duration=' | cut -f2 -d= )
+
+ffmpeg -i "$IN"               \
+  -ss "$START" -t "$DURATION" \
+  -vcodec copy -acodec copy   \
+  "$OUT"
+
+printf '\n%s\n' "$OUT"
+xdg-open "$OUT"
+

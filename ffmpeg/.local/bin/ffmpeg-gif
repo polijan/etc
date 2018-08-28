@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Usage: ffmpeg-trim IMG.gif
+# outputs video of the animated gif (one loop) to IMG.mp4
+
+# see https://unix.stackexchange.com/questions/40638/how-to-do-i-convert-an-animated-gif-to-an-mp4-or-mv4-on-the-command-line
+
+IN=$1
+OUT=$(basename "$IN" | sed s%.gif$%.mp4%)
+
+ffmpeg -i "$IN" \
+  -movflags faststart -pix_fmt yuv420p    \
+  -vf "crop=trunc(iw/2)*2:trunc(ih/2)*2" \
+  "$OUT"
+
+# crop instead of scale
+#  -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" \
+
+printf '\n%s\n' "$OUT"
+xdg-open "$OUT"
