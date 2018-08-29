@@ -1,3 +1,7 @@
 Here, I put files that should always be stowed in.
-Scripts/functions/aliases that relies only on things available, everywhere (as
-per POSIX) or at least on my systems (ie available in busybox, coreutils, ...)
+Scripts/functions/aliases that
+
+- either rely on things available everywhere (as per POSIX) or at least on my
+  systems (ie available in busybox, coreutils, ...)
+
+- or does test the existence of other applications
