@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Usage: $0 [XCALIB_ARGS]
+# inverse colors using xcalib
+xcalib -i -a "$@"

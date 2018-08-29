@@ -3,17 +3,21 @@
 # Usage: $0 [-o|--off|off]
 # use xcalib to setup a "night mode" (red tint-ed)
 # -o|--off resets the colors to normal
+# -i inversed nightmode
+
+night() {
+   xcalib -c
+   xcalib "$@" -red 1 35 35 -blue 1 8 8 -green 1 12 12 -a
+}
 
 case $# in
-   0) xcalib -c
-      xcalib -red 1 35 35 -blue 1 8 8 -green 1 12 12 -a ;;
+   0) night ;;
    1) case $1 in
+         -i) night -i ;;
          -o|--off|off) xcalib -c -a ;;
          *) usage -d ;;
       esac ;;
    *) usage -d ;;
 esac
-
-# also use -i to inverse if needed
 
 # https://www.reddit.com/r/linux/comments/6hp4r6/if_you_work_a_lot_in_the_darknight_you_should/
