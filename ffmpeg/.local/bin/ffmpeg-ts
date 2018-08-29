@@ -1,0 +1,9 @@
+#!/bin/sh
+
+IN=$1
+OUT=$(basename "$IN" | sed s%.mp4$%.ts%)
+
+ffmpeg -i "$IN" \
+  -c copy -bsf:v h264_mp4toannexb -f mpegts "$OUT"
+
+printf '\n%s\n' "$OUT"

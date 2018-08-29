@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Usage: ffmpeg-reverse VIDEO.mp4
+# reverse video as VIDEO.rev.mp4 and plays it
+
+IN=$1
+OUT=$(basename "$IN" | sed s%.mp4$%.rev.mp4%)
+
+ffmpeg -i "$IN" \
+  -vf reverse   \
+  "$OUT"
+
+printf '\n%s\n' "$OUT"
+xdg-open "$OUT"
+

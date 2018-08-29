@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# Usage: ffmpeg-concat FILE.txt
+# concatenate video files
+#
+# FILE.txt is a text file which contains the list of videos to concatenate.
+# Each line is: file video.mp4
+# the script will output the video to FILE.mp4 and play it.
+
+IN=$1
+OUT=$(basename "$IN" | sed s%.txt$%.mp4%)
+
+ffmpeg -f concat -i "$IN" -codec copy "$OUT"
+
+printf '\n%s\n' "$OUT"
+xdg-open "$OUT"
