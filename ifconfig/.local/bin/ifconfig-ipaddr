@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: ifconfig-ipaddr
+# Calls ifconfig(1) but only output the lines with ip address, mask, broadcast.
+# So it's just a shortcout to quickly display your internal IP address(es).
+
+ifconfig | grep 'inet addr' | sed 's/^ *//'
