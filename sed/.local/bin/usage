@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# Usage: usage [-d] [SCRIPT]
+# display help message embedded as comments in a SCRIPT
+#
+# If SCRIPT not specified, then use the calling program.
+# -d option: kill (send SIGTERM) to the calling program.
+
+# How to format the help message of a shell script:
+# put your text in a comment section, # Usage is the start of the message which
+# stops at the last #. The string $0 will be replaced by the SCRIPT name.
+
+# the sed command at the core of this script is taken from:
+# http://www.commandlinefu.com/commands/view/3344/display-an-embeded-help-message-from-bash-script-header
+
+KILL=false
+[ "$1" = -d ] && { KILL=true; shift; }
+
+if [ -n "$*" ]; then
+   SCRIPT="$*"
+elif [ -f /proc/$PPID/comm ]; then
+   SCRIPT="$(cat /proc/$PPID/comm)"
+else
+   SCRIPT="$(ps -p $PPID -o comm=)"
+fi
+
+if [ -f "$SCRIPT" ]; then
+   # busybox' sed is not happy with that first sed,
+   # so maybe replace it with awk?
+   #    awk '/^# Usage:/ { p=1 }
+   #               /^# / { if (p) {print; next;} }
+   #                     { if (p) exit }' |
+   #    sed -e '/^# //' -e "s/\$0/$(basename "$SCRIPT")/g"
+
+   sed -n -e '/^# Usage:/,/^$/ s/^# \?//p' "$SCRIPT" |
+   sed "s/\$0/$(basename "$SCRIPT")/g"
+else
+   printf '%s: cannot access %s: no such file\n' \
+          "$(basename "$0")"  "$SCRIPT"        >&2
+   exit 1
+fi
+
+if $KILL; then
+   kill $PPID
+fi
+

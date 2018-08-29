@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Usage: sed-uncolor [SED_ARGS]
+#        filter that removes ANSI character with sed,
+#        can take more arguments for more sed processing
+
+exec sed -e 's/\x1B\[[0-9;]*[a-zA-Z]//g' "$@"
+
+# more elaborate version maybe (use sed -r for extended regex) :
+# exec sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+# => see: http://www.commandlinefu.com/commands/view/3584/remove-color-codes-special-characters-with-sed
+

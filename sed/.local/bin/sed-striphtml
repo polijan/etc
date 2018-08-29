@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# Usage: $0 [EXTRA_SED_ARGS]... [FILE]...
+# invokes sed(1) to strip HTML tags
+#
+# Transform the input the following way:
+# 1. Replace "<BR>" tags with a newline (special handling)
+# 2. Remove all tags between '<' and '>'. If a line still has
+#    a '<' character, it is a multi-line tag. Join this line
+#    with the next ('N'), and repeat removing tags (this code
+#    was borrowed from a script by changyj@rtfiber.com.tw)
+# 3. Replace &nbsp; character entities with a blank (special handling)
+# 4. Remove character entities (i.e. "&copy;" or "&nbsp;")
+
+sed -e 's:<[bB][rR]/*>:\
+:g' \
+    -e '/</{
+	:loop
+	s/<[^>]*>//g
+	 /</{
+	     N
+	     b loop
+	 }
+     }' \
+    -e 's:&[nN][bB][sS][pP];: :g' \
+    -e 's:&..;::g; s:&...;::g; s:&....;::g'	\
+    "$@"

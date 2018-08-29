@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Usage: sedcheck SCRIPT
+# sedcheck is a utility checking various portability issues (mostly
+# POSIX conformance) in sed scripts. Sedcheck is itself written in sed.
+
+sed -f "$HOME/etc/sed/_/sedcheck.sed" < "$1"
+
+# see: http://lvogel.free.fr/sed.htm#sedcheck
+#
+# Sedcheck is rather pedantic (the first three warnings reported may not seem 
+# very useful or relevant), but this is because I applied (rather strictly) the
+# following sources:
+# - the recent POSIX spec (HTML version).
+# - Sed and Awk, by Dale Dougherty and Arnold Robbins (O'reilly).
+#
+# Now the good news is, that the overall framework and sed parser work
+# correctly, and it is much easier to remove warnings that it was to add them.
+#
+# Sedcheck was tested successfully on the whole GNU sed testsuite and on many
+# scripts from the grabbag. Nevertheless some bugs may still be there. Please
+# report bugs and suggestions to me (see my email address below). I'd
+# appreciate it particularly if sed programmers running other sed
+# implementations than GNU sed could tell me whether some of the warnings
+# currently in sedcheck are useless, or whether some other ones should be
+# added.

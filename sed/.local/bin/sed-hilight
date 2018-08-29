@@ -1,0 +1,23 @@
+#!/bin/bash
+# filter to hilight patterns (with different colors)
+# sed-hilight [PATTERN]...
+
+# https://www.reddit.com/r/commandline/comments/3y2ruf/regexbased_highlighter/
+#hilight() {
+#   local sedexpr= arg i=1
+#   for arg do
+#       sedexpr+="s/${arg//'/'/'\/'}/\x1b[30;10$((i++%10))m&\x1b[m/g;"
+#   done
+#   sed -e "${sedexpr%;}"
+#}
+## ^---- GNU sed recognizes \x but it's undefined with say BSD sed.
+## one more bashism and here we get the \x1b working if sed doesn't support it.
+hi() {
+   local sedexpr= arg i=1
+   for arg do
+       sedexpr+="s/${arg//'/'/'\/'}/"$'\x1b'"[30;10$((i++%10))m&"$'\x1b'"[m/g;"
+   done
+   sed -e "${sedexpr%;}"
+}
+
+hi "$@"
