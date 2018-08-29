@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# Usage: $0 [-a/-base64] [--] FILE
+# password-based symmetric encryption/decryption using openssl
+# output encrypted copy of FILE to FILE.encrypted (or FILE.encrypted.txt
+# if -a option is used). With -a option, the output file will be base 64
+# ascii text [A-Z][a-z][0-9]+/
+# (but the file size will be bigger).
+
+A=''
+case $1 in
+   -a) A='-a'; shift;;
+   --) shift    ;;
+   -*) usage -d ;;
+esac
+
+[ $# -eq 1 ] || usage -d
+[ -f "$1" ]  || die "$1: No such file"
+
+OUT="$(basename "$1").encrypted"
+[ -z "$A" ]   || OUT="$OUT.txt"
+[ -e "$OUT" ] && die "file $OUT already exists"
+
+
+openssl enc -aes-256-cbc -salt $A -in "$1" -out "$OUT"
+
+# if you have gpg installed, you should rather use gpg rather than openssl for encryption
+# see https://stackoverflow.com/questions/16056135/how-to-use-openssl-to-encrypt-decrypt-files/31552829#31552829
+# and https://stackoverflow.com/questions/28247821/openssl-vs-gpg-for-encrypting-off-site-backups

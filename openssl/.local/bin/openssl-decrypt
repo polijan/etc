@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# Usage: $0 [-a|+a] [--] FILE
+# password-based symmetric encryption/decryption using openssl
+# prints the decrypted content of FILE to the standard output
+#
+# -a option, FILE is also base64 encrypted
+# +a option, FILE is not base64 encrypted
+# if not specified, it will try to automatically check
+
+
+A='auto'
+case $1 in
+  -a)    A='-a'; shift;;
+  +a)    A=''  ; shift;;
+  --)    shift    ;;
+  -*|+*) usage -d ;;
+esac
+
+[ $# -eq 1 ] || usage -d
+[ -f "$1" ]  || die "$1: No such file"
+
+# check if only contains BASE64 (ascii alphanumeric or +/ and \n, = at the end)
+if [ "$A" = 'auto' ]; then
+   A=''
+   [ "$(LC_ALL=C tr -d '\n[A-Z][a-z][0-9]+/' < "$1" | sed 's/=*//' | wc -c)" = '0' ] && A='-a'
+fi
+
+openssl enc -d -aes-256-cbc $A -in "$1"
