@@ -4,7 +4,7 @@
 # launch dillo embedded in the terminal's window (if terminal sets WINDOWID)
 # (if terminal doesn't set WINDOWID, launch dillo in background)
 
-is-xwindow || die "$0 requires X-Window"
+is-xwindow || die 'requires X-Window'
 if [ -z "$WINDOWID" ]; then
 
    # some X terminals (xterm, rxvt, ...) set up WINDOWID, but some don't
