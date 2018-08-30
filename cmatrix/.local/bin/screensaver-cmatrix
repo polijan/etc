@@ -1,5 +1,5 @@
 #!/bin/sh
-# Usage: $0
+# Usage: $0 [CMATRIX_ARGS]...
 # screensaver based on cmatrix
 
 FLAGS='-s' # exits any keystroke
@@ -21,4 +21,4 @@ if exists dice; then
 fi
 
 #shellcheck disable=SC2086
-exec cmatrix $FLAGS
+exec cmatrix $FLAGS "$@"

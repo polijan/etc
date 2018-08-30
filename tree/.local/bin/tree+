@@ -3,7 +3,13 @@
 # Usage: tree+ [TREE_ARGS]...
 # my wrapper around tree(1)
 
+# -C force colorization (with builtin colors if LS_COLORS is not defined)
+# we use that if stdout is a terminal and LS_COLORS isn't defined
+FORCE_COLOR=
+[ -z "$LS_COLORS" ] && [ -t 1 ] && FORCE_COLOR='-C' 
+
 # -a         also prints hidden files
 # -I '.git'  ... but ignore the git versioning stuff
 # -F         appends an 'indicator' like ls -F does
-exec tree -aF --dirsfirst -I '.git' "$@"
+
+exec tree $FORCE_COLOR -aF --dirsfirst -I '.git' "$@"
