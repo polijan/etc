@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Usage: htop-me [HTOP_ARGS]...
+# htop but shows only the processes owned by me
+
+htop -u "$(whoami)" "$@"

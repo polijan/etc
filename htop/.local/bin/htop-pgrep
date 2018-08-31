@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: htop-pgrep PATTERN [HTOP_ARG]...
+# look up processes whose name is based on PATTERN (using pgrep)
+# and then only examine those in htop.
+
+PATTERN=$1
+shift || exit 1
+exec htop -p "$(pgrep -d , "$PATTERN")" "$@"
