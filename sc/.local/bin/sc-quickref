@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Usage: $0
+# show a quick reference quide to sc
+exists scqref || die 'cannot find program scqref'
+scqref | man -l -

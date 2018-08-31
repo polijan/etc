@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Usage: sc-tutorial
+# launch sc(1) with tutorial
+
+TUT=/usr/share/doc/sc/tutorial.sc
+[ -e "$TUT" ] || die "cannot find $TUT"
+sc "$TUT"
