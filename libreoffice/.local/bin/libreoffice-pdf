@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Usage: $0 [...] FILE...
+# convert document FILEs that can by read by libreoffice to pdf (no GUI)
+libreoffice --headless --convert-to pdf "$@"
