@@ -1,0 +1,22 @@
+#!/bin/sh
+
+cowsay -l | tr ' ' '\n' |
+xargs -I {} cowsay -f {} "cowsay -f {} 'Message'" 2>/dev/null |
+less
+
+
+## # command-not-found package suggests something in Ubuntu
+## # if typed command is wrong (uses command_not_found_handle from bash)
+## [ -x /usr/lib/command-not-found -o -x /usr/share/command-not-found/command-not-found ] && \
+## function command_not_found_handle {
+##   local ret=127
+##   local cnf=$(loopfind "test -x" /usr/lib/command-not-found /usr/share/command-not-found/command-not-found)
+##   if [ $? -eq 0 ]
+##      then $cnf -- "$1" 2>&1 ; ret=$?
+##      else printf "%s: command not found\n" "$1"
+##   fi | cowsay >&2
+##   return $ret
+## }
+
+
+
