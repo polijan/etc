@@ -1,0 +1,30 @@
+#!/data/data/com.termux/files/usr/bin/sh
+#!/bin/sh
+
+# Usage: termux-url-opener URL
+# In android, when sharing a URL, termux can respond to this intend by
+# launching $HOME/bin/termux-url-opener in a termux terminal. It will
+# then pass the URL as the argument.
+#
+# This is an interactive script which allows several operations
+# bookmarking it, etc.)
+
+
+echo "URL-OPENER: $*"
+
+# for now: append it to a file
+printf '%s\n' "$@" >> "$HOME/tmp/urls"
+
+# later, let's develop that scripts, choice of possible things to do:
+# - store link in bookmarks
+# - Collect: add in GTD inbox
+# - Process: add as @towatch action
+# - save content
+# - save in variable URL and open subshell =>
+# - open in text browser
+# - open in android (VIEW intent)  => am start --user 0 -a android.intent.action.VIEW -d "$1"
+# - other (copy to clipboard)      => termux-clipboard-set "$1"
+# - exit                           => exit
+
+
+

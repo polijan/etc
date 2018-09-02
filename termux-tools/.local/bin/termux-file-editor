@@ -1,0 +1,12 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+# Usage: termux-file-opener [FILE] In android, when sharing a FILE, termux
+# copies it to ~/downloads, then a dialog offer the possibility to edit it
+# which launches ~/bin/termux-file-opener
+
+NANOP="$HOME/bin/nano+"
+[ -x "$NANOP" ] || exit 1
+
+FILE="$(printf %q "$*")"
+sh -c "$NANOP --linenumbers --softwrap $FILE"
+
