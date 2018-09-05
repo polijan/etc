@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# Usage: $0 [-X] [DIALOG_ARGS...]
+#
+# By default, dialog/whiptail draws its UI on stdout and output its result on
+# stderr. This is very cumbersome! It's easier to use those programs while
+# drawing the UI on the terminal (/dev/tty) and output result on stdin.
+#
+# Also, we use the terminal's alternative screen (if possible) so that
+# dialog/whiptail doesn't alter the current screen. The -X option (which needs
+# to be the first option) disables this [as sometimes, it's not wanted].
+
+case $(basename "$0") in
+     dialog*) if [ "$1" = '-X' ]
+                 then  shift; DIALOG=dialog
+                 else  DIALOG='dialog --keep-tite'
+              fi ;;
+
+   whiptail*) [ "$1" = '-X' ] && shift
+              DIALOG=whiptail ;;
+
+           *) die ;;
+esac
+
+
+$DIALOG "$@" 2>&1 >/dev/tty
+
