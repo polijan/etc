@@ -1,0 +1,9 @@
+#!/bin/sh
+# Usage: $0
+
+exists tmux || die 'requires tmux'
+if [ -n "$TMUX" ]; then
+   tmux split -h lf ; lf
+else
+   tmux new-session "$0"
+fi

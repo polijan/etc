@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: $0
+# uses 'lf -selection-path' to print selected file(s)
+
+TMP=$(mktemp) || die
+LF_START_MESSAGE='please select file(s)...' lf -selection-path "$TMP" "$@"
+cat "$TMP"
+rm -rf "$TMP"

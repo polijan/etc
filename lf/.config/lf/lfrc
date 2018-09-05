@@ -1,0 +1,30 @@
+# my config for 'lf' file manager (https://github.com/gokcehan/lf/)
+
+# rather dummy for now, I need to configure this properly
+
+# at start, let's write the client id at start or
+# the content of LF_START_MESSAGE (if that is set)
+%{{ if [ -n "$LF_START_MESSAGE" ]
+       then printf %s "$LF_START_MESSAGE"
+       else printf 'client %s' "$id"
+    fi
+ }}
+
+
+# I want to see the hidden files
+: set hidden on
+
+# command to dynamically set info displayed based on the number of columns
+cmd recol !{{
+    w=$(stty size | awk '{print $2}')
+    if [ $w -lt 60 ]; then
+       [ $w -lt 40 ] && lf -remote "send $id set nopreview"
+       lf -remote "send $id set ratios 1"
+    elif [ $w -lt 80 ]; then
+       lf -remote "send $id set ratios 1:2"
+    elif [ $w -le 160 ]; then
+       lf -remote "send $id set ratios 1:2:3"
+    else
+       lf -remote "send $id set ratios 1:2:3:5"
+    fi
+}}
