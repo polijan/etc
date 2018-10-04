@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Usage: $0 VIDEO.mp4 AUDIO
+# overlay the audio in the background
+# (will re-encode the audio, not the video)
+
+VID=$1
+OUT=$(basename "$VID" | sed s%.mp4$%.audio.mp4%)
+AUDIO=$2
+
+# see: https://superuser.com/questions/712862/ffmpeg-add-background-audio-to-video-but-not-completely-muting-the-original-audi
+# uses the amerge and pan audio filters
+#
+# This will take the audio stream from the first input (audio.mp3) and the
+# audio stream from the second input (video.mp4). amerge will combine them into
+# a 4 channel stream, then pan will combine the 4 channels into a stereo
+# stream. The output link label is called [out] (you can use almost any
+# arbitrary name).
+#
+# Then -map 1:v selects the video from the second input as a video source for
+# the output file, and -map "[out]" selects the audio from the filtergraph as
+# an audio source for the output file.
+#
+#
+# The video is stream copied with -c:v copy, so it is not re-encoded. Filters
+# require re-encoding, so -c:a libfdk_aac is used in this example to re-encode
+# to AAC audio.
+#
+# The -shortest option will end the output file whenever the shortest input
+# ends which is useful if one input is shorter than the other.
+
+ffmpeg -i "$AUDIO" -i "$VID" -filter_complex                     \
+       "[0:a][1:a]amerge,pan=stereo:c0<c0+c2:c1<c1+c3[out]"      \
+       -map 1:v -map "[out]" -c:v copy -c:a libfdk_aac -shortest \
+       "$OUT"
+
+printf '\n%s\n' "$OUT"
+xdg-open "$OUT"
+
