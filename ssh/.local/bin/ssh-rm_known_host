@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# $0 HOST
+# remove host key for given HOST (from ~/.ssh/known_hosts)
+
+ssh-keygen -f "$HOME/.ssh/known_hosts" -R "$@"
