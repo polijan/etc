@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Usage: tiddlywiki-server PORT [PASSWORD]
+# use tiddlywiki --server command to start server on given port
+# on my raspberry pi, it's served to my LAN, otherwise just on localhost.
+
+[ -n "$1" ] || die 'port not specified'
+
+WHERE='127.0.0.1'
+[ "$(hostname)" = 'pi3' ] &&
+   WHERE=$(ifconfig | awk -F: '/inet addr:192.168/ { sub(/ .*$/, "", $2); print $2; }')
+
+echo | nc localhost "$1" &&
+   die 'server is already started?'
+
+tiddlywiki --server \
+   "$1"             \
+   '$:/core/save/all' 'text/plain' 'text/html' \
+   florian          \
+   "$2"             \
+   "$WHERE"
