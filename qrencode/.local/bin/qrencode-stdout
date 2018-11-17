@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Usage: $0 [QRENCODE_ARGS]...
+# encode input data and prints a QR Code (on stdout in B&W with unicode symbols)
+
+qrencode -t ANSIUTF8 -o - "$@"
