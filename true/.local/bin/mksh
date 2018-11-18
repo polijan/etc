@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# Usage: $0 [--sh|--bash] NAME
+# create a new shell script, make its executable, and launch it in editor
+#
+# by default, uses a sh shebang unless it ends with .bash or is otherwise specified
+# --sh   forces sh shebang
+# --bash forces bash shebang
+#
+# editor is specified via environment variable VISUAL or alternatively EDITOR
+# (or alternatively defaults to vi)
+
+case "$1" in
+    -*b*) SB='bash' ; shift ;;
+    -*s*) SB='sh'   ; shift ;;
+   ''|-*) usage -d ;;
+       *) case "$1" in
+            *.bash) SB='bash' ;;
+                 *) SB='sh'   ;;
+          esac ;;
+esac
+
+[ $# -eq  1 ] || usage -d
+[ -e "$1" ] && die "'$1' already exists"
+
+
+{ # often bash is located as /bin/bash, however the shebang for bash should
+  # be #!/usr/bin/env bash for max. portability: different *nixes might put
+  # bash in different places, and using /usr/bin/env is a workaround to run
+  # the first bash found on the PATH. And sh is not bash.
+  if [ $SB = 'bash' ]
+     then printf '#!/usr/bin/env bash'
+     else printf '#!/bin/sh'
+  fi
+  #shellcheck disable=SC2016
+  printf '\n\n# Usage: $0\n# \n\n'
+} >> "$1"
+
+chmod 755 "$1"
+
+${VISUAL:-${EDITOR:-vi}} "$1"
