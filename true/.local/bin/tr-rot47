@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Usage: ... | $0
+# rot47 filter (simple letter substitution cipher similar to rot13)
+
+# from Wikipedia (article on ROT13):
+# ROT47 is a derivative of ROT13 which, in addition to scrambling the basic
+# letters, also treats numbers and common symbols. Instead of using the
+# sequence A-Z as the alphabet, ROT47 uses a larger set of characters from the
+# common character encoding known as ASCII. Specifically, the 7-bit printable
+# characters, excluding space, from decimal 33 '!' through 126 '~', 94 in
+# total, taken in the order of the numerical values of their ASCII codes, are
+# rotated by 47 positions, without special consideration of case. For example,
+# the character A is mapped to p, while a is mapped to 2. The use of a larger
+# alphabet produces a more thorough obfuscation than that of ROT13; for
+# example, a telephone number such as +1-415-839-6885 is not obvious at first
+# sight from the scrambled result Z`\c`d\gbh\eggd. On the other hand, because
+# ROT47 introduces numbers and symbols into the mix without discrimination, it
+# is more immediately obvious that the text has been enciphered.
+
+tr '\!-~' 'P-~\!-O'

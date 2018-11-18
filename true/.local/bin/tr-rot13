@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: ... | $0
+# rot13 filter (rot13 is a simple letter substitution cipher)
+
+# see : https://en.wikipedia.org/wiki/ROT13
+# from: http://www.commandlinefu.com/commands/view/1792/rot13-using-the-tr-command
+
+tr 'A-Za-z' 'N-ZA-Mn-za-m'
