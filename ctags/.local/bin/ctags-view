@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Usage: ctags-view TAG [CTAGS_FILE]
+# use 'ctags-open' with CTAGS_OPENER set to PAGER (or by default to less)
+
+if [ -n "$PAGER" ]
+   then CTAGS_OPENER="$PAGER"
+   else CTAGS_OPENER='less'
+fi
+export CTAGS_OPENER
+ctags-open "$@"
