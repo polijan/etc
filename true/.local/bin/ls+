@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Usage: ls+ [LS_ARGS]...
+# my wrapper around ls
+
+# if we have ls from gnu coreutils, add options
+GNU=''
+#shellcheck disable=SC2012
+if ls --help | fgrep -q 'dereference-command-line-symlink-to-dir'; then
+   GNU="--group-directories-first                 \
+        --dereference-command-line-symlink-to-dir \
+        --time-style=long-iso                     "
+   ## --sort=extension
+fi
+
+ls_() { ls -h -F $GNU --color=auto "$@"; }
+
+# we want human output collation
+export LC_COLLATE='fr_FR.UTF-8'
+
+# important particular case: if there's no arguments and we
+# are in $HOME, we dont want to see all the dotfiles "junk"
+if [ $# -eq 0 ] && [ "$PWD" = "$HOME" ]
+   then ls_
+   else ls_ -A "$@"
+fi

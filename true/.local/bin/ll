@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: ll [LS_ARGS]...
+# invoke ls+ -l
+# (ls+ is my wrapper around ls)
+
+ls+ -l "$@"
