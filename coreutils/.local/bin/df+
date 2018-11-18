@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Usage: $0 [DF_ARGS]...
+# report disk space usage using df(1)
+
+# df -h             => human readable format
+# df --print-type   => print file system type (only GNU df)
+df -h --print-type "$@" |
+{ read header
+  if [ -t 1 ]
+     then printf '\033[33m%s\033[0m\n' "$header"
+     else printf '%s\n' "$header"
+  fi
+  sort -rn -k 6 |
+  grep-hilight '9.%' '100%'
+}
+
+# read header; ...  => correctly maintain header row (while sorting) and highlight it...
+# sort -rn -k 6     => sort by use% [-k 5 if not using df --print-type]
+# grep-hilight      => hilight disks that are more than 90% full
