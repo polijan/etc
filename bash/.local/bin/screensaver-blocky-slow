@@ -1,0 +1,2 @@
+#!/bin/sh
+exec screensaver-blocky -T 0.01 "$@"
