@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# Usage: $0
+# display some pattern that looks like a maze (but isn't)
+
+# it utilises unicode character ╱ and ╲
+# here's a possible one-liner short version:
+# yes 'c=(╱ ╲);printf ${c[RANDOM%2]}' | bash
+
+SPEED=0.5
+
+setcolumn() {
+   local size
+   size=$(stty size)
+   COLUMNS=${size#* }
+}
+trap 'LINE="" && printf "\n" && setcolumn' WINCH
+setcolumn
+
+
+while true; do
+   LINE=''
+   for ((i=0; i<COLUMNS; i++)); do
+       if [ $((RANDOM % 2)) -eq 0 ]
+          then LINE+='╱'
+          else LINE+='╲'
+       fi
+   done
+
+   read -r -s -n 1 -t $SPEED && exit  # wait 0.5s and exit if a key is pressed
+   printf %s "$LINE"
+done
