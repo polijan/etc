@@ -24,7 +24,7 @@ fzf --ansi --reverse                                 \
     --prompt "$1>"                                   \
     --preview '
         N=$(echo {} | awk "{print \$1}")
-        F=$(tree --noreport -a --dirsfirst -I ".git"
+        F=$(tree --noreport -a --dirsfirst -I ".git" \
                  -fi                                 |
             sed "${N}q;d"                            )
         less "$F"                                  ' \
