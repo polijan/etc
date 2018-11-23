@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Usage: $0 [DIR]
+# a small fzf(1) TUI to preview content under the given DIR hierarchy
+
+[ -z "$1" ] || cd "$1" || die "$1: not a valid directory"
+exists fzf || die 'requires fzf'
+pre=$(printf '\033[32m')
+post=$(printf '\033[0m')
+
+# in fzf menu:
+#    invoke tree,
+#    number the output lines
+# in the fzf preview:
+#    extract line number of the selected line
+#    with line number, extract file name from tree without decoration
+#    display file (with less, because of preprocessor)
+
+tree --noreport -a --dirsfirst -I '.git'             \
+     -CF                                             |
+awk -v pre="$pre" -v post="$post"                    \
+    '{ printf("%s%6d%s  %s\n", pre, NR, post, $0) }' |
+fzf --ansi --reverse                                 \
+    --prompt "$1>"                                   \
+    --preview '
+        N=$(echo {} | awk "{print \$1}")
+        F=$(tree --noreport -a --dirsfirst -I ".git"
+                 -fi                                 |
+            sed "${N}q;d"                            )
+        less "$F"                                  ' \
+    --bind 'Alt-Z:toggle-preview'                    \
+    --bind 'Tab:execute(printf "%s\n" {} | less)'    \
+    >/dev/null
