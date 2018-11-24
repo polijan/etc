@@ -1,0 +1,21 @@
+fzf(1) (aka fuzzy finder) has become an important part of my workflow.
+A recent version (or even the program) is not necessarily available
+through the OS package manager, so I often just install it locally.
+Here is in brief how to do so:
+
+1) from ~/.local/src:
+   $ git clone --depth 1 https://github.com/junegunn/fzf.git
+   $ cd fzf && ./install --bin  # <-- get the binary from your platform!
+
+2) from ~/.local/bin:
+   $ ln -s ../src/fzf/bin/fzf
+   $ ln -s ../src/fzf/bin/fzf-tmux
+
+3) from ~/.local/share/man/man1:
+   $ ln -s ../../../src/fzf/man/man1/fzf.1
+   $ ln -s ../../../src/fzf/man/man1/fzf-tmux.1
+
+
+To upgrade fzf:
+I have defined a 'fzf_upgrade' function which pulls
+from github and then upgrade the binary.
