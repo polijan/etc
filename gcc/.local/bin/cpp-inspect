@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Usage: cpp-inspect [CPP_OPTIONS]... [HEADER-FILE]
+# display typedefs, structs, unions and functions provided by a header file
+
+show() {
+   if which pygmentize >/dev/null; then
+      pygmentize -l c++ | less -FX
+   else
+      less -FX
+   fi
+}
+
+cpp "$@" | grep -v '^#' | grep -v '^$' | show

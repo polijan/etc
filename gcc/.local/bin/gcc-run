@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# Usage: gcc-run [FLAGS] CFILE [ARGS...]
+# compile CFILE using gcc into a temporary executable file,
+# runs the file (if compilation is successful), then clean.
+
+run() {
+#   local i cfile flags=""
+#   for i; do
+#       if [ -f "$1" ]; then
+#          cfile=$1 ; shift
+#          break
+#       else
+#          flags="$flags $1"
+#       fi
+#   done
+#   [ -n "$cfile" ] || return 72
+
+   local flags=""
+   until [ -f "$1" ]; do
+      flags="$flags $1"
+      shift || break
+   done
+
+   local cfile=$1
+   [ -f "$cfile" ] || return 72
+   shift
+
+   local exec
+   exec=$(mktemp) || return
+
+   command -v gcc >/dev/null || return
+   local cc=gcc
+   command -v colorgcc >/dev/null && cc=colorgcc
+   "$cc" -x c -o "$exec" "$cfile" $flags || return
+
+   echo
+   "$exec" "$@"
+   rm -f "$exec"
+}
+
+#[ "$(basename -- "$0")" = 'gcc-run' ] && gcc-run "$@"
+run "$@"
