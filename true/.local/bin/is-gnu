@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Usage: $0 [COMMAND]
+# returns 0 if the COMMAND is the GNU version
+# return non-zero otherwise (including in case it doesn't exist)
+#
+# if no command is provided, then uses 'ls'
+#
+# important: to make the determination, command is called with --help
+
+APP="$1"
+[ $# -eq 0 ] && APP='ls'
+"$APP" --help 2>/dev/null | grep -q 'gnu.org'
