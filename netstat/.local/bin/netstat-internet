@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Usage: $0 [NETSTART_ARGS]...
+# uses netstat to display internet connections in a fzf tui
+# -n can be used to stop resolution of port and hosts names
+
+MORE='-e'
+is-busybox netstat || MORE='-e -p'
+
+netstat -a -tuw $MORE "$@" 2> /dev/null |
+{ IFS= read -r HEADER; cat; }           |
+fzf --prompt 'connections > '           \
+    --reverse --inline-info             \
+    --header-lines 1
