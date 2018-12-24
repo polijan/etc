@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# Usage: $0 [PSTREE_ARG]...
+# A TUI (with fzf(1)) that shows the tree of processes (using pstree(1))
+# Some args to pstree(1) will work (some will break the way we retrieve PIDs)
+# Output will be lines of selected PIDs, so it could be used as an
+# interactive version of pgrep(1)
+
+# busybox' pstree always might show more than one PID per line
+is-busybox pstree && die "sorry, doesn't work with busybox' pstree"
+
+pstree -Ual -T -p "$@"                               |
+fzf --multi --prompt 'pstree > '                     \
+    --inline-info --reverse                          \
+    --preview-window 'down:2'                        \
+    --preview '
+      printf %s {}                                   |
+      sed -n "s/[^,]*,\([0-9][0-9]*\)[^0-9]*.*/\1/p" |
+      xargs ps -F -p                                 |
+      { IFS= read -r L
+        printf "\033[32m%s\033[0m\n" "$L"
+        cat
+      }'                                             |
+sed -n "s/[^,]*,\([0-9][0-9]*\)[^0-9]*.*/\1/p"
