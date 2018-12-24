@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Usage: requires COMMAND
+# if COMMAND exists, returns 0
+# otherwise, terminates the process calling this.
+exists "$@" || exec die "requires $*"
