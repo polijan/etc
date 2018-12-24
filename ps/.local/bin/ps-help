@@ -2,4 +2,14 @@
 
 # Usage: $0
 # show ps builtin help in pager
-ps --help all | less
+#
+# (procps' ps(1) has are many options and ps --help provides a summary)
+
+if is-busybox ps; then
+   ps --help
+else
+   # ps help, colorize section, pager
+   H=$(printf '\033[32m')
+   R=$(printf '\033[0m')
+   ps --help all | sed "s/^[A-Z].*:$/$H&$R/"
+fi | less
