@@ -8,6 +8,7 @@
 
 # busybox' pstree always might show more than one PID per line
 is-busybox pstree && die "sorry, doesn't work with busybox' pstree"
+requires fzf
 
 pstree -Ual -T -p "$@"                               |
 fzf --multi --prompt 'pstree > '                     \
