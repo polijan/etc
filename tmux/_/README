@@ -1,0 +1,1 @@
+FROM https://github.com/Bash-it/bash-it/blob/master/completion/available/tmux.completion.bash
