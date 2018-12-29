@@ -3,30 +3,45 @@
 # quickly get help about tmux command from the man page
 
 
-
 exists() { command -v "$@" > /dev/null ; }
 ansi()   { printf '\033[%sm' "$1" ; }
 CCMD=$(ansi 32)
 CSHORT=$(ansi 33)
 RESET=$(ansi 0)
 
-main() {
-   local cmd=$1
-   exists menu || cmd='full'
+CMD=$1
+exists fzf || { man fzf; exit; }
 
-   if [ -z "$cmd" ]; then
-      cmd=$({ printf '%s\n' "$(ansi 31)full tmux man page$RESET"
-              tmux lscm                                            |
-              sed -e s/' (\([^)]*\)) '/" (${CSHORT}\\1${RESET}) "/ \
-                  -e s/'^[^ ]* '/$CCMD\&$RESET/
-           }| menu --tiebreak=begin 'tmux command') || return 0
-      cmd=$(printf %s "$cmd" | cut -d ' ' -f1)
-   fi
+if [ -z "$CMD" ]; then
+   CMD=$({ printf '%s\n' "$(ansi 31)full tmux man page$RESET"
+           tmux lscm                                            |
+           sed -e s/' (\([^)]*\)) '/" (${CSHORT}\\1${RESET}) "/ \
+               -e s/'^[^ ]* '/"$CCMD"\&"$RESET"/
+         }                                                      |
+           fzf -1 --ansi --tiebreak=begin                       \
+               --prompt 'tmux commands > '                      \
+               --preview-window 'down'                          \
+               --preview '
+                 if [ $COLUMNS -gt 80 ]
+                    then MANWIDTH=$((COLUMNS - 4))
+                    else MANWIDTH=76
+                 fi
+                 export MANWIDTH
+                 CMD=$(printf %s {} | cut -d " " -f 1)
+                 if [ "$CMD" = "full" ]; then
+                    man tmux
+                 else
+                    man tmux                            |
+                    grep -A $((LINES - 1)) "^  *$CMD\>" |
+                    sed "s/^ *//"                       |
+                    grep --color=always "^\|^$CMD\>"
+                 fi '                                           \
+               --query "$*"
+        ) || return 0
+   CMD=$(printf %s "$CMD" | cut -d ' ' -f1)
+fi
 
-   if [ "$cmd" = 'full' ];
-      then man tmux
-      else man tmux | less -p "^ +$cmd"
-   fi
-}
-
-main "$@"
+if [ "$CMD" = 'full' ]
+   then man tmux
+   else man tmux | less -p "^ +$CMD\>"
+fi
