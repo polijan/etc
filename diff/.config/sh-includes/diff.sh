@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# colorizing diff if possible
-if [ "$SYSTEM" = 'GNU' ]; then
-   alias diff='diff --color'
+# colorizing diff on the terminal when possible
+if is-gnu diff; then
+   alias diff='diff --color=auto'
 elif exists colordiff; then
    diff() {
       if [ -t 1 ]
