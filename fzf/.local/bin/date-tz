@@ -1,0 +1,4 @@
+#!/bin/sh
+# Usage: $0 [DATA_ARG]...
+# choose a timezone and prints current date
+TZ=$(tz) date "$@"

@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Usage: $0 [INITIAL_FZF_QUERY]
+# display a fzf menu with the TZ-database entries and prints selection
+#
+# * we assume TZ entries are located as files in /usr/share/zoneinfo
+# * the TUI show a preview of the current time using zdump(1) if it exists
+# * a common usage could be: TZ=$($0) COMMAND ...
+#   to execute COMMAND with chosen timezone setting
+# * for a discussion about posix vs 'right' in the TZ database, see:
+#   https://mm.icann.org/tz/2015-February/022024.html
+
+ZONEINFO=/usr/share/zoneinfo
+cd "$ZONEINFO" || die 'cannot find TZ (no /usr/share/)'
+
+fzf_() {
+   fzf --prompt 'timezones > '   \
+       --reverse --inline-info   \
+       --preview-window 'down:1' \
+       --preview "$1"            \
+       --query "$2"
+}
+
+find . -type f | sed 's:./::' |
+if ! exists zdump
+   then fzf_ 'zdump {} ; sed "s/[^ ]* */Current: /"' "$*"
+   else fzf_ 'printf "Current: "; TZ={} date'        "$*"
+fi
