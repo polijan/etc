@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Usage: $0 FB_ARGS...
+# ivokes fbi (frame buffer viewer) with autozoom and no status bar
+fbi --autozoom --noverbose "$@"
