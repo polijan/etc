@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: $0 [SEARCH_TERM]...
+# search snaps, show results in pager
+snap find --color=always "$@" |
+if is-busybox less
+   then less -S
+   else less -NS
+fi

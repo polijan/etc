@@ -1,0 +1,10 @@
+#!/bin/sh
+# Usage: $0 [FZF_QUERY]
+# show list of snaps in fzf,
+# prints name of selected snap
+
+snap list --color=always --all |
+fzf --prompt 'snaps > '        \
+    --ansi --header-lines 1    \
+    --query "$*"               |
+awk '{print $1}'

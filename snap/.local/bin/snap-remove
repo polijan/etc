@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Usage: $0 [PACKAGE]
+# remove given snap package
+# if launched with no arguments, makes you select one snap (using snap-list)
+
+if [ $# -eq 0 ]; then
+   SNAP=$(snap-list)
+   [ -z "$SNAP" ] && exit
+   sudo snap remove "$SNAP"
+else
+   sudo snap remove "$@"
+fi

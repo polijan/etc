@@ -1,0 +1,5 @@
+#!/bin/sh
+# Usage: $0 [PACKAGE]
+# install snap package
+[ $# -eq 0 ] && usage -d
+sudo snap install "$@"
