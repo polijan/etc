@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# Usage: $0 [N]
+# create "empty" two similar-sized panes on the left and on
+# the right of the current pane, so that current pane gets
+# resized to the width N (or by default 80)
+#
+# note: must be run inside tmux!
+# note: width of the current pane must be sufficient, ie:
+#   - width < N + 1 => do nothing, returns 1
+#   - width < N + 3 => only create empty pane on the right
+
+
+left()  {
+   tmux split-window -h -b -l "$1" 'sleep 999999999'
+   tmux select-pane -R
+}
+right() {
+   tmux split-window -h -l "$1" 'sleep 999999999'
+   tmux select-pane -L
+}
+
+case $# in
+   0) N=80 ;;
+   1) case $1 in
+         ''|*[!0-9]*) usage -d ;;
+         *) N=$1 ;;
+      esac ;;
+   *) usage -d ;;
+esac
+
+[ -n "$TMUX" ] || die 'must be called from tmux'
+
+[ -z "$COLUMNS" ] && COLUMNS=$(stty size | awk '{print $2}')
+
+# in case current width is too small...
+case $((COLUMNS - N)) in
+   0|1|-*) exit 1 ;;
+      2|3) right "$((COLUMNS - N - 1))"
+           exit ;;
+esac
+
+LEFT=$(( (COLUMNS - 2 - N) / 2 ))
+RMDR=$(( (COLUMNS - 2 - N) % 2 ))
+left  $LEFT
+right $((LEFT + RMDR))
