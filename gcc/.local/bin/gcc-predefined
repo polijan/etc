@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Usage: $0 [GCC_ARGS]...
+# prints all the predefined macros
+#
+# for example:
+# $0 -std=c11
+# $0 -std=c99
+# ...
+
+echo | gcc "$@" -E -dM -
