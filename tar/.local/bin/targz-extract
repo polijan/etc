@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: $0 FILE
+# uncompress a tarball (.tar.gz) file
+
+[ $# -eq 1 ] || usage -d
+tar -xvzf "$1"
