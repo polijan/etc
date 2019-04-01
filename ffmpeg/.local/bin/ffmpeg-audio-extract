@@ -4,7 +4,7 @@
 # extract the audio from the given video
 
 VID=$1
-OUT=$(basename "$VID" | sed s%.mp4$%.audio-extract.mp4%)
+OUT=$(basename "$VID" | sed s%.mp4$%.audio-extract.aac%)
 
 ffmpeg -i "$VID"        \
        -vn -acodec copy \
