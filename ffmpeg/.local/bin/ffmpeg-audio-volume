@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Usage: $0 VIDEO.mp4 N
+# change volume of the video for N decibels
+# if N is positive, increase volume
+# if N is negative, lowers volume
+
+VID=$1
+OUT=$(basename "$VID" | sed s%.mp4$%.audio-volume.mp4%)
+N=$2
+
+ffmpeg -i "$VID" -vcodec copy \
+       -af "volume=${N}dB"    \
+       "$OUT"
+
+printf '\n%s\n' "$OUT"
+xdg-open "$OUT"

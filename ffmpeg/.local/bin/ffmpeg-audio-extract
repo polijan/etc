@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Usage: $0 VIDEO.mp4
+# extract the audio from the given video
+
+VID=$1
+OUT=$(basename "$VID" | sed s%.mp4$%.audio-extract.mp4%)
+
+ffmpeg -i "$VID"        \
+       -vn -acodec copy \
+       "$OUT"
+
+printf '\n%s\n' "$OUT"
+xdg-open "$OUT"
