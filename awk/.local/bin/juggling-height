@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Usage: $0 THROW1 [THROW2=3] [DWELL=0.5]
+# calculate relative height of siteswap THROW1 to another THROW2
+# assuming throw are with made on an unchangin beats and fixed dwell time
+#
+# THROW1 and THROW2 should be integer >1
+# DWELL represent the 'dwell ratio', which is the fraction of time that a hand
+# has a ball in it. DWELL should be between 0 and 1, but is almost always
+# between 0.3 and 0.7. Default value is 0.5.
+#
+# for exmaple, see/watch: https://www.youtube.com/watch?v=s09mV9TXEis
+
+T1=$1
+T2=3
+D=0.5
+
+case $# in
+   1) ;;
+   2) T2=$2 ;;
+   3) T2=$2 ; D=$3 ;;
+   *) usage -d ;;
+esac
+
+awk -v t1="$T1" -v t2="$T2" -v d="$D" \
+    'BEGIN { print ((t1 - 2*d)^2)/((t2 - 2*d)^2) }'
