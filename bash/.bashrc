@@ -46,7 +46,7 @@ export CPLUS_INCLUDE_PATH="$HOME/.local/include"
 export LIBRARY_PATH="$HOME/.local/lib"
 export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig"
 # run time dynamic linker:
-if [ -z $LD_LIBRARY_PATH" ]
+if [ -z "$LD_LIBRARY_PATH" ]
    # not sure why the IF is necessary, but termux gives me some errors otherwise
    then export LD_LIBRARY_PATH="$HOME/.local/lib"
    else export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
