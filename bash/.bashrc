@@ -216,11 +216,7 @@ __ps1_create() {
   [[ -n "$SSH_CLIENT" || -n "$SSH_TTY" ]] && { __ps1_segment 4 7; PS1+='\h'; }
 
   # current directory
-  if [[ $HOME = /data/data/com.termux/* ]]
-     then __ps1_segment 11 6 # termux and not chroot'ed => brightyellow on cyan
-     #else __ps1_segment 11 4 # brightyellow on blue
-      else __ps1_segment 250 241 # base2 on base00
-  fi
+  __ps1_segment 250 241 # base2 on base00
   PS1+='\w'
 
   # git status ...
