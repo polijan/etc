@@ -1,0 +1,9 @@
+#!/bin/bash
+# from http://bruxy.regnet.cz/web/linux/EN/bash-as-programmers-calculator/
+
+[ -n "$LINES" ]   || LINES=$(tput lines)
+[ -n "$COLUMNS" ] || COLUMNS=$(tput cols)
+P=(' ' █ ░ ▒ ▓)
+while :; do
+   printf "\e[$[RANDOM%LINES+1];$[RANDOM%COLUMNS+1]f${P[$RANDOM%5]}"
+done
