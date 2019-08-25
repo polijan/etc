@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# Usage: $0
+# prints stdin on the standard output, but replace printable
+# ascii-characters with a double width
+#
+# By default, ASCII-printable characters are replaced with their
+# equivalent in the 'Halfwidth and Fullwidth Forms' Unicode block
+# and spaces are replaced with '  '
+#
+# ANSI escape sequence are left untouched
+#
+# see: https://en.wikipedia.org/wiki/Halfwidth_and_fullwidth_forms
+
+while IFS= read -r line; do
+   len=${#line}
+   for ((i=0; i<len; i++)); do
+       c="${line:$i:1}"
+       case "$c" in
+        ["!"-~]) ord=$(LC_CTYPE=C printf '%0x' "'$c")
+                 printf %b "\UFF$((${ord:0:1}-2))${ord:1:1}" ;;
+
+            ' ') printf '  '  ;;
+                 # printf '\U3000' ;;
+
+        $'\033') # ANSI escape sequence, just print it.
+                 # we assume a COLOR sequence ESC...m
+                 printf '\033'
+                 for ((i++; i<len; i++)); do
+                     c="${line:$i:1}"
+                     printf %s "$c"
+                     [ "$c" = 'm' ] && break
+                 done ;;
+
+              *) printf %s "$c" ;;
+
+       esac
+   done
+   printf '\n'
+done
