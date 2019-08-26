@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# Usage: $0
+#
+# print git status, then prompts to
+# 1. add everything (git add .) and commit (using date as message)
+# 2. push
+
+confirm() {
+   if ! command -v yesno >/dev/null; then
+      yesno "$*" && return 0
+   else
+      printf '%s [y/n]? ' "$*"
+      IFS= read -r ANSWER
+      case $ANSWER in y|Y|yes|YES) return 0;; esac
+   fi
+   exit 1
+}
+
+
+git status || exit
+echo
+
+confirm 'save all'
+git add .                       || exit
+DATE="$(date +'%F %H:%M:%S')"   || exit
+git commit -m "saving on $DATE" || exit
+echo
+
+confirm 'push'
+git push
