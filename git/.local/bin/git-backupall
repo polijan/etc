@@ -7,7 +7,7 @@
 # 2. push
 
 confirm() {
-   if ! command -v yesno >/dev/null; then
+   if command -v yesno >/dev/null; then
       yesno "$*" && return 0
    else
       printf '%s [y/n]? ' "$*"
