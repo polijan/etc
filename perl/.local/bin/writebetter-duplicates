@@ -1,0 +1,87 @@
+#!/usr/bin/env perl
+
+# Write better...
+# These scripts are from:
+# http://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/
+# also see:      https://news.ycombinator.com/item?id=13295530
+# also consider: https://www.gnu.org/software/diction/
+
+
+# A script to find lexical illusions
+# ----------------------------------
+# Read the following text:
+#
+#   Many readers are not aware that the
+#   the brain will automatically ignore
+#   a second instance of the word "the"
+#   when it starts a new line.
+#
+# Read that same text again, but with different line breaks:
+#
+#   Many readers are not aware that the the
+#   brain will automatically ignore a second
+#   instance of the word "the" when it starts
+#   a new line.
+#
+# Duplicating words is a phenomenon of electronic composition. They seem to
+# happen as cut and paste accidents, and most frequently it's with the word
+# the. Unfortunately, it can be difficult to proofread away duplicate words,
+# because this lexical illusion prevents us from finding them. No reviewer will
+# shoot down a submission solely because it contains duplicate words, but when
+# small mistakes like spelling errors and duplicate words pile up, they convey
+# a lack of proofreading. Reviewers will (rightfully) interpret inadequate
+# proofreading as a lack of respect for their time and attention. Fortunately,
+# a short perl script hunts these bugs down:
+
+
+# Finds duplicate adjacent words.
+use strict ;
+
+my $DupCount = 0 ;
+
+if (!@ARGV) {
+  print "usage: dups <file> ...\n" ;
+  exit ;
+}
+
+while (1) {
+  my $FileName = shift @ARGV ;
+
+  # Exit code = number of duplicates found.
+  exit $DupCount if (!$FileName) ;
+
+  open FILE, $FileName or die $!;
+
+  my $LastWord = "" ;
+  my $LineNum = 0 ;
+
+  while (<FILE>) {
+    chomp ;
+
+    $LineNum ++ ;
+
+    my @words = split (/(\W+)/) ;
+
+    foreach my $word (@words) {
+      # Skip spaces:
+      next if $word =~ /^\s*$/ ;
+
+      # Skip punctuation:
+      if ($word =~ /^\W+$/) {
+        $LastWord = "" ;
+        next ;
+      }
+
+      # Found a dup?
+      if (lc($word) eq lc($LastWord)) {
+        print "$FileName:$LineNum $word\n" ;
+        $DupCount ++ ;
+      } # Thanks to Sean Cronin for tip on case.
+
+      # Mark this as the last word:
+      $LastWord = $word ;
+    }
+  }
+
+  close FILE ;
+}

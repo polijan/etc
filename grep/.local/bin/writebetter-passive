@@ -1,0 +1,110 @@
+#!/bin/sh
+
+# Write better...
+# These scripts are from:
+# http://matt.might.net/articles/shell-scripts-for-passive-voice-weasel-words-duplicates/
+# also see:      https://news.ycombinator.com/item?id=13295530
+# also consider: https://www.gnu.org/software/diction/
+
+
+# Passive voice
+# -------------
+# There are times when the passive voice is acceptable in technical writing. I
+# also believe, as with adverbs, that removal of the passive voice would have
+# been a net improvement for over half the technical writing I've edited. (That
+# is, students abuse the passive voice more often than they use it well.)
+#
+# Of course, I do not advocate dogmatic removal of the passive voice. The
+# passive voice is tough to shake. Even while writing this article, I caught
+# myself defaulting to the passive in situations where the active was better.
+# The passive voice is bad when it hides relevant or explanatory information:
+#
+# Bad:    Termination is guaranteed on any input.
+# Better: Termination is guaranteed on any input by a finite state-space.
+# OK:     A finite state-space guarantees termination on any input.
+#
+# In the first sentence, the passive hides relevant information. The second
+# sentence includes the relevant information, but the passive misplaces the
+# emphasis. The third sentence contains all the relevant information, and it
+# feels crisp.
+#
+# There's one case where I think the passive is preferrable in technical
+# writing -- when the subject is truly irrelevant:
+#
+# OK: 4 mL HCl were added to the solution.
+# Even in this example, I personally don't believe it's egregious to use we:
+# OK (to me): We added 4 mL HCl to the solution.
+#
+# In summary, for each use of the passive highlighted by my script, ask the
+# following questions:
+# * Is the agent relevant yet unclear?
+# * Does the text read better with the sentence in the active?
+# If the answer to both questions is "yes," then change to the active.
+# If only the answer to the first question is "yes," then specify the agent.
+
+# A script to find passive voice
+# ------------------------------
+
+irregulars="awoken|\
+been|born|beat|\
+become|begun|bent|\
+beset|bet|bid|\
+bidden|bound|bitten|\
+bled|blown|broken|\
+bred|brought|broadcast|\
+built|burnt|burst|\
+bought|cast|caught|\
+chosen|clung|come|\
+cost|crept|cut|\
+dealt|dug|dived|\
+done|drawn|dreamt|\
+driven|drunk|eaten|fallen|\
+fed|felt|fought|found|\
+fit|fled|flung|flown|\
+forbidden|forgotten|\
+foregone|forgiven|\
+forsaken|frozen|\
+gotten|given|gone|\
+ground|grown|hung|\
+heard|hidden|hit|\
+held|hurt|kept|knelt|\
+knit|known|laid|led|\
+leapt|learnt|left|\
+lent|let|lain|lighted|\
+lost|made|meant|met|\
+misspelt|mistaken|mown|\
+overcome|overdone|overtaken|\
+overthrown|paid|pled|proven|\
+put|quit|read|rid|ridden|\
+rung|risen|run|sawn|said|\
+seen|sought|sold|sent|\
+set|sewn|shaken|shaven|\
+shorn|shed|shone|shod|\
+shot|shown|shrunk|shut|\
+sung|sunk|sat|slept|\
+slain|slid|slung|slit|\
+smitten|sown|spoken|sped|\
+spent|spilt|spun|spit|\
+split|spread|sprung|stood|\
+stolen|stuck|stung|stunk|\
+stridden|struck|strung|\
+striven|sworn|swept|\
+swollen|swum|swung|taken|\
+taught|torn|told|thought|\
+thrived|thrown|thrust|\
+trodden|understood|upheld|\
+upset|woken|worn|woven|\
+wed|wept|wound|won|\
+withheld|withstood|wrung|\
+written"
+
+if [ "$1" = "" ]; then
+ echo "usage: `basename $0` <file> ..."
+ exit
+fi
+
+egrep -n -i --color \
+ "\\b(am|are|were|being|is|been|was|be)\
+\\b[ ]*(\w+ed|($irregulars))\\b" $*
+
+exit $?
