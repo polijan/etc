@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# Usage: $0 [...]
+# executes: grep -insI --color=always "$@" ./* (if grep is GNU)
+#       or  grep -ins "$@" ./*                 (otherwise)
+
+# -i: case insensitive
+# -n: prints line number
+# -s: suppress error message (about non readable files, ...)
+# (-I: for binary file, pretends it never matches)
+
+g() { grep -ins "$@" ./* | sed 's:./::' ; }
+if is-gnu grep
+   then g -I --color=always "$@" | less -SFX
+   else g "$@"
+fi

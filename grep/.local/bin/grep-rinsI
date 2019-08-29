@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Usage: $0 [...]
+# executes: grep -rinsI --color=always "$@" (if grep is GNU)
+#       or  grep -rins "$@"                 (otherwise)
+
+if is-gnu grep
+   then grep -rinsI --color=always "$@" | less -SFX
+   else grep -rins "$@"
+fi

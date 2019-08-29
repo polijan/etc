@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Usage: ... | grep-hilight [PATTERN]...
+# highlight reged patterns (using grep --color)
+
+pattern='^' # ^ is the start of line, so pattern is always a match
+for i; do   # concatenate all in one pattern
+    pattern="${pattern}\|$i"
+done
+grep -i --color=auto "$pattern"

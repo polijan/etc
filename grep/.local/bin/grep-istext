@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: $0 [FILE]
+# returns 0 if text file
+
+[ -f "$*" ] || die "$*: No such file"
+grep -qI '' "$*" || ! [ -s "$*" ]
