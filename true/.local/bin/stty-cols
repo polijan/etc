@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Usage: $0
+# prints the number of columns of the terminal
+#
+# more portable than 'tput cols' as stty is POSIX
+# where as tput is a ncurses utility.
+stty size | cut -d' ' -f2
