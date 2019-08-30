@@ -6,7 +6,7 @@
 client() {
    URL='http://localhost:8080'
    if exists termux-url-opener; then
-      termux-url-open "$URL"
+      termux-url-opener "$URL"
    elif exists chromium-browser; then
       chromium-browser --app="$URL"
    elif exists firefox; then
