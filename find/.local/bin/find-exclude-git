@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Usage: $0 [FIND_ARGS]...
+# 'find .' while excluding '.git' directories
+
+find . -type d -name '.git' -prune -o "$@" -print
