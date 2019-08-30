@@ -1,0 +1,37 @@
+#!/bin/sh
+# Usage: $0
+# basic script to start a tiddliwiki-based wiki server and/or client
+
+# start client (background)
+client() {
+   URL='http://localhost:8080'
+   if exists termux-url-open; then
+      termux-url-open "$URL"
+   elif exists chromium-browser; then
+      chromium-browser --app="$URL"
+   elif exists firefox; then
+      firefox "$URL"
+   elif is-graphical && exists xdg-open; then
+      xdg-open "$URL"
+   else
+     exit 1
+   fi
+}
+
+# start server (exec)
+server() { exec tiddlywiki --listen ;}
+
+[ -f tiddlywiki.info ] || die 'not a TiddlyWiki folder'
+
+printf '%s\n' 'start wiki:'
+printf '%s\n' '  1) client'
+printf '%s\n' '  2) server'
+printf '%s\n' '  3) client and server'
+printf '> '
+IFS= read -r CHOICE
+case $CHOICE in
+  1) client ;;
+  2) server ;;
+  3) (sleep 4 && client) & server ;;
+  *) exit 1 ;;
+esac
