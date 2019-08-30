@@ -5,7 +5,7 @@
 # start client (background)
 client() {
    URL='http://localhost:8080'
-   if exists termux-url-open; then
+   if exists termux-url-opener; then
       termux-url-open "$URL"
    elif exists chromium-browser; then
       chromium-browser --app="$URL"
