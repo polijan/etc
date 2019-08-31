@@ -9,8 +9,8 @@
 
 # if we're using the linux console, or if terminal is small,
 # there are better things to do than watching 'cute' ponies.
-if [ "$TERM" != linux ] && [ $COLUMNS -ge 72 ] && [ $LINES -ge 24 ]; then
-   if [ $LINES -ge 35 ]
+if [ "$TERM" != 'linux' ] && [ "$(stty-cols)" -ge 72 ] && [ "$(stty-lines)" -ge 24 ]; then
+   if [ "$(stty-lines)" -ge 35 ]
       then ponysay -b unicode -q
       else ponysay -o # only the graphics, no quote
    fi

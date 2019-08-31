@@ -33,64 +33,10 @@ shopt -s checkwinsize
 #shopt -s globstar
 
 
-# configuration for ~/.local
-# also see this post: http://nullprogram.com/blog/2017/06/19/
-
-# PATH
-PATH="$HOME/.local/bin:$HOME/bin:$PATH"
-# Add directories to the include and link path for C and C++ compilers
-# This is like the -I compiler option and the -L linker option, except
-# there wont be a need to use them explicitly
-export C_INCLUDE_PATH="$HOME/.local/include"
-export CPLUS_INCLUDE_PATH="$HOME/.local/include"
-export LIBRARY_PATH="$HOME/.local/lib"
-export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig"
-# run time dynamic linker:
-if [ -z "$LD_LIBRARY_PATH" ]
-   # not sure why the IF is necessary, but termux gives me some errors otherwise
-   then export LD_LIBRARY_PATH="$HOME/.local/lib"
-   else export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
-fi
-# man pages:
-exists manpath || export MANPATH="$HOME/.local/share/man:$MANPATH"
-  # I would expect that I had to do the following, but no,
-  # it seems to seems to be able to figure it out
-  # export MANPATH="$HOME/.local/share/man:$(manpath)"
-
-
-# usage: exists COMMAND
-# return 0 if command is found or failure if command isn't found
-# prefers this than which(1) since it also detects function, aliases, ...
-exists() { command -v "$@" > /dev/null ; }
-
-# loopfind COMMAND [ITEM]...
-# iterate through the list of ITEMS and applies COMMAND to each argument;
-# if the COMMAND is succesful, loopfind echoes that argument and stops.
-# return value is 0 (if we can print an argument from the LIST)
-# or 1 (if end of list is reached and COMMAND never was succesful)
-#
-# example: MP3_PLAYER=$(loopfind exists  mpv vlc mplayer mpg321 mpg123 ffplay) || exit 127
-loopfind() {
-   local i cmd
-   cmd="$1"
-   shift
-   for i do
-       $cmd "$i" >/dev/null && { printf '%s\n' "$i"; return; }
-   done
-   return 1
-}
 
 # TODO: move this
 # reload the shell (useful after config file change)
 bash-reload() { exec "$SHELL" -l; }
-
-################################################################################
-# EDITOR
-################################################################################
-
-EDITOR=$(loopfind exists nano+ nano pico e3pi emacs ne mg e3em vim vi)
-export EDITOR
-export VISUAL="$EDITOR"
 
 
 ################################################################################
