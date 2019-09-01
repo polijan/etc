@@ -28,9 +28,12 @@ while IFS= read -r i; do
       else printf '%s\n' "$i"
    fi
 done                                           |
-fzf --prompt  'etc > '                         \
+fzf --ansi                                     \
+    --prompt  'etc > '                         \
+    --bind 'Alt-Z:toggle-preview'              \
     --preview-window "right:$((COLUMNS - 22))" \
     --preview 'if [ -d {} ]
                   then tree -aFC {}
                   else cat {}
                fi'                             \
+    --query "$*"
