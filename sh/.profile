@@ -66,7 +66,7 @@
 
 # when starting a non-login interactive shell, sh
 # will execute file contained in the ENV variable
-ENV=$HOME/.shrc
+export ENV="$HOME/.shrc"
 # so I think of it as equivalent to ~/.bashrc but for sh
 # I will also include it from here (near the end of this file)
 
