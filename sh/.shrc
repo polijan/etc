@@ -1,0 +1,14 @@
+#!/bin/sh
+#^--- not to be executed directly, this is just for editors' syntax hilighting
+
+[ -n "$DEBUG_SH" ] && printf 'DEBUG (~/.shrc): this is ~/.shrc\n' >&2
+
+################################################################################
+# INCLUDE *.sh FILES FROM ~/.config/sh-includes
+################################################################################
+
+for i in "$HOME/.config/sh-includes"/*.sh; do
+    [ -n "$DEBUG_SH" ] && printf 'DEBUG (~/.shrc): including %s\n' "$i" >&2
+    . "$i"
+done
+unset i

@@ -1,5 +1,8 @@
 #!/bin/bash
 #^--- not to be executed directly, this is just for editors' syntax hilighting
+
+[ -n "$DEBUG_SH" ] && printf 'DEBUG (~/.bashrc): this is ~/.bashrc\n' >&2
+
 ################################################################################
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
@@ -221,7 +224,9 @@ fi
 # INCLUDE *.sh AND *.bash FILES FROM ~/.config/sh-includes
 ################################################################################
 
-for i in "$HOME/.config/sh-includes"/*.{bash,sh}; do
+# for i in "$HOME/.config/sh-includes"/*.{bash,sh}; do
+for i in "$HOME/.config/sh-includes"/*.bash; do
+    [ -n "$DEBUG_SH" ] && printf 'DEBUG (~/.bashrc): including %s\n' "$i" >&2
     . "$i"
 done
 unset i
