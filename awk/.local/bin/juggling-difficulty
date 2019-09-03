@@ -1,49 +1,39 @@
 #!/bin/sh
 
-# usage: $0 [THROWS]...
-# prints the "difficulty" of the juggling sequence (siteswap)
-# made of the given throws.
+# Usage: $0 [THROW]...
 #
+# Prints the difficulty of the juggling sequence described by the given THROWs.
 # The "difficulty" D is calculated as follow:
 #             ___________________
 #            |  ___
-#            |  \              2       except when throw is 0,
-#  D =  2 +  |  /__ (throw - 2)   <--- in that case, nothing is
-#            |  ----------------       added to the sum.
-#           \|       period
+#            |  \              2        except when throw is 0,
+#  D =  2 +  |  /__ (throw - 2)    <--- in that case, nothing is
+#            |  ----------------        added to the sum.
+#           \|  number of throws
 #            `
 #
-# note (all this c(sh)ould be improved)
-# * only relevant for 3 balls or more
-# * don't write a,b,c,... for throws >9, enter the numerical value
-# * each throw separated by spaces
-# * only understand vanilla sequence, not synchronous or multiplex
-#     - for sync: enter all throws, drop the x
-#     - for multiplex: replace the throw by something "believable"
-#       [54] => 6, [44] => 5    ???
+# each THROW is supposed to be a valid mathematical expression which is
+# evaluated by awk(1) intepreter, and then the formula is applied.
 #
-# examples:
-# 441     : $0 4 4 1           => 3.7
+# Here are some examples:
 # db97531 : $0 13 11 9 7 5 3 1 => 8.4
 # (6x,4)* : $0 6 4             => 5.2
+# [43]23  : $0 '4+1' 2 3       => 3.8 (assumption for the [43])
 #
 # This difficulty comes from Ben Beever's "guide to juggling patterns"
 # https://www.jugglingedge.com/pdf/BenBeeversGuidetoJugglingPatterns.pdf
 # which points out another difficulty measure could be:
 # D = (average excitation level)/2 + number of balls
 
-
 [ $# -eq 0 ] && usage -d
 
-S=0
 for i; do
    case $i in
-           0) throw=2  ;;
-      [0-9]*) throw=$i ;;
-           *) usage -d ;;
+        0) printf '0\n'  ;;
+        *) awk "BEGIN{ print $i - 2 }" || exit ;;
    esac
-   S=$(( S + (throw - 2) * (throw - 2) ))
-done
-
-awk -v S="$S" -v P=$# \
-    'BEGIN{ printf("%.1f\n", 2 + sqrt(S / P)); }'
+done |
+awk '
+   { S+= $0 * $0; }
+   END{ printf("%.1f\n", 2 + sqrt(S / NR)); }
+'
