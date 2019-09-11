@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Usage: matchglob GLOB STRING
+# returns 0 if STRING matches the GLOB pattern, otherwise returns 1
+#
+# you can also source this file to import the matchglob function:
+# . matchglob
+
+matchglob() {
+   case "$2" in
+      $1) return 0 ;;
+       *) return 1 ;;
+   esac
+}
+
+# if not sourced, run the function
+case "$0" in matchglob|*/matchglob)
+   if [ $# -eq 2 ]
+      then matchglob "$@"
+      else printf 'Usage: matchglob GLOB STRING\n' >&2 ; exit 2
+   fi ;;
+esac
