@@ -1,0 +1,66 @@
+#!/bin/sh
+
+# Usage: $0 [string]...
+# prints out a "suitable" file basename based on it's input ($*)
+#
+# The "suitable" name is derived from the string arguments as follow:
+# 1. remove invalid UTF8 chars and process ANSI sequence to remove colors
+# 2. replace the following with _
+#    * (an empty string)
+#    * non-printable characters
+#    * file separator /, space, and other "meta"-chars: \*?:[]"<>|(){}&!;
+#    * the LEADING following chars: . # - +
+# 3. simplify by
+#    * removing more than two consecutive __
+#    * truncate to 60 chars (add trailing ... if trimmed)
+
+# motivation: https://dwheeler.com/essays/fixing-unix-linux-filenames.html
+
+
+################################################################################
+# TODO (to make name portable with WINDOWS and FAT)
+#
+# 1) trim trailing dots (problematic in windows!)
+#    CURRENT TRIMMING RULES MUST CHANGE TOO
+#
+# 2) check if UPPERCASE(name) now is one of the MS-WINDOWS reserved name:
+#    CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9]
+#    or one of those name with an extension (CON.whateverafterthedot)
+#
+# 3) MAYBE disallow ^ characters ?????
+#    (is ^ disallowed on FAT filesystem?)
+################################################################################
+
+
+name="$*"
+
+[ -z "$name" ] && { printf 'untitled\n'; exit; }
+
+
+name=$(printf %s "$name"                              |
+       FZF_DEFAULT_OPTS='' fzf --ansi --no-sort -f '' |
+       tr '/\*?:[]"<>|(){}&!; '\''\n'   '_'           |
+       sed -e 's/_$//'                                \
+           -e 's/[^[:print:]]/_/g'                    \
+           -e 's/^[.#+-]/_/'                          \
+           -e 's/__[_]*/__/g'                         \
+           -e 's/\(.\{57\}\).....*/\1.../'            )
+#  so here is how this pipeline works:
+#  1. non-interactive fzf(1) to strip colors and ensures valid UTF-8.
+#     note: this appends a \n (turns to _ in step 2, removed in step 3a)
+#  2. tr(1) to replace printable ASCII chars: space, /, shell "meta"-chars
+#     and '\n' (because line-based sed(1) in next step won't remove \n)
+#  3. sed(1) to:
+#     a. remove extra \n -> _ which got introduced in step 1
+#     b. replace non-printable chars
+#     c. replace leading .#+-
+#     d. remove sequences of more than 2 consecutive __
+#     e. trim to 60 chars (and adds trailing ... if trimmed)
+#        note: 60 chars for the name is a good limit, because:
+#           1) 60 chars name + 15 extra (YYYY-MM-DD_ and _NNN) is good
+#              readability limit and suits well on a terminal line.
+#           2) it's a good limit as 60 unicode chars + 15 ascii char
+#              is garantueed to be <= 255 bytes (60*4 + 15) ...
+#              which AFAIK is the max filename length on NTFS or FAT
+
+printf '%s\n' "$name"
