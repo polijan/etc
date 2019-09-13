@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# Usage: $0 [directory]
+# Determining if directory ($* or if no argument given, then the current
+# directory) is empty.
+# returns 0 if directory is empty
+# returns 1 if directroy is not empty
+# returns 2 (and prints an error on stdout) if it's not a directory
+
+# Determining if a directory is empty (with just sh)
+# idea taken from: http://www.etalabs.net/sh_tricks.html
+#
+# dir_is_empty() (
+#    cd "$1"
+#    set -- .[!.]* ; test -f "$1" && return 1
+#    set -- ..?*   ; test -f "$1" && return 1
+#    set -- *      ; test -f "$1" && return 1
+#    return 0
+# )
+#
+# This code uses the magic 3 globs which are needed to match all possible
+# names except "." and "..", and also handles the cases where the glob
+# matches a literal name identical to the glob string.
+#
+# Naturally it has race conditions if the directory is writable by other
+# users or if other processes may be modifying it.
+
+if [ -z "$*" ]; then
+   cd "$*" 2>/dev/null \
+   || { printf "%s: '%s' is not a directory\n" "$0" "$*" >&2; exit 2; }
+fi
+set -- .[!.]* ; [ -f "$1" ] && exit 1
+set -- ..?*   ; [ -f "$1" ] && exit 1
+set -- *      ; [ -f "$1" ] && exit 1
+exit 0
