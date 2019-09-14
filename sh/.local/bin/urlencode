@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Usage: $0 string
+# url encode the given string (actually $*)
+#
+# URL-encoding (also knows as perent encoding) is a way to escape
+# reserved, unprintable, or non-ASCII characters in URLS.
+# see: https://en.wikipedia.org/wiki/Percent-encoding
+
+string=$*
+[ -z "$string" ] && exit
+while [ -n "$string" ]; do
+   tail=${string#?}
+   head=${string%$tail}
+   case $head in
+     [-._~0-9A-Za-z]) printf %c     "$head"  ;;
+                   *) printf %%%02x "'$head" ;;
+   esac
+   string=$tail
+done
+echo

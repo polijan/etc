@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# Usage: $0 string
+# url decode the given string (actually $*)
+#
+# URL-encoding (also knows as perent encoding) is a way to escape
+# reserved, unprintable, or non-ASCII characters in URLS.
+# see: https://en.wikipedia.org/wiki/Percent-encoding
+
+[ -z "$*" ] && exit
+: "${*//+/ }"
+printf '%b\n' "${_//%/\\x}"
