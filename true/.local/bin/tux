@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Usage: ... | $0
+# display "tux" and prints the content from
+# stdin on the right side.
+#
+# this shell script is intended as a poorman's
+# replacement of cowsay(1). This script is dumb
+# though, if stdin lines wrapping on the terminal,
+# it will destroy the prettiness.
+
+if [ $# -ne 0 ]; then
+   usage "$0" | "$0"
+   exit 1
+fi
+
+P() { IFS= read -r L; printf '%b %s\n' "$1" "$L"; }
+A() { awk -v X="$1" '{print X, $0}' ;}
+
+P '    .--.   '
+P '   |o\033[33m_\033[0mo |  '
+P '   |\033[33m:_/\033[0m |  '
+P '  //   \ \ '
+P ' (|     | )'
+P '\033[33m/\033[0m'\''\033[33m|_   _/\033[0m~\033[33m\\\033[0m'
+P '\033[33m\___)\033[0m=\033[1;33m(___/\033[0m'
+P '           '
+A '           '
