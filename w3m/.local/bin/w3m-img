@@ -1,18 +1,25 @@
 #!/bin/sh
 
-# w3m can display images in a terminal window
-# (this works only on certain terminal which are based on xterm or rxvt)
+# Usage: w3m-img IMAGE...
+# use w3m to display an image (works under certain conditions)
+#
+# Note: w3m can display images in a terminal window
+# this works only on certain terminal which are based on xterm or rxvt
 # also see: https://www.youtube.com/watch?v=R2bMUtCOGko
 
-# the critical compnent in w3m is: /usr/lib/w3m/w3mimgdisplay. It accepts
+
+# the critical component in w3m is: /usr/lib/w3m/w3mimgdisplay. It accepts
 # some input on stdin and display the image, so there'd be a way to use only
 # that and not full blown w3m, but I don't know how to do (#TODO in future?)
+w3mimgdisplay='/usr/lib/w3m/w3mimgdisplay'
+
+[ -e "$w3mimgdisplay" ] || "cannot find $w3mimgdisplay (sometimes package w3m-img is required)"
 
 # we set the following w3m options with -o:
-#   use external image viewer    => false
-#   command to display image     => /usr/lib/w3m/w3mimgdisplay
-#   confirm when quitting with q => false
-w3m -o ext_image_viewer=0 \
-    -o imgdisplay=/usr/lib/w3m/w3mimgdisplay \
-    -o confirm_qq=0 \
+#   use external image viewer     => false
+#   command to display image      => w3mimgdisplay
+#   confirm when quitting with q  => false
+w3m -o ext_image_viewer=0          \
+    -o imgdisplay="$w3mimgdisplay" \
+    -o confirm_qq=0                \
     "$@"
