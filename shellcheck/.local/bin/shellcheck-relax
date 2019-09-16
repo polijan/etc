@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Usage: $0
+# shellcheck(1) but with some adjustment...
+#
+# List of stuff to exclude:
+#
+#-----------------------------------------------------------------------
+# SC2039 (about using 'local' which is undefined in POSIX sh)
+#-----------------------------------------------------------------------
+# local is NOT POSIX but is understood in most shells, so I feel I can
+# use it and remain "fairly" portable. But note one should still stay
+# careful using local:
+#
+# 1) USE ONLY ONE LOCAL DECLARATION PER LINE
+#    in dash: 'local a=3 b=2' will make 'a' a local variable but
+#    'b' will be global. In bash both will be local. To avoid
+#    always put one local declaration per line.
+#
+# 2) WORD SPLITTING APPLIES AFTER LOCAL, USE QUOTES
+#    in bash 'local v1=$v2', v2 may contains any input
+#    bash supressed word plsitting after 'local', 'export', and 'readonly' keywords.
+#    no in dash... so use quotes: local v1="$v2"
+#-----------------------------------------------------------------------
+
+shellcheck -e SC2039 "$@"
