@@ -1,0 +1,83 @@
+#!/bin/sh
+
+# Usage:
+#
+# (1) quote string...
+#     prints "$*" in shell-quoted form
+#
+# (2) quote
+#     no arguments. Prompt user for a string (if stdin is a
+#     terminal), then prints it in a shell quoted form
+#
+# (3) . quote
+#     source the quote() function  (see this script!)
+
+##########################################################################
+
+# quote function taken from "Rich’s sh (POSIX shell) tricks" at
+# http://www.etalabs.net/sh_tricks.html, here quoting the page:
+#
+# Shell-quoting arbitrary strings
+# -------------------------------
+#
+# Sometimes it’s necessary to put a string in a shell-quoted form,
+# for instance if it needs to be expanded into a command that will
+# be evaluated with eval, written into a generated script, or
+# similar. There are several methods, but many of them fail if the
+# string contains newlines. Here is a version that works:
+
+quote () { printf %s\\n "$1" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/'/" ; }
+
+# This function simply replaces every instance of ' (single quote)
+# within the string with '\'' (single quote, backslash, single
+# quote, single quote), then puts single quotes at the beginning
+# and end of the string. Since the only character whose meaning is
+# special within single quotes is the single quote character
+# itself, this is totally safe. Trailing newlines are handled
+# correctly, and the single quote at the end doubles as a safety
+# character to prevent command substitution from clobbering the
+# trailing newlines, should one want to do something like:
+# quoted=$(quote "$var")
+
+##########################################################################
+
+
+# execute if we're not sourced
+if [ "${0##*/}" = 'quote' ]; then
+   if [ $# -eq 0 ]; then
+      if [ -t 0 ]; then
+         printf 'string to quote: '
+         IFS= read -r STRING
+      else
+         print 'quote: no args and not a terminal' >&2
+         exit 2
+      fi
+   else
+      STRING=$*
+   fi
+   quote "$STRING"
+fi
+
+
+
+##########################################################################
+
+# Note that both bash printf builtin and the GNU printf(1) command
+# accept a %q format which output its arguement quoted.
+
+# Also note in bash-completion package (at least in Debian 9),
+# the /usr/share/bash-completion script defines a pure bash
+# implementation as such:
+#
+# # This function shell-quotes the argument
+# quote()
+# {
+#     local quoted=${1//\'/\'\\\'\'}
+#     printf "'%s'" "$quoted"
+# }
+#
+# # This function shell-dequotes the argument
+# dequote()
+# {
+#     eval printf %s "$1" 2> /dev/null
+# }
