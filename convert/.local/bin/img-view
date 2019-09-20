@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # taken from here: https://git.gnome.org/browse/vte/tree/perf/img.sh
+# Usage: $0 image
 
 
 # Image viewer for terminals that support true colors.
@@ -31,7 +32,10 @@ fi
 # This is so that "upper" is still visible after exiting the while loop.
 shopt -s lastpipe
 
-COLUMNS=$(tput cols)
+# stty is more portable than tput
+# COLUMNS=$(tput cols)
+COLUMNS=$(stty size | cut -d' ' -f2)
+
 
 declare -a upper lower
 upper=()
