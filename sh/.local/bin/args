@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# Usage: $0 ...
+# prints its arguments
+# (can be useful for debugging scripts)
+
+exists() { command -v "$@" > /dev/null ;}
+
+if [ -n "$ARGS_COLOR" ] || [ -t 1 ]
+   then color=true
+   else color=false
+fi
+
+p() {
+  if $color; then
+     printf '\033[35m$\033[32m%s\033[0m ' "$1"
+     # I want this to be able to run with sh only, so if we
+     # dont have sed, but otherwise, we hilight spaces with
+     # our 'sed-hilight' script.
+     if exists sed-higlight
+        then printf '%s\n' "$2" | sed-hilight ' '
+        else printf '%s\n' "$2"
+     fi
+  else
+     printf '$%s %s\n' "$1" "$2"
+  fi
+}
+
+p '#' "$#"   # $# = number of arguments
+p '*' "$*"   # $* = all arguments joined together with spaces
+p '0' "$0"   # $0 = program running
+n=0
+while [ $# -gt 0 ]; do
+   n=$((n+1))
+   p $n "$1"
+   shift
+done
