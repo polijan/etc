@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Usage: $0
+# transform the input to ascii and prints on stdout.
+# this is a very simple wrapper to iconv(1)
+#
+# non-ascii characters will be transliterated (ie replace with
+# similar looking ascii character) when it is possible (for example
+# latin letter with accents, etc.) and if it's not posible replace
+# with a '?'
+
+iconv -t ASCII//TRANSLIT
