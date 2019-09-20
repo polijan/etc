@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# Usage: ... | $0 [EXTRA_SED_STUFF]...
+# replace ASCII latin letters with Fraktur characters
+#
+# from: https://en.wikipedia.org/wiki/Fraktur
+# Unicode does not encode Fraktur as a separate script. Instead,
+# Fraktur is considered a class of fonts of the Latin alphabet. There
+# are, however, two sets of "Fraktur" symbols in the Unicode blocks of
+# mathematical alphanumeric symbols, letterlike symbols, and Latin E.
+# These are normally meant to be used only in mathematics.
+
+sed -e 's/A/𝕬/g' -e 's/B/𝕭/g' -e 's/C/𝕮/g' -e 's/D/𝕯/g' \
+    -e 's/E/𝕰/g' -e 's/F/𝕱/g' -e 's/G/𝕲/g' -e 's/H/𝕳/g' \
+    -e 's/I/𝕴/g' -e 's/J/𝕵/g' -e 's/K/𝕶/g' -e 's/L/𝕷/g' \
+    -e 's/M/𝕸/g' -e 's/N/𝕹/g' -e 's/O/𝕺/g' -e 's/P/𝕻/g' \
+    -e 's/Q/𝕼/g' -e 's/R/𝕽/g' -e 's/S/𝕾/g' -e 's/T/𝕿/g' \
+    -e 's/U/𝖀/g' -e 's/V/𝖁/g' -e 's/W/𝖂/g' -e 's/X/𝖃/g' \
+    -e 's/Y/𝖄/g' -e 's/Z/𝖅/g'                           \
+    -e 's/a/𝖆/g' -e 's/b/𝖇/g' -e 's/c/𝖈/g' -e 's/d/𝖉/g' \
+    -e 's/e/𝖊/g' -e 's/f/𝖋/g' -e 's/g/𝖌/g' -e 's/h/𝖍/g' \
+    -e 's/i/𝖎/g' -e 's/j/𝖏/g' -e 's/k/𝖐/g' -e 's/l/𝖑/g' \
+    -e 's/m/𝖒/g' -e 's/n/𝖓/g' -e 's/o/𝖔/g' -e 's/p/𝖕/g' \
+    -e 's/q/𝖖/g' -e 's/r/𝖗/g' -e 's/s/𝖘/g' -e 's/t/𝖙/g' \
+    -e 's/u/𝖚/g' -e 's/v/𝖛/g' -e 's/w/𝖜/g' -e 's/x/𝖝/g' \
+    -e 's/y/𝖞/g' -e 's/z/𝖟/g'                           \
+    "$@"

@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# Usage: ... | $0 [-u|-l] [EXTRA_SED_STUFF]...
+# replace many latin letters with similar looking "old italic" characters
+#
+# option -l :  only replace lowercase letters with smallcaps
+# option -u :  only replace uppercase letters with smallcaps
+#
+# see: https://en.wikipedia.org/wiki/Old_Italic_(Unicode_block)
+#      https://en.wikipedia.org/wiki/Old_Italic_scripts
+
+case "$1" in
+  -u) A=A; B=B; C=C; D=D; E=E; F=F
+      G=G; H=H; I=I; J=J; K=K; L=L
+      M=M; N=N; O=O; P=P; Q=Q; R=R
+      S=S; T=T; U=U; V=V; W=W; X=X
+      Y=Y; Z=Z; shift ;;
+  -l) A=a; B=b; C=c; D=d; E=e; F=f
+      G=g; H=h; I=i; J=j; K=k; L=l
+      M=m; N=n; O=o; P=p; Q=q; R=r
+      S=s; T=t; U=u; V=v; W=w; X=x
+      Y=y; Z=z; shift ;;
+   *) A='[Aa]'; B='[Bb]'; C='[Cc]'; D='[Dd]'; E='[Ee]'; F='[Ff]'
+      G='[Gg]'; H='[Hh]'; I='[Ii]'; J='[Jj]'; K='[Kk]'; L='[Ll]'
+      M='[Mm]'; N='[Nn]'; O='[Oo]'; P='[Pp]'; Q='[Qq]'; R='[Rr]'
+      S='[Ss]'; T='[Tt]'; U='[Uu]'; V='[Vv]'; W='[Ww]'; X='[Xx]'
+      Y='[Yy]'; Z='[Zz]'  ;;
+esac
+
+sed -e "s/$A/𐌀/g" -e "s/$B/𐌁/g" -e "s/$C/𐌂/g" -e "s/$D/𐌃/g" \
+    -e "s/$E/𐌄/g" -e "s/$F/𐌅/g" -e "s/$H/𐌇/g" -e "s/$I/𐌆/g" \
+    -e "s/$K/𐌊/g" -e "s/$L/𐌋/g" -e "s/$M/𐌑/g" -e "s/$N/𐌍/g" \
+    -e "s/$O/𐌏/g" -e "s/$P/𐌓/g" -e "s/$Q/𐌒/g" -e "s/$S/𐌔/g" \
+    -e "s/$T/𐌕/g" -e "s/$X/𐌗/g" -e "s/$Y/𐌖/g" "$@"

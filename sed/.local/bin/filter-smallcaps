@@ -1,0 +1,45 @@
+#!/bin/sh
+
+# Usage: ... | $0 [-u|-l] [EXTRA_SED_STUFF]...
+# replace ASCII latin letters with small caps
+#
+# option -l :  only replace lowercase letters with smallcaps
+# option -u :  only replace uppercase letters with smallcaps
+#
+#
+# from: https://en.wikipedia.org/wiki/Small_caps
+# Although small caps are not usually "semantically important", the
+# Unicode standard does define a number of "small capital" characters
+# in the IPA extensions, Phonetic Extensions and Latin Extended-D
+# ranges (0250–02AF, 1D00–1D7F, A720–A7FF). These characters, with
+# official names such as latin letter small capital a, are meant for
+# use in phonetic representations. As of Unicode 12.0, the only
+# character missing from the ISO basic Latin alphabet is the
+# small-capital version of X. (so for X, we use a lowercase x)
+
+
+case "$1" in
+  -u) A=A; B=B; C=C; D=D; E=E; F=F
+      G=G; H=H; I=I; J=J; K=K; L=L
+      M=M; N=N; O=O; P=P; Q=Q; R=R
+      S=S; T=T; U=U; V=V; W=W; X=X
+      Y=Y; Z=Z; shift ;;
+  -l) A=a; B=b; C=c; D=d; E=e; F=f
+      G=g; H=h; I=i; J=j; K=k; L=l
+      M=m; N=n; O=o; P=p; Q=q; R=r
+      S=s; T=t; U=u; V=v; W=w; X=x
+      Y=y; Z=z; shift ;;
+   *) A='[Aa]'; B='[Bb]'; C='[Cc]'; D='[Dd]'; E='[Ee]'; F='[Ff]'
+      G='[Gg]'; H='[Hh]'; I='[Ii]'; J='[Jj]'; K='[Kk]'; L='[Ll]'
+      M='[Mm]'; N='[Nn]'; O='[Oo]'; P='[Pp]'; Q='[Qq]'; R='[Rr]'
+      S='[Ss]'; T='[Tt]'; U='[Uu]'; V='[Vv]'; W='[Ww]'; X=X
+      Y='[Yy]'; Z='[Zz]'  ;;
+esac
+
+sed -e "s/$A/ᴀ/g" -e "s/$B/ʙ/g" -e "s/$C/ᴄ/g" -e "s/$D/ᴅ/g" \
+    -e "s/$E/ᴇ/g" -e "s/$F/ꜰ/g" -e "s/$G/ɢ/g" -e "s/$H/ʜ/g" \
+    -e "s/$I/ɪ/g" -e "s/$J/ᴊ/g" -e "s/$K/ᴋ/g" -e "s/$L/ʟ/g" \
+    -e "s/$M/ᴍ/g" -e "s/$N/ɴ/g" -e "s/$O/ᴏ/g" -e "s/$P/ᴘ/g" \
+    -e "s/$Q/ꞯ/g" -e "s/$R/ʀ/g" -e "s/$S/ꜱ/g" -e "s/$T/ᴛ/g" \
+    -e "s/$U/ᴜ/g" -e "s/$V/ᴠ/g" -e "s/$W/ᴡ/g" -e "s/$X/x/g" \
+    -e "s/$Y/ʏ/g" -e "s/$Z/ᴢ/g" "$@"
