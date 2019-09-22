@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Usage: $0
+# upgrade tiddlywiki nodejs installation (requires npm)
+# (requires npm, assumes 'global' install)
+
+requires npm
+sudo npm update -g tiddlywiki
