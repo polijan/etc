@@ -23,7 +23,7 @@ mkdir -p "$CACHE/tiddlers" "$CACHE/output"
 # render file using '--rendertiddler' command
 # (note: this is deprecated in newer tiddlywiki in favor of the
 #        '--render' command, so maybe we'll have to use that later)
-TITLE="$(awk '/^title: / { print $2 }' $1)"
+TITLE=$(awk '/^title: / { print $2 }' "$1")
 if [ -n "$TITLE" ]; then
    cp "$1" "$CACHE/tiddlers/tid.tid"
 else
