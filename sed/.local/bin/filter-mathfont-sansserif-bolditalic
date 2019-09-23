@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Usage: ... | $0 [EXTRA_SED_STUFF]...
+# print the intput but replace ASCII letters with (UTF-8 encoded)
+# unicode "sans-serif bold italic" characters
+#
+# -------------------------------------------------------------------
+#
+# Sans-serif bold italic symbols are located in the 'Mathematical
+# Alphanumeric Symbols' Unicode blocks, which is a block (in the SMP,
+# range U+1D400 ... U+1D7FF) of Latin and Greek letters and decimal
+# digits that enable mathematicians to denote different notions with
+# different letter styles.
+#
+# Note that those are normally meant to be used only in mathematics.
+# Unicode expressly recommends that these characters not be used in
+# general text as a substitute for presentational markup; the
+# letters are specifically designed to be semantically different
+# from each other.
+#
+# Reference:
+# https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols
+
+
+sed -e 's/A/𝘼/g' -e 's/B/𝘽/g' -e 's/C/𝘾/g' -e 's/D/𝘿/g' \
+    -e 's/E/𝙀/g' -e 's/F/𝙁/g' -e 's/G/𝙂/g' -e 's/H/𝙃/g' \
+    -e 's/I/𝙄/g' -e 's/J/𝙅/g' -e 's/K/𝙆/g' -e 's/L/𝙇/g' \
+    -e 's/M/𝙈/g' -e 's/N/𝙉/g' -e 's/O/𝙊/g' -e 's/P/𝙋/g' \
+    -e 's/Q/𝙌/g' -e 's/R/𝙍/g' -e 's/S/𝙎/g' -e 's/T/𝙏/g' \
+    -e 's/U/𝙐/g' -e 's/V/𝙑/g' -e 's/W/𝙒/g' -e 's/X/𝙓/g' \
+    -e 's/Y/𝙔/g' -e 's/Z/𝙕/g'                           \
+    -e 's/a/𝙖/g' -e 's/b/𝙗/g' -e 's/c/𝙘/g' -e 's/d/𝙙/g' \
+    -e 's/e/𝙚/g' -e 's/f/𝙛/g' -e 's/g/𝙜/g' -e 's/h/𝙝/g' \
+    -e 's/i/𝙞/g' -e 's/j/𝙟/g' -e 's/k/𝙠/g' -e 's/l/𝙡/g' \
+    -e 's/m/𝙢/g' -e 's/n/𝙣/g' -e 's/o/𝙤/g' -e 's/p/𝙥/g' \
+    -e 's/q/𝙦/g' -e 's/r/𝙧/g' -e 's/s/𝙨/g' -e 's/t/𝙩/g' \
+    -e 's/u/𝙪/g' -e 's/v/𝙫/g' -e 's/w/𝙬/g' -e 's/x/𝙭/g' \
+    -e 's/y/𝙮/g' -e 's/z/𝙯/g'                           \
+    "$@"

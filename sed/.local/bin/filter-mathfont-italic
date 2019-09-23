@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# Usage: ... | $0 [EXTRA_SED_STUFF]...
+# print the intput but replace ASCII letters with
+# (UTF-8 encoded) unicode "italic" characters
+#
+# -------------------------------------------------------------------
+#
+# Italic symbols are all located in the Unicode 'Mathematical
+# Alphanumeric Symbols' block except for small letter "h" which is in
+# the 'letterlike sysmbols' block:
+#
+# 1) Mathematical Alphanumeric Symbols:
+#    Unicode block (in the SMP, range U+1D400..U+1D7FF) of Latin and
+#    Greek letters and decimal digits that enable mathematicians to
+#    denote different notions with different letter styles.
+#
+# 2) Letterlike symbols:
+#    Unicode originally included a limited set of letters meant for
+#    math in its Letterlike Symbols block before completing the
+#    'Mathematical Alphanumeric Symbols' block. The italic letter 'h'
+#    is located there representing the Planck constant.
+#
+# Note that those are normally meant to be used only in mathematics.
+# Unicode expressly recommends that these characters not be used in
+# general text as a substitute for presentational markup; the letters
+# are specifically designed to be semantically different from each
+# other.
+#
+# References:
+# * https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols
+# * https://en.wikipedia.org/wiki/Letterlike_Symbols
+
+
+sed -e 's/A/𝐴/g' -e 's/B/𝐵/g' -e 's/C/𝐶/g' -e 's/D/𝐷/g' \
+    -e 's/E/𝐸/g' -e 's/F/𝐹/g' -e 's/G/𝐺/g' -e 's/H/𝐻/g' \
+    -e 's/I/𝐼/g' -e 's/J/𝐽/g' -e 's/K/𝐾/g' -e 's/L/𝐿/g' \
+    -e 's/M/𝑀/g' -e 's/N/𝑁/g' -e 's/O/𝑂/g' -e 's/P/𝑃/g' \
+    -e 's/Q/𝑄/g' -e 's/R/𝑅/g' -e 's/S/𝑆/g' -e 's/T/𝑇/g' \
+    -e 's/U/𝑈/g' -e 's/V/𝑉/g' -e 's/W/𝑊/g' -e 's/X/𝑋/g' \
+    -e 's/Y/𝑌/g' -e 's/Z/𝑍/g'                           \
+    -e 's/a/𝑎/g' -e 's/b/𝑏/g' -e 's/c/𝑐/g' -e 's/d/𝑑/g' \
+    -e 's/e/𝑒/g' -e 's/f/𝑓/g' -e 's/g/𝑔/g' -e 's/h/ℎ/g' \
+    -e 's/i/𝑖/g' -e 's/j/𝑗/g' -e 's/k/𝑘/g' -e 's/l/𝑙/g' \
+    -e 's/m/𝑚/g' -e 's/n/𝑛/g' -e 's/o/𝑜/g' -e 's/p/𝑝/g' \
+    -e 's/q/𝑞/g' -e 's/r/𝑟/g' -e 's/s/𝑠/g' -e 's/t/𝑡/g' \
+    -e 's/u/𝑢/g' -e 's/v/𝑣/g' -e 's/w/𝑤/g' -e 's/x/𝑥/g' \
+    -e 's/y/𝑦/g' -e 's/z/𝑧/g'                           \
+    "$@"

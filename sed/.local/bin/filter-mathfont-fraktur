@@ -1,0 +1,56 @@
+#!/bin/sh
+
+# Usage: ... | $0 [EXTRA_SED_STUFF]...
+# print the input but replace ASCII latin letters with
+# (UTF-8 encoded) Unicode "Fraktur" characters
+#
+# -------------------------------------------------------------------
+#
+# Unicode does not encode Fraktur as a separate script. There are,
+# however, two sets of "Fraktur" symbols (normal and bold) in the
+# Unicode blocks of 'Mathematical Alphanumeric Symbols' and
+# 'letterlike sysmbols' [and also some (not used here) in 'Latin E']:
+#
+# 1) Mathematical Alphanumeric Symbols:
+#    Unicode block (in the SMP, range U+1D400..U+1D7FF) of Latin and
+#    Greek letters and decimal digits that enable mathematicians to
+#    denote different notions with different letter styles.
+#
+# 2) Letterlike symbols:
+#    Unicode originally included a limited set of letters meant for
+#    math in its Letterlike Symbols block before completing the
+#    'Mathematical Alphanumeric Symbols' block. So some characters
+#    are in this block: C, H, I, R, Z
+#
+# 3) Latin E: contains "black letters"  'e', 'o', and 'striked o'
+#             but those are NOT USED as there are "fraktur-ed"
+#             e and o in Mathematical Alphanumeric Symbols block.
+#
+# Note that those are normally meant to be used only in mathematics.
+# Unicode expressly recommends that these characters not be used in
+# general text as a substitute for presentational markup; the letters
+# are specifically designed to be semantically different from each
+# other.
+#
+# References:
+# * https://en.wikipedia.org/wiki/Fraktur
+# * https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols
+# * https://en.wikipedia.org/wiki/Letterlike_Symbols
+# * https://en.wikipedia.org/wiki/Latin_Extended-E
+
+
+sed -e 's/A/𝔄/g' -e 's/B/𝔅/g' -e 's/C/ℭ/g' -e 's/D/𝔇/g' \
+    -e 's/E/𝔈/g' -e 's/F/𝔉/g' -e 's/G/𝔊/g' -e 's/H/ℌ/g' \
+    -e 's/I/ℑ/g' -e 's/J/𝔍/g' -e 's/K/𝔎/g' -e 's/L/𝔏/g' \
+    -e 's/M/𝔐/g' -e 's/N/𝔑/g' -e 's/O/𝔒/g' -e 's/P/𝔓/g' \
+    -e 's/Q/𝔔/g' -e 's/R/ℜ/g' -e 's/S/𝔖/g' -e 's/T/𝔗/g' \
+    -e 's/U/𝔘/g' -e 's/V/𝔙/g' -e 's/W/𝔚/g' -e 's/X/𝔛/g' \
+    -e 's/Y/𝔜/g' -e 's/Z/ℨ/g'                           \
+    -e 's/a/𝔞/g' -e 's/b/𝔟/g' -e 's/c/𝔠/g' -e 's/d/𝔡/g' \
+    -e 's/e/𝔢/g' -e 's/f/𝔣/g' -e 's/g/𝔤/g' -e 's/h/𝔥/g' \
+    -e 's/i/𝔦/g' -e 's/j/𝔧/g' -e 's/k/𝔨/g' -e 's/l/𝔩/g' \
+    -e 's/m/𝔪/g' -e 's/n/𝔫/g' -e 's/o/𝔬/g' -e 's/p/𝔭/g' \
+    -e 's/q/𝔮/g' -e 's/r/𝔯/g' -e 's/s/𝔰/g' -e 's/t/𝔱/g' \
+    -e 's/u/𝔲/g' -e 's/v/𝔳/g' -e 's/w/𝔴/g' -e 's/x/𝔵/g' \
+    -e 's/y/𝔶/g' -e 's/z/𝔷/g'                           \
+    "$@"

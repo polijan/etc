@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# Usage: ... | $0 [EXTRA_SED_STUFF]...
+# print the intput but replace ASCII numbers and letters with
+# (UTF-8 encoded) unicode "monospace" characters
+#
+# -------------------------------------------------------------------
+#
+# "Monospace" symbols are located in the 'Mathematical Alphanumeric
+# Symbols' Unicode blocks, which is a block (in the SMP, range
+# U+1D400 ... U+1D7FF) of Latin and Greek letters and decimal digits
+# that enable mathematicians to denote different notions with
+# different letter styles.
+#
+# Note that those are normally meant to be used only in mathematics.
+# Unicode expressly recommends that these characters not be used in
+# general text as a substitute for presentational markup; the
+# letters are specifically designed to be semantically different
+# from each other.
+#
+# Reference:
+# https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols
+
+
+sed -e 's/A/𝙰/g' -e 's/B/𝙱/g' -e 's/C/𝙲/g' -e 's/D/𝙳/g' \
+    -e 's/E/𝙴/g' -e 's/F/𝙵/g' -e 's/G/𝙶/g' -e 's/H/𝙷/g' \
+    -e 's/I/𝙸/g' -e 's/J/𝙹/g' -e 's/K/𝙺/g' -e 's/L/𝙻/g' \
+    -e 's/M/𝙼/g' -e 's/N/𝙽/g' -e 's/O/𝙾/g' -e 's/P/𝙿/g' \
+    -e 's/Q/𝚀/g' -e 's/R/𝚁/g' -e 's/S/𝚂/g' -e 's/T/𝚃/g' \
+    -e 's/U/𝚄/g' -e 's/V/𝚅/g' -e 's/W/𝚆/g' -e 's/X/𝚇/g' \
+    -e 's/Y/𝚈/g' -e 's/Z/𝚉/g'                           \
+    -e 's/a/𝚊/g' -e 's/b/𝚋/g' -e 's/c/𝚌/g' -e 's/d/𝚍/g' \
+    -e 's/e/𝚎/g' -e 's/f/𝚏/g' -e 's/g/𝚐/g' -e 's/h/𝚑/g' \
+    -e 's/i/𝚒/g' -e 's/j/𝚓/g' -e 's/k/𝚔/g' -e 's/l/𝚕/g' \
+    -e 's/m/𝚖/g' -e 's/n/𝚗/g' -e 's/o/𝚘/g' -e 's/p/𝚙/g' \
+    -e 's/q/𝚚/g' -e 's/r/𝚛/g' -e 's/s/𝚜/g' -e 's/t/𝚝/g' \
+    -e 's/u/𝚞/g' -e 's/v/𝚟/g' -e 's/w/𝚠/g' -e 's/x/𝚡/g' \
+    -e 's/y/𝚢/g' -e 's/z/𝚣/g'                           \
+    -e 's/0/𝟶/g' -e 's/1/𝟷/g' -e 's/2/𝟸/g' -e 's/3/𝟹/g' \
+    -e 's/4/𝟺/g' -e 's/5/𝟻/g' -e 's/6/𝟼/g' -e 's/7/𝟽/g' \
+    -e 's/8/𝟾/g' -e 's/9/𝟿/g'                           \
+    "$@"

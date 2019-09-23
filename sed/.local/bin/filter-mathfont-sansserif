@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# Usage: ... | $0 [EXTRA_SED_STUFF]...
+# print the intput but replace ASCII numbers and letters with
+# (UTF-8 encoded) unicode "sans-serif" characters
+#
+# ------------------------------------------------------------------
+#
+# Sans-serif symbols are located in the 'Mathematical Alphanumeric
+# Symbols' Unicode blocks, which is a block (in the SMP, range
+# U+1D400 ... U+1D7FF) of Latin and Greek letters and decimal digits
+# that enable mathematicians to denote different notions with
+# different letter styles.
+#
+# Note that those are normally meant to be used only in mathematics.
+# Unicode expressly recommends that these characters not be used in
+# general text as a substitute for presentational markup; the
+# letters are specifically designed to be semantically different
+# from each other.
+#
+# Reference:
+# https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols
+
+
+sed -e 's/A/𝖠/g' -e 's/B/𝖡/g' -e 's/C/𝖢/g' -e 's/D/𝖣/g' \
+    -e 's/E/𝖤/g' -e 's/F/𝖥/g' -e 's/G/𝖦/g' -e 's/H/𝖧/g' \
+    -e 's/I/𝖨/g' -e 's/J/𝖩/g' -e 's/K/𝖪/g' -e 's/L/𝖫/g' \
+    -e 's/M/𝖬/g' -e 's/N/𝖭/g' -e 's/O/𝖮/g' -e 's/P/𝖯/g' \
+    -e 's/Q/𝖰/g' -e 's/R/𝖱/g' -e 's/S/𝖲/g' -e 's/T/𝖳/g' \
+    -e 's/U/𝖴/g' -e 's/V/𝖵/g' -e 's/W/𝖶/g' -e 's/X/𝖷/g' \
+    -e 's/Y/𝖸/g' -e 's/Z/𝖹/g'                           \
+    -e 's/a/𝖺/g' -e 's/b/𝖻/g' -e 's/c/𝖼/g' -e 's/d/𝖽/g' \
+    -e 's/e/𝖾/g' -e 's/f/𝖿/g' -e 's/g/𝗀/g' -e 's/h/𝗁/g' \
+    -e 's/i/𝗂/g' -e 's/j/𝗃/g' -e 's/k/𝗄/g' -e 's/l/𝗅/g' \
+    -e 's/m/𝗆/g' -e 's/n/𝗇/g' -e 's/o/𝗈/g' -e 's/p/𝗉/g' \
+    -e 's/q/𝗊/g' -e 's/r/𝗋/g' -e 's/s/𝗌/g' -e 's/t/𝗍/g' \
+    -e 's/u/𝗎/g' -e 's/v/𝗏/g' -e 's/w/𝗐/g' -e 's/x/𝗑/g' \
+    -e 's/y/𝗒/g' -e 's/z/𝗓/g'                           \
+    -e 's/0/𝟢/g' -e 's/1/𝟣/g' -e 's/2/𝟤/g' -e 's/3/𝟥/g' \
+    -e 's/4/𝟦/g' -e 's/5/𝟧/g' -e 's/6/𝟨/g' -e 's/7/𝟩/g' \
+    -e 's/8/𝟪/g' -e 's/9/𝟫/g'                           \
+    "$@"

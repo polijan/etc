@@ -1,14 +1,24 @@
 #!/bin/sh
 
 # Usage: ... | $0 [EXTRA_SED_STUFF]...
-# replace ASCII latin letters with Fraktur characters
+# print the input but replace ASCII latin letters with
+# (UTF-8 encoded) Unicode "Fraktur bold" characters
 #
-# from: https://en.wikipedia.org/wiki/Fraktur
-# Unicode does not encode Fraktur as a separate script. Instead,
-# Fraktur is considered a class of fonts of the Latin alphabet. There
-# are, however, two sets of "Fraktur" symbols in the Unicode blocks of
-# mathematical alphanumeric symbols, letterlike symbols, and Latin E.
-# These are normally meant to be used only in mathematics.
+# -------------------------------------------------------------------
+#
+# Unicode does not encode Fraktur as a separate script. There are,
+# however, two sets of "Fraktur" symbols (normal and bold) in the
+# Unicode blocks of 'Mathematical Alphanumeric Symbols':
+#
+# Note that those are normally meant to be used only in mathematics.
+# Unicode expressly recommends that these characters not be used in
+# general text as a substitute for presentational markup; the letters
+# are specifically designed to be semantically different from each
+# other.
+#
+# References:
+# * https://en.wikipedia.org/wiki/Fraktur
+# * https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols
 
 sed -e 's/A/𝕬/g' -e 's/B/𝕭/g' -e 's/C/𝕮/g' -e 's/D/𝕯/g' \
     -e 's/E/𝕰/g' -e 's/F/𝕱/g' -e 's/G/𝕲/g' -e 's/H/𝕳/g' \
