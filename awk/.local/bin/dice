@@ -1,0 +1,84 @@
+#!/bin/sh
+
+# Usage: $0 [-q|-v] [EXPRESSION]...
+# evaluate expression in "dice notation"
+# (see: https://en.wikipedia.org/wiki/Dice_notation)
+#
+# OPTIONS (for controlling the output):
+# -q => (quiet)   only result of the expression is printed.
+# -v => (verbose) also show the result of every dice roll.
+# If output is not a terminal, -q is the default.
+# On a terminal, -v is the default except for expressions
+# which only consist of one dice roll (and nothing else)
+#
+# DICE NOTATION
+# This script understands mathematical notation with numbers
+# and also 'dice' throws (with letter D (or d) in the form
+# [a]D[b] where a and b are natural numbers, and where
+# default values are a=1 and b=6 if omitted)
+# letter 'x' is same as * and represents multiplication
+#
+# SPECIAL (shortcut) EXPRESSIONS
+# if expression is empty: replace with 1D6
+# if expression is just a number n: replace with 1Dn
+#
+# IMPLEMENTATION NOTE: I implemented this quite simply by
+# transforming the expression and then evaluating it with
+# awk(1) where D(a,b) is a function that evaluates aDb
+
+
+# verbosity option -> 0=quiet, 1=verbose, 2=verbose+colors
+case "$1" in
+   -q) verbose=0; shift ;;
+   -v) [ -t 1 ] && verbose=2 || verbose=1; shift ;;
+esac
+
+is_int() { case $1 in ''|*[!0-9]*) return 1;; esac; }
+
+# build the expression
+E='D(1,6)'
+if [ $# -eq 1 ] && is_int "$1"; then
+   E="D(1,$1)"
+elif [ -n "$*" ]; then
+   # Apply those transformations:
+   # x -> *   aDb -> D(a,b)  aD -> D(a,6)  Db -> D(1,b)
+   # any remaining lonely D -> D(1,6)
+   E=$(printf %s "$*"   |
+       sed -e 's/x/*/g' \
+           -e 's/\([0-9][0-9]*\)[Dd]\([0-9][0-9]*\)/D(\1,\2)/g' \
+           -e 's/\([0-9][0-9]*\)[Dd]/D(\1,6)/g' \
+           -e 's/[Dd]\([0-9][0-9]*\)/D(1,\1)/g' \
+           -e 's/[Dd]\([^(]\)/D(1,6)\1/g'       \
+           -e 's/[Dd]$/D(1,6)/g'
+      )
+fi
+
+# choose default verbosity if none is chosen
+if [ -z $verbose ]; then
+   verbose=0
+   if [ -t 1 ]; then
+      printf %s "$E"                                       |
+      grep -q '^[[:space:]]*D(1,[0-9][0-9]*)[[:space:]]*$' \
+      || verbose=2
+   fi
+fi
+
+# define awk function D(a,b) and evaluate expression in awk
+awk -v verbose=$verbose -v seed="$(date +%s)"   "
+    function D(roll, sides) {
+       if (verbose) printf(\"%dD%d:\", roll, sides)
+       for (sum=0; roll; roll--) {
+          d = 1 + int(sides * rand())
+          if      (verbose==2) printf(\"\033[33m[%d]\033[0m\", d)
+          else if (verbose==1) printf(\"[%d]\", d)
+          sum += d
+       }
+       if (verbose) printf(\" \")
+       return sum
+    }
+    BEGIN {
+       srand(seed)
+       total=$E
+       if (verbose) printf(\"=> \")
+       print total
+    }"
