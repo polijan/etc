@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Usage: $0 [CMD_LINE]... NAME
+# mostly equivalent to this => which NAME | xargs -r [CMD_LINE]...
+
+[ $# -eq 0 ] && usage -d "$@"
+
+# get the last argument
+for last; do :; done
+# ^^ That's should be POSIX ^^
+# We iterate 'last' over the args and do nothing.
+
+# BUT HERE ARE SOME HEAVY BASHISMS, set $@ to all but last args:
+set -- "${@:1:$(($#-1))}"
+# ^^^How it works: ^^^
+# $# is the number of arguments
+# $((...)) is an arithmetic expression, so $(($#-1)) is one less than the number of arguments.
+# ${variable:position:count} is a substring expression: it extracts count characters from variable starting at position. In the special case where variable is @, which means the argument list, it extracts count arguments from the list beginning at position. Here, position is 1 for the first argument and count is one less than the number of arguments worked out previously.
+# set -- arg1...argn sets the argument list to the given arguments
+# So the end result is that the argument list is replaced with a new list, where the new list is the original list except for the last argument.How it works:
+
+
+which "$last" | xargs -r "$@"
+
+
+case ${PIPESTATUS[0]} in
+  0) exit "${PIPESTATUS[1]}" ;;
+  1) printf "command '%s' not found\n" "$last" >&2; exit 1 ;;
+  *) exit 2 ;;
+esac
