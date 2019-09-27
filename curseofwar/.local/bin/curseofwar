@@ -1,9 +1,0 @@
-#!/bin/sh
-# Usage: curseofwar
-# breaks addiction to the game curseofwar(6)
-
-BIN=$(which -a curseofwar | grep /usr)
-
-echo 'No.'; exit; # comment/uncomment this line
-
-exec "$BIN" "$@"
