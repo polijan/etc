@@ -1,4 +1,4 @@
 #!/bin/sh
-# Usage: $0
+# Usage: $0 ...
 # calls etc-stow with -R option to restow
-exec etc-stow -R "$@"
+etc-stow -R "$@"

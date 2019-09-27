@@ -1,28 +1,33 @@
 #!/bin/sh
 
 # Usage: etc-stow [-STOW_FLAG]... [NAME]...
-# uses stow(1) to install 'configuration packages' from ~/etc into ~
-# if NAME(s) are given, stow command applies on those 'configuration packages'
-# otherwise stow command applies to all 'configuration packages' whose name
-# matches a command or a package installed by apt.
+# uses stow(1) to install "etc's packages" into ~
+# if NAME(s) are given, stow command applies on those 'packages'
+# otherwise stow command applies to all 'packages' whose name
+# matches a command or a "dpkg's package"
 
-###############################################################################
-
+########################################################################
 ansi() { printf '\033[%sm' "$1"; }
-HIGH=$(ansi '33')
+HIGH=$(ansi 33)
 RESET=$(ansi 0)
 
-is_installed() { #args: PACKAGE
-   # returns 0 if package is installed, non-zero otherwise
-   { which "$1" || dpkg -s "$1" ;} >/dev/null 2>/dev/null
+exists() { command -v "$@" > /dev/null; }
+
+# args: PACKAGE
+# returns 0 if package is installed, non-zero otherwise
+# assumes dpkg packaging system (Debian's derivatives and some others)
+is_installed() {
+   exists "$1" || dpkg -L "$1" >/dev/null 2>/dev/null
 }
 
 xargs_stow() {
    # we do not stow _ or READMEs
    xargs stow -v -t "$HOME" --ignore=README --ignore=_ "$@"
 }
+########################################################################
 
-cd "$HOME/etc"
+[ -z "$ETC_HOME" ] && ETC_HOME="$HOME/etc"
+cd "$ETC_HOME"  || exit 1
 
 HAS_NAMES=false
 for i; do

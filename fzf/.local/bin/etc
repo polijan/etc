@@ -1,0 +1,44 @@
+#!/bin/sh
+
+# Usage: $0 [QUERY]
+# preview my 'etc' directory
+
+########################################################################
+ansi() { printf '\033[%sm' "$1"; }
+HIGH=$(ansi 33)
+RESET=$(ansi 0)
+
+exists() { command -v "$@" > /dev/null; }
+
+# args: PACKAGE
+# returns 0 if package is installed, non-zero otherwise
+# assumes dpkg packaging system (Debian's derivatives and some others)
+is_installed() {
+   exists "$1" || dpkg -L "$1" >/dev/null 2>/dev/null
+}
+########################################################################
+
+[ -z "$ETC_HOME" ] && ETC_HOME="$HOME/etc"
+cd "$ETC_HOME"  || exit 1
+exists fzf      || { echo 'requires fzf(1)'  2>/dev/null; exit 1; }
+exists tree     || { echo 'requires tree(1)' 2>/dev/null; exit 1; }
+
+COLUMNS=$(stty size | cut -f2 -d' ')
+
+#find -maxdepth 1                              |
+find ./* -type d -prune                        |
+sed -e 's:\./::' -e 's:^\.$::'                 |
+while IFS= read -r i; do
+   if [ -d "$i" ] && is_installed "$i"
+      then printf '%s\n' "${HIGH}${i}${RESET}"
+      else printf '%s\n' "$i"
+   fi
+done                                           |
+fzf --ansi                                     \
+    --bind 'Alt-Z:toggle-preview'              \
+    --preview-window "right:$((COLUMNS - 22))" \
+    --preview 'if [ -d {} ]
+                  then tree -aFC {}
+                  else cat {}
+               fi'                             \
+    --query "$*"
