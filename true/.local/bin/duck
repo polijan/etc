@@ -19,8 +19,12 @@ is-graphical || DDG="$DDG/lite"
 
 case "$*" in
    '?'|-'?'|-h|--help) usage "$0" ;;
-   '') if is-graphical; then
-          browser "$DDG"
+   '') # if we got not query:
+       # - go to ddg we have (a chance to have) a nice graphical browser
+       #   (so we can get interactive completion of bangs, etc.)
+       # - but otherwise, we might as well ask for the query here in the tty
+       if is-graphical; then
+          exec browser "$DDG"
        elif exists bash; then
           # if bash exists, we can use readline (read -e):
           QUERY=$(bash -c 'IFS= read -r -e -p "search: "
@@ -31,4 +35,4 @@ case "$*" in
        fi ;;
     *) QUERY="$*" ;;
 esac
-browser "$DDG/?q=$(urlencode "$QUERY")"
+exec browser "$DDG/?q=$(urlencode "$QUERY")"
