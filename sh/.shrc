@@ -4,6 +4,64 @@
 [ -n "$DEBUG_SH" ] && printf 'DEBUG (~/.shrc): this is ~/.shrc\n' >&2
 
 ################################################################################
+
+# see /usr/share/doc/bash/examples/startup-files for examples.
+# the files are located in the bash-doc package.
+
+# the default umask is set in /etc/profile; for setting the umask
+# for ssh logins, install and configure the libpam-umask package.
+#umask 022
+
+
+################################################################################
+# CONFIGURATION FOR ~/.local
+# also see this post: http://nullprogram.com/blog/2017/06/19/
+################################################################################
+
+# PATH
+PATH="$HOME/.local/bin:$PATH"
+# Add directories to the include and link path for C and C++ compilers
+# This is like the -I compiler option and the -L linker option, except
+# there wont be a need to use them explicitly
+export C_INCLUDE_PATH="$HOME/.local/include"
+export CPLUS_INCLUDE_PATH="$HOME/.local/include"
+export LIBRARY_PATH="$HOME/.local/lib"
+export PKG_CONFIG_PATH="$HOME/.local/lib/pkgconfig"
+# run time dynamic linker:
+if [ -z "$LD_LIBRARY_PATH" ]
+   # not sure why the IF is necessary, but termux gives me some errors otherwise
+   then export LD_LIBRARY_PATH="$HOME/.local/lib"
+   else export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$HOME/.local/lib"
+fi
+# man pages:
+exists manpath || export MANPATH="$HOME/.local/share/man:$MANPATH"
+  # I would expect that I had to do the following, but no,
+  # it seems to seems to be able to figure it out
+  # export MANPATH="$HOME/.local/share/man:$(manpath)"
+
+################################################################################
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/bin" ] ; then
+   PATH="$HOME/bin:$PATH"
+fi
+
+################################################################################
+# EDITOR
+################################################################################
+
+for i in nano+ nano pico e3pi micro emacs ne mg e3em vim vi; do
+    if command -v "$i" >/dev/null; then
+       EDITOR=$i
+       break
+    fi
+done
+unset i
+export EDITOR
+export VISUAL="$EDITOR"
+
+
+################################################################################
 # INCLUDE *.sh FILES FROM ~/.config/sh-includes
 ################################################################################
 
