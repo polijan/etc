@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# Usage: $0 [ARG]...
+# Launch a browser (ARG typically is a URL)
+# If defined, use the BROWSER or the BROWSER_TTY (if environment
+# is not graphical)environment variables.
+
+exists() { command -v "$@" >/dev/null; }
+
+# find [COMMAND]...
+# iterate through the list of COMMANDs and prints the first one that exists
+# return non-0 if end of list is reached but nothing was found
+cmdfind() {
+   for i do
+       exists "$i" && { printf '%s\n' "$i"; return; }
+   done
+   return 1
+}
+
+browser_gui() {
+   [ -n "$BROWSER" ] && return
+   BROWSER=$(cmdfind termux-open-url xdg-open sensible-browser \
+                     firefox chromium-browser                  \
+                     epiphany-browser epiphany dillo
+            ) && return
+   browser_tty
+}
+
+browser_tty() {
+   [ -n "$BROWSER_TTY" ] && { BROWSER=$BROWSER_TTY; return; }
+   BROWSER=$(cmdfind w3m lynx links curl) && return
+   die 'cannot find a browser'
+}
+
+if is-graphical
+   then browser_gui
+   else browser_tty
+fi
+
+[ -t 2 ] && printf '\033[33mbrowser:\033[0m %s %s\n' "$BROWSER" "$*" >&2
+exec "$BROWSER" "$@"

@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# Usage: $0 [query]...
+#
+#    o<   make on online search using Duck Duck Go,
+# >{=}    the search engine that doesn't track you.
+# ~~~~~
+#
+# tips:
+# - leave query empty to go to Duck Duck Go page
+# - use !bangs to use other engines, such as:
+#   !g    google
+#   !w    wikipedia (or !w** for different languages)
+#   !lite duckduckgo lite page
+#   ...   (see: https://duckduckgo.com/bang)
+
+DDG='https://duckduckgo.com'
+is-graphical || DDG="$DDG/lite"
+
+case "$*" in
+   '?'|-'?'|-h|--help) usage "$0" ;;
+   '') if is-graphical; then
+          browser "$DDG"
+       elif exists bash; then
+          # if bash exists, we can use readline (read -e):
+          QUERY=$(bash -c 'IFS= read -r -e -p "search: "
+                           printf %s "$REPLY" ')
+       else
+          printf 'search: '
+          IFS= read -r QUERY
+       fi ;;
+    *) QUERY="$*" ;;
+esac
+browser "$DDG/?q=$(urlencode "$QUERY")"
