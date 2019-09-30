@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# Usage: $0
+# wrapper to cal(1)
+# - try to make week (which isn't the daefult)
+# - if no argument, use -3
+# ...
+
+# args: ...
+# calls cal(1) but try to make week start on a Monday
+# sometimes it's with -M or could be with -m (busybox)
+# or maybe it's not supported
+cal_() {
+    if cal -M >/dev/null 2>/dev/null; then
+       cal -M "$@"
+    elif cal -m >/dev/null 2>/dev/null; then
+       cal -m "$@"
+    else
+       cal "$@"
+    fi
+}
+
+# no args, do cal_ -3 (possibly with ncal(1) if we have)
+if [ -t 1 ] && [ $# -eq 0 ]; then
+   if command -v ncal >/dev/null
+      then ncal -M -b -3
+      else cal_ -3
+   fi
+else
+   cal_ "$@"
+fi
