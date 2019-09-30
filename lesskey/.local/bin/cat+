@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Usage: cat+ FILE
+#        cat+ [CAT_OPTION]... [FILE]...
+#
+# When stdin and stdout are opened on a terminal and cat+ is called with only
+# one (existing, readable) FILE, then this file will be displayed using
+# less(1). In any other case, cat+ just invokes the cat(1) command.
+
+
+# In an interactive shell, cat may be used to display the file on screen
+# thus when cat is only invoked with a filename from and to a terminal,
+# I invoke less instead. less is called so that it displays on the terminal
+# and exit if file can be displayed on one screen
+
+[ -t 0 ] && [ -t 1 ] && [ $# -eq 1 ] && [ -r "$1" ] && exec less -L -FX "$1"
+exec cat "$@"
