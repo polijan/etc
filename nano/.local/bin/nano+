@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Usage: nano+ [ARG]...
+# launch nano(1) editor with some options (if your build of nano has them)
+# based on the terminal size:
+# if terminal is large enough, display line numbers
+# if terminal has <20 lines  , do not show the two help lines at the bottom.
+
+
+# has OPTION -> returns zero if nano has the given OPTION, non-zero otherwise
+has() { nano --help | grep -qF -- "$@" ; }
+
+# note: line numbers display has been introduced in nano 2.7.1 [end 2016]
+# TODO: soon I won't have system with so old nano, so maybe testing those
+#       options won't be necessary.
+
+OPTS=''
+[ -n "$COLUMNS" ] || COLUMNS=$(stty size | cut -f2 -d' ')
+[ -n "$LINES" ]   || LINES=$(  stty size | cut -f1 -d' ')
+[ "$COLUMNS" -ge 68 ] && has '--linenumbers' && OPTS="$OPTS --linenumbers"
+[ "$LINES" -lt 20 ]   && has '--nohelp'      && OPTS="$OPTS --nohelp"
+exec nano -q $OPTS "$@"
