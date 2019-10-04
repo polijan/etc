@@ -1,7 +1,7 @@
 # GNU nano's config file
 # (~/.nanorc or ~/.config/nano/nanorc)
 
-# see: man nanorc
+# see: man nanorc(5)
 
 ########################################################################
 
@@ -20,14 +20,25 @@ set tabsize 4
 set tabstospaces
 
 # ^J: remove trailing white space from wrapped lines:
+set fill 80
+set nowrap
+#   ^-- this option is now deprecated,
+#       but this is needed for older versions, otherwise 'set fill'
+#       will trigger hard wrapping. in the future, remove it.
 set trimblanks
+set justifytrim
+#   ^-- nano now uses 'set trimblanks' option
+#       older versions used 'set justifytrim' (which is now deprecated)
+#       in the future, I should only keep 'set trimblanks'
 
 # top title row:
 #set titlecolor brightwhite,blue
+# (actually, the default (reverse video) looks good)
 
 # bottom row/menu:
 #set keycolor cyan
 #set functioncolor green
+# (actually, the default (reverse video) looks good)
 
 # status bar:
 set constantshow
