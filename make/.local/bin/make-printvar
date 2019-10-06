@@ -9,5 +9,11 @@
 # 2) @echo $*=$($*) : automatic variable $* matches the % and then $($*) gets the value of a variable whose name is stored in $*
 # more explanation : see http://blog.jgc.org/2015/04/the-one-line-you-should-add-to-every.html
 
-[ $# -eq 1 ] || { echo 'Usage: make-printvar VAR_NAME' >&2; exit 1; }
-exec make --eval="print-%: ; @echo $*=$($*)" "print-$1"
+[ $# -eq 1 ] || usage -d "$0"
+
+
+# shellcheck disable=SC2016
+# (supress shellcheck's warning about non-expansion)
+# literal string below contains $... and that is what's needed
+
+make --eval='print-%: ; @echo $*=$($*)' "print-$1"
