@@ -2,9 +2,10 @@
 
 #######################################################################
 #
-# Usage: ... | $0
-# display "tux" and prints the content from
-# stdin on the right side.
+# Usage: $0
+# prints a colored ASCII art logo of the Linux penguin (Tux)
+# $0       => display the logo
+# ... | $0 => "cat" stding and display "Tux" as left margin
 #
 # this shell script is intended as a poorman's
 # replacement of cowsay(1). This script is dumb
@@ -40,13 +41,19 @@ fi
 P() { IFS= read -r L; printf '%b %s\n' "$1" "$L"; }
 A() { awk -v X="$1" '{print X, $0}' ;}
 
+tux() {
+  P '    .--.   '
+  P '   |\033[32mo\033[33m_\033[32mo\033[0m |  '
+  P '   |\033[33m:_/\033[0m |  '
+  P '  //   \ \ '
+  P ' ((     (_)'
+  P '\033[33m/ \\\033[0m}    \033[33m/ \\\033[0m'
+  P '\033[33m\  \\\033[0m._.\033[33m/  /\033[0m'
+  P " \033[33m\`-'   \`-'\033[0m "
+  A '           '
+}
 
-P '    .--.   '
-P '   |\033[32mo\033[33m_\033[32mo\033[0m |  '
-P '   |\033[33m:_/\033[0m |  '
-P '  //   \ \ '
-P ' ((     (_)'
-P '\033[33m/ \\\033[0m}    \033[33m/ \\\033[0m'
-P '\033[33m\  \\\033[0m._.\033[33m/  /\033[0m'
-P " \033[33m\`-'   \`-'\033[0m "
-A '           '
+if [ -t 0 ]
+   then echo | tux
+   else tux
+fi
