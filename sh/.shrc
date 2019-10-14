@@ -1,6 +1,36 @@
 #!/bin/sh
 #^--- not to be executed directly, this is just for editors' syntax hilighting
 
+
+
+################################################################################
+#####TODO
+################################################################################
+
+#  # ~/.bashrc: executed by bash(1) for non-login shells.
+#  # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+#  # or  /usr/share/doc/bash-doc/examples in the bash-doc package
+#  # for examples
+#
+#  # If not running interactively, do not do anything
+#  [[ $- != *i* ]] && return
+#  ##case $- in
+#  ##    *i*) ;;
+#  ##      *) return;;
+#  ##esac
+#  # An  interactive shell is one started without non-option argu‐
+#  # ments and without the -c  option  whose  standard  input  and
+#  # error  are  both  connected  to  terminals  (as determined by
+#  # isatty(3)), or one started with the -i option.   PS1  is  set
+#  # and  $-  includes  i if bash is interactive, allowing a shell
+#  # script or a startup file to test this state.
+
+
+
+
+
+
+
 [ -n "$DEBUG_SH" ] && printf 'DEBUG (~/.shrc): this is ~/.shrc\n' >&2
 
 ################################################################################
@@ -11,6 +41,16 @@
 # the default umask is set in /etc/profile; for setting the umask
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
+
+
+################################################################################
+# general/useful functions
+################################################################################
+
+exists() { command -v "$@" >/dev/null ;}
+
+# reload the shell (useful after config file change)
+reload_shell() { exec "$SHELL" -l; }
 
 
 ################################################################################
@@ -41,7 +81,7 @@ exists manpath || export MANPATH="$HOME/.local/share/man:$MANPATH"
 
 ################################################################################
 
-# set PATH so it includes user's private bin if it exists
+# set PATH so it includes user's private bin (if it exists)
 if [ -d "$HOME/bin" ] ; then
    PATH="$HOME/bin:$PATH"
 fi
@@ -70,3 +110,16 @@ for i in "$HOME/.config/sh-includes"/*.sh; do
     . "$i"
 done
 unset i
+
+
+################################################################################
+# IF WE'RE STARTING BASH: INCLUDE *.bash FILES FROM ~/.config/sh-includes
+################################################################################
+
+if [ -n "$BASH_VERSION" ]; then
+   for i in "$HOME/.config/sh-includes"/*.bash; do
+       [ -n "$DEBUG_SH" ] && printf 'DEBUG (~/.bashrc): including %s\n' "$i" >&2
+       . "$i"
+   done
+   unset i
+fi
