@@ -23,10 +23,9 @@
 # as a login shell:            interactive shell:         non-interactive shell:
 # 1. /etc/profile              1. /etc/bash.bashrc        1. file from $BASH_ENV
 # 2. one of: ~/.bash_profile   2. ~/.bashrc
-#      , or: ~/.bash_login
-#      , or: ~/.profile
-#
-#
+#      , or: ~/.bash_login                                (^) except for remote
+#      , or: ~/.profile                                       shells, (check out
+#                                                                   ~/.basrchrc)
 # /etc/profile would typically be written to source
 # /etc/bash.bashrc and scripts in /etc/profile.d
 #
@@ -44,10 +43,10 @@
 #   1. sets up ENV to ~/.shrc (in ~/.profile)
 #   2. and includes ~/.shrc
 #
-# * a ~/.bashrc which is just a symlink to ~/.shrc
+# * a ~/.bashrc which mostly just source ~/.shrc
 #
-# * a ~/.shrc written in POSIX sh (which include other bash (if we use that)
-#             and sh scripts from ~/.config/sh-includes/...
+# * a ~/.shrc written in POSIX sh which include other sh script (and bash
+#             scripts too if we run with bash) from ~/.config/sh-includes/
 #
 # here's how the startup works:
 #
@@ -56,14 +55,13 @@
 #                                 ^i   ^   2> include ~/.config *.sh
 #                                 |n   |   3> include ~/.config *.bash (if bash)
 # sh -l   -> 1. /etc/profile      |c   |
-#            2. ~/.profile -------|l   |
-#                                 |u   |
-# bash -l -> 1. /etc/profile      |d   |
-#            2. ~/.profile -------'e   |
-#                                      |
-# bash    -> 1. /etc/bash.bashrc       | k
-#            2. ~/bashrc --------------' n
-#                               is a symli
+#            2. ~/.profile -------|l   |i
+#                                 |u   |n
+# bash -l -> 1. /etc/profile      |d   |c
+#            2. ~/.profile -------'e   |l
+#                                      |u
+# bash    -> 1. /etc/bash.bashrc       |d
+#            2. ~/bashrc --------------'e
 #
 ################################################################################
 
