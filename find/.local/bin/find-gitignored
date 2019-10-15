@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Usage: $0 [-c]
+# display each line of .gitignore (except comments) and
+# a number indicating how many files this line matches.
+
+case $1 in
+   -c) count=true    ;;
+   '') count=false   ;;
+    *) usage -d "$@" ;;
+esac
+
+grep -v '^#' .gitignore |
+while IFS= read -r i; do
+   if $count; then
+      printf '%s\t' "$i"
+      find . -wholename "./$i" | wc -l
+   else
+      find . -wholename "./$i"
+   fi
+done
