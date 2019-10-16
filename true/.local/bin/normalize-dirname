@@ -6,12 +6,6 @@
 # on string only, the directroy doesn't need to exist.
 
 exists() { command -v "$@" > /dev/null ;}
-tac_()   { # tac(1) in case we don't have it [BSD has 'tail -r' instead]
-   if   exists tac; then    tac
-   elif exists fzf; then    FZF_DEFAULT_OPTS='' fzf -f --tac --no-sort
-                    else    sed '1!G;h;$!d' # slow: https://unix.stackexchange.com/questions/233014/how-does-the-command-sed-1ghd-reverse-the-contents-of-a-file
-   fi
-}
 
 # "normalize" directory name
 # we operate on string only, we don't use realpath -s or readlink -m
@@ -46,7 +40,7 @@ D=$(printf %s "$D/" |
     sed 's://*:/:g' |
                     \
     tr '/\n' '\n/'  |
-    tac_            |
+    portably-tac    |
                     \
     awk '  /^$/     { skip=0; printf "\n"; exit; }
            /^\.$/   { next; }
@@ -54,7 +48,7 @@ D=$(printf %s "$D/" |
                     { if (skip>0) skip--; else print; }
            END      { for(; skip>0; skip--) printf "..\n"; }
         '           |
-    tac_            |
+    portably-tac    |
     tr '/\n' '\n/'  )
 
 # D is now the normalized directory name with a final / (or D is null

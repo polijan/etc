@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Usage: ... | $0 [FILE]
+# prints lines in reverse
+# this is a basic tac(1) in a portably-manner
+#
+# tac: GNU and busybox have tac(1)
+#      BSD has 'tail -r' instead
+#      POSIX doesn't have it
+
+if   exists tac; then
+     tac
+elif exists fzf; then
+     # I find it fun to use fzf in this way :)
+     FZF_DEFAULT_OPTS='' fzf -f --tac --no-sort
+else
+     # slow: https://unix.stackexchange.com/questions/233014/how-does-the-command-sed-1ghd-reverse-the-contents-of-a-file
+     sed '1!G;h;$!d'
+fi
