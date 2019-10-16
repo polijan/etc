@@ -10,21 +10,9 @@
 
 APP="$1"
 [ $# -eq 0 ] && APP='ls'
-APP=$(which "$APP") || exit 100
+command -v "$APP" >/dev/null || exit 3
 
-if command -v readlink > /dev/null; then
-   # readlink(1) is NOT posix (although it exists in coreutils, busybox, BSD, etc.)
-   case "$(readlink -f "$APP")" in
-      *busybox*) exit 0 ;;
-   esac
-else
-   # POSIX specifies 'ls -l' should output 'linkpath -> filepath'
-   # parsing ls sucks, but if we assume APP doesn't contains spaces,
-   # newlines, or weird stuff, then we can do this
-   # inspired by https://groups.google.com/forum/#!topic/comp.unix.shell/3s8cuwcVnTk
-   [ "$1" = 'busybox' ] && exit 0
-   case "$(LC_ALL=C ls -ld "$APP")" in
-      *" -> "*busybox*) exit 0 ;;
-   esac
-fi
-exit 1
+case $(portably-readlink "$APP") in
+   *busybox*) exit 0 ;;
+           *) exit 1 ;;
+esac

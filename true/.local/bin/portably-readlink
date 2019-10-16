@@ -14,7 +14,7 @@
 #
 # It feels brittle and ugly though!
 
-if exists readlink; then
+if command -v readlink >/dev/null; then
    readlink "$1"
 
 elif [ -L "$1" ]; then
