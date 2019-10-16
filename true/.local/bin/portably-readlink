@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Usage: $0 FILE
+# print value of symbolic link
+# this is a basic readlink(1) in a kinda "portably"-manner
+# doesn't accept options
+
+# MORE INFO:
+# readlink(1) should be present on GNU/BSD/Busybox, but it's not POSIX.
+# However POSIX says 'ls -l' should output 'linkpath -> filepath',
+# and so provided that the link's name does NOT include "->",
+# the following should work:     L=$(ls -dl link)
+#                                echo ${L#*-> }
+#
+# It feels brittle and ugly though!
+
+if exists readlink; then
+   readlink "$1"
+
+elif [ -L "$1" ]; then
+   L=$(ls -dl "$1")
+   printf '%s\n' "${L#*-> }"
+else
+   exit 1
+fi
