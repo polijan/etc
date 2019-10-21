@@ -124,6 +124,9 @@ __ps1_create() {
   # add host in the prompt if we are SSH'ing
   [[ -n "$SSH_CLIENT" || -n "$SSH_TTY" ]] && { __ps1_segment 4 7; PS1+='\h'; }
 
+  # mj shell
+  [[ -n "$MJ_SHELL" ]] && { __ps1_segment 7 166 ; PS1+='mj'; }
+
   # current directory
   __ps1_segment 250 241 # base2 on base00
   PS1+='\w'
