@@ -1,0 +1,56 @@
+#!/bin/sh
+
+# Usage: $0 [-a] ...
+# 1) find files under the current directory, sort them
+#    by last modification time (or alphabetically is -a is specified)
+#    and launch an interactive menu to choose one file,
+# 2) then launch the program (specified in the arguments (or by default editor) on it.
+# 3) back to step 1
+#
+# keys:
+# enter     : launch the program/editor
+# esc       : quit
+# alt-z     : toggle preview window's visibility
+# ctrl-alt-z: toggle preview window's line wrapping
+# alt-r     : refresh the view (useful if you delete/create files)
+#
+# note: last modification time requires GNU find, -a does not.
+
+TIMESORT=true
+[ "$1" = -a ] && { shift; TIMESORT=false; }
+if $TIMESORT && ! is-gnu find; then
+   die 'requires GNU find (hint: -a option does not require GNU find)'
+fi
+
+[ -n "$*" ] || set -- $VISUAL
+[ -n "$*" ] || set -- $EDITOR
+[ -n "$*" ] || set -- vi
+
+while true; do
+   F=$(if $TIMESORT; then
+          find . -type f -printf "%T@ %Tc %p\n"  |
+          sort -n -r
+       else
+          find . -type f | sort
+       fi                                        |
+       sed 's:[^/]*/::'                          |
+       fzf --prompt "$* > "                      \
+           --bind 'Alt-Z:toggle-preview'         \
+           --bind 'Alt-R:execute(kill -9 $PPID)' \
+           --preview-window 'down:33%'           \
+           --preview 'cat {}'                    )
+   case $? in
+           0) "$@" "$F" ;;
+     1|2|130) break ;;
+   esac
+done
+
+#NOTES:
+#
+# find's printf:
+#      %Tk: File's last modification time in the format specified by k.
+#      @: seconds since Jan. 1, 1970, 00:00 GMT, with fractional part.
+#      %p: File's name.
+# sed: delete everything before first /
+#
+# fzf: alt-r: refresh the view (by killing fzf, thus relooping)
