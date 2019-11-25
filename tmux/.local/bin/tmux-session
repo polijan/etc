@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Usage: $0 [directory]
+#
+# first, create a new tmux session (unless it already exists), such as:
+# - session is named after the given directory (or the current directory)
+# - session's start directory will be the given directory
+# and then switch client (or attach) to that session.
+
+if [ $# -eq 0 ]
+   then DIR=$(pwd)
+   else DIR=$1
+fi
+[ -d "$DIR" ] || die "$1: not a directory"
+
+NAME=$(basename "$DIR")
+
+if [ -z "$TMUX" ]; then
+   tmux new-session -s "$NAME" -c "$DIR"
+else
+   tmux new-session -d -s "$NAME" -c "$DIR"
+   tmux switch-client -t "$NAME"
+fi
