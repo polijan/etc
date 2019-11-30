@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Usage: $0 [bash_read_arg]...
+# Calls bash's 'read' builtin and prints the answer.
+#
+# This could be used to call a better 'read' from a
+# less sophisticated shell interpreter such as dash(1)
+#
+# Just an example:
+# A=$(bash-read -p 'prompt: ' -i 'initial value')
+# To see options/arguments, do: bash -c 'help read'
+
+IFS= read -r -e "$@" </dev/tty
+[ -z "$REPLY" ] && exit
+printf '%s\n' "$REPLY"
