@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Usage: $0 CAPABILITY [TERMINAL]...
+# display the sequence corresponding to the terminfo CAPABILITY
+# for the current terminal and the given terminal(s) as queried
+# by tput(1)
+
+cap() {
+   tput "$CAP" | LESS='' less -FX
+   printf '%b%s\n' "$GOTO" "$TERM"
+}
+
+[ -n "$1" ] || usage -d "$0"
+GOTO="                         $(tput cuu1)"
+CAP=$1
+shift
+
+cap
+for i; do
+    TERM=$i
+    cap
+done
