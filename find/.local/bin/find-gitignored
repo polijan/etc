@@ -1,8 +1,9 @@
 #!/bin/sh
 
 # Usage: $0 [-c]
-# display each line of .gitignore (except comments) and
-# a number indicating how many files this line matches.
+# display each line (expect comments) in git ignore
+# files, ie: $HOME/.config/git/ignore and .gitignore
+# and a number indicating how many files each line matches.
 
 case $1 in
    -c) count=true    ;;
@@ -10,8 +11,12 @@ case $1 in
     *) usage -d "$@" ;;
 esac
 
-grep -v '^#' .gitignore |
+grep -h -v '^#'                      \
+     "$HOME/.config/git/ignore"      \
+     .gitignore                      \
+     2>/dev/null                     |
 while IFS= read -r i; do
+   [ -z "$i" ] && continue
    if $count; then
       printf '%s\t' "$i"
       find . -wholename "./$i" | wc -l
