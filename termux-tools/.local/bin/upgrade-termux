@@ -1,0 +1,4 @@
+#!/bin/sh
+# Usage: $0
+# upgrade termux programs
+pkg upgrade
