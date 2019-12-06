@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: $0
+# list software (globally and locally) installed with npm
+{ npm list -g
+  npm list
+} 2>/dev/null

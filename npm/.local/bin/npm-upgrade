@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Usage: $0 PACKAGE
+# update the given npm package
+
+PACKAGE=$1
+
+GLOBAL=$(npm root -g 2>/dev/null)
+if [ -e "$GLOBAL/$PACKAGE" ]; then
+  # upgrading (global)
+  sudo npm update -g "$PACKAGE"
+else
+  # upgrading (local)
+  npm update "$PACKAGE"
+fi
