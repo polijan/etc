@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: $0
+# sudo apt update && sudo apt upgrade
+
+requires sudo
+
+sudo apt update &&
+sudo apt upgrade
