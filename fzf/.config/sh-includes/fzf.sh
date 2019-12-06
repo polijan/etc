@@ -14,6 +14,7 @@ if   [ -d "$HOME/.local/src/fzf/.git" ]; then
      fzf_upgrade() { # function to upgrade the fzf binary with git
         ( cd "$HOME/.local/src/fzf" && git pull && ./install --bin )
      }
+     alias upgrade-fzf=fzf_upgrade
 elif [ -d "/usr/share/fzf/shell" ]      ; then FZF_SHELL="/usr/share/fzf/shell"
 elif [ -d "/usr/share/fzf" ]            ; then FZF_SHELL="/usr/share/fzf"
 elif [ -d "/usr/local/share/fzf/shell" ]; then FZF_SHELL="/usr/local/share/fzf/shell"
