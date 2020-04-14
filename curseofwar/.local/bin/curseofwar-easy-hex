@@ -1,0 +1,4 @@
+#!/bin/sh
+# Usage: $0
+# launch 'curseofwar' with the easiest settings on a hex grid
+curseofwar-easy -S hex "$@"
