@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# Usage: $0 [...]
+# with no, or several, or -* arguments: 'mv -i'
+# with one argument:
+#  - interactively prompt the destination
+#    (by default the , useful if you want to change
+#    a few letters of the name)
+#  - and then 'mv -i "$1" <destination>'
+
+MV() { mv -i "$@"; exit; }
+
+[ $# -ne 1 ] && MV "$@"
+
+case $1 in -*)  MV "$@";; esac
+
+IFS= read -r -e -p 'to: ' -i "$1"
+[ $? -eq 0 ]        || exit
+[ -z "$REPLY" ]     && exit 1
+[ "$REPLY" = "$1" ] && exit 1
+MV "$1" "$REPLY"
