@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# Usage: $0 [...]
+# with no, or several, or -* argument(s): 'cp -i'
+# with one argument (non -*):
+#  - interactively prompt the destination
+#    (by default the , useful if you want to change
+#    a few letters of the name)
+#  - and then 'cp -i -a "$1" <destination>'
+
+CP() { cp -i "$@"; exit; }
+
+[ $# -ne 1 ] && CP "$@"
+case $1 in -*)  CP "$@";; esac
+
+IFS= read -r -e -p 'copy to: ' -i "$1.$(date +%F_%H%M%S)"
+[ $? -eq 0 ]        || exit
+[ -z "$REPLY" ]     && exit 1
+[ "$REPLY" = "$1" ] && exit 1
+CP -a "$1" "$REPLY"
