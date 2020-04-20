@@ -13,7 +13,7 @@ MV() { mv -i "$@"; exit; }
 [ $# -ne 1 ] && MV "$@"
 case $1 in -*)  MV "$@";; esac
 
-IFS= read -r -e -p 'to: ' -i "$1"
+IFS= read -r -e -p 'move to: ' -i "$1"
 [ $? -eq 0 ]        || exit
 [ -z "$REPLY" ]     && exit 1
 [ "$REPLY" = "$1" ] && exit 1
