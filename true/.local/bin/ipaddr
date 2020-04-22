@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Usage: $0
+# Print IP adress.
+# Assumes we're on a IPv4 LAN with 192.168.x.x adresses, print
+# first one return by 'ifconfig' or 'ip'.
+# If we can't find anything, prints '127.0.0.1'
+
+exists() { command -v "$@" > /dev/null; }
+
+IP=''
+if exists ifconfig; then
+   IP=$(ifconfig | awk '/192.168./ {print $2; exit}')
+elif exists ip; then
+   IP=$(ip addr  | awk '/192.168./ {print $2; exit}' | cut -d/ -f1)
+fi 2>/dev/null
+
+case $IP in
+   192.168.*) printf '%s\n' "$IP" ;;
+           *) echo '127.0.0.1'    ;;
+esac
+
+
