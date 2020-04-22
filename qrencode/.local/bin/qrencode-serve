@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# Usage: $0 FILE
+# Prints a QR code representing a URL to the given FILE.
+# A nc-based http server serves the file one time.
+# The file can thus be downloaded from a phone using with a QR scan.
+
+# use this port:
+PORT=8999
+
+# check args and required programs (nc) and scripts:
+[ $# -ne 0 ]       || usage -d "$0"
+[ -s "$*" ]        || die "is empty file: $*"
+[ -f "$*" ]        || die "not a file: $*"
+[ -d "$*" ]        && die "is a directory: $*"
+exists 'nc'        || die 'requires nc'
+exists 'urlencode' || die 'requires my "urlencode" sh script'
+exists 'ipaddr'    || die 'requires my "ipaddr" sh script'
+
+# write the qr code (and address):
+ADDRESS="http://$(ipaddr):$PORT/$(urlencode "$*")"
+qrencode -t ANSIUTF8 -o - "$ADDRESS"
+printf '%s\n\n' "$ADDRESS"
+
+# serve the file to download over http (using nc):
+{  printf 'HTTP/1.0 OK\r\n'
+   printf 'Content-Type: application/octet-stream\r\n'
+   printf 'Content-Length: %s\r\n\r\n' "$(wc -c < "$*")"
+   cat "$*"
+}| nc -l -p $PORT
