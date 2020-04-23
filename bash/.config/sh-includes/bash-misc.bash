@@ -26,9 +26,14 @@ HISTCONTROL=ignoreboth
 # append to the history file, don't overwrite it
 shopt -s histappend
 
-# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
+# history length
+# HISTSIZE    : max number of commands that will be displayed
+# HISTFILESIZE: how many commands are retained in ~/.bash_history
+# HISTIGNORE  : commands not to be added to ~/.bash_history
+export HISTSIZE=1000
+export HISTFILESIZE=9999
+export HISTIGNORE="history:exit"
+
 
 
 ################################################################################
