@@ -1,6 +1,39 @@
 #!/bin/sh
 
 # Usage: $0
-# prints the ID of the active window
+# $0      => prints the ID of the active window
+# $0 ...  => 1. execute it arguments,
+#            2. wait (or give up after ~10s) for a new window to become active
+#            3. print the ID of this new active window
 
-xprop -root 32x '\t$0\n' _NET_ACTIVE_WINDOW | cut -f2
+active() {
+   xprop -root 32x '\t$0\n' _NET_ACTIVE_WINDOW | cut -f2
+}
+
+if [ $# -eq 0 ]; then
+   active
+else
+   old=$(active)
+   win=$old
+   n=0
+
+   # launch (in background)
+   "$@" &
+
+   # wait for active window to change (or give up at some point)
+   while [ "$win" = "$old" ]; do
+      sleep 0.1
+      [ $n -lt 100 ] || die 'giving up waiting for a new window'
+      win=$(active)
+      n=$((n + 1))
+   done
+
+# at this point, you'd think, you can just:
+#  printf '%s\n' "$win"
+# but sometimes, it prints 0x0, so just wait
+# a bit more and reprint active window:
+
+sleep 0.2
+active
+
+fi
