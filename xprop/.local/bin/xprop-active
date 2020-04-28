@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Usage: $0
+# prints the ID of the active window
+
+xprop -root 32x '\t$0\n' _NET_ACTIVE_WINDOW | cut -f2
