@@ -6,8 +6,10 @@
 #            2. wait (or give up after ~10s) for a new window to become active
 #            3. print the ID of this new active window
 
+die() { printf '%s\n' "$*" >&2; exit 1; }
+
 active() {
-   xprop -root 32x '\t$0\n' _NET_ACTIVE_WINDOW | cut -f2
+  xprop -root 32x '\t$0\n' _NET_ACTIVE_WINDOW | cut -f2
 }
 
 if [ $# -eq 0 ]; then
@@ -17,8 +19,11 @@ else
    win=$old
    n=0
 
-   # launch (in background)
-   "$@" &
+   # launch the command in background and note that we block
+   # the command's output, otherwise it would interfere with
+   # this program if we called it as a 'command substitution',
+   # for example: WIN=$(xprop-active xterm)
+   "$@" >/dev/null 2>/dev/null &
 
    # wait for active window to change (or give up at some point)
    while [ "$win" = "$old" ]; do
@@ -28,11 +33,11 @@ else
       n=$((n + 1))
    done
 
+
 # at this point, you'd think, you can just:
 #  printf '%s\n' "$win"
 # but sometimes, it prints 0x0, so just wait
 # a bit more and reprint active window:
-
 sleep 0.2
 active
 
