@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Usage: $0
+# $0          => make the active window fullscreen
+# $0 --select => select a window and make that oen active
+# $0 ...      => launch, wait for a new window
+
+full() {
+  wmctrl "$@" -b toggle,fullscreen
+  exit
+}
+
+case $# in
+   0) full -r :ACTIVE: ;;
+   1) [ "$1" = --select ] && full -r :SELECT: ;;
+esac
+
+WIN=$(xprop-active "$@") && full -ir "$WIN"
