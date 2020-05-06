@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Usage: $0
+# disable inputting a 'non-breakable space' (nbsp)
+# character via the keyboard under X-window.
+#
+# On finnish or french keyboards I use, when you press
+# <ALT-Gr> + <SPACE>, you get a nbsp (UTF8: \302\240).
+# Nbsp displays like a space, so there's no way to see
+# when you type one by accident (which is frequent).
+#
+# Note: The same result can be achieved in xorg.conf :
+# add the following in the InputDevice section related
+# to your keyboard:
+# ...
+# Option "XkbOptions"    "nbsp:none"
+# ...
+
+setxkbmap -option "nbsp:none"
