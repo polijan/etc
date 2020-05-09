@@ -1,0 +1,697 @@
+#!/usr/bin/perl -w
+# lbas2ascii.pl - Convert tokenized Locomotive BASIC to ASCII
+# Marco Vieth, 28.02.2006
+#
+# 0.01  28.02.2006 first tests
+# 0.02  19.04.2008 put into one module
+#
+# see also:
+# http://andercheran.aiind.upv.es/~amstrad/docs/bastech.html
+#
+#
+  $VERSION = '0.02';
+  use strict;
+
+
+package Language::Basic::Locomotive::List;
+  #$VERSION = '0.01';
+  use strict;
+
+
+sub new {
+  my $class = shift;
+  my $self = bless({}, ref($class) || $class);
+  return $self;
+}
+
+sub get_hex1($$$) {
+  my($blk_r, $pos1, $len) = @_;
+  my @tmp1 = unpack('C*', substr($$blk_r, $pos1, $len));
+  my @tmp2 = map { sprintf("%02X", $_) } @tmp1;
+  return '['. join(',', @tmp2) .'] ';
+}
+
+
+sub num8_dec($$) {
+  my($data_r, $i_r) = @_;
+  $$i_r++;
+  return unpack('C', substr($$data_r, $$i_r - 1, 1));
+}
+
+
+sub num16_dec($$) {
+  my($data_r, $i_r) = @_;
+  $$i_r += 2;
+  return unpack('v', substr($$data_r, $$i_r - 2, 2));
+}
+
+sub num16_hex($$) {
+  my($data_r, $i_r) = @_;
+  return '&'. sprintf("%X", num16_dec($data_r, $i_r));
+}
+
+sub num16_bin($$) {
+  my($data_r, $i_r) = @_;
+  return '&X'. sprintf("%b", num16_dec($data_r, $i_r));
+}
+
+
+# floating point numbers:
+# byte 0: mantissa (bits 23-16)
+# byte 1: mantissa (bits 15-8)
+# byte 2: mantissa (bits 7-0)
+# byte 3: sign, mantissa (bits 30-24)
+# byte 4: exponent
+#
+#
+# examples:
+# 0xa2,0xda,0x0f,0x49,0x82 (PI)
+# 0x00,0x00,0x00,0x00,0x81 (1)
+#
+# 0x00,0x00,0x00,0x00,0x84      ; 10 (10^1)
+# 0x00,0x00,0x00,0x48,0x87      ; 100 (10^2)
+# 0x00,0x00,0x00,0x7A,0x8A      ; 1000 (10^3)
+# 0x00,0x00,0x40,0x1c,0x8e      ; 10000 (10^4) (1E+4)
+# 0x00,0x00,0x50,0x43,0x91      ; 100000 (10^5) (1E+5)
+# 0x00,0x00,0x24,0x74,0x94      ; 1000000 (10^6) (1E+6)
+# 0x00,0x80,0x96,0x18,0x98      ; 10000000 (10^7) (1E+7)
+# 0x00,0x20,0xbc,0x3e,0x9b      ; 100000000 (10^8) (1E+8)
+# 0x00,0x28,0x6b,0x6e,0x9e      ; 1000000000 (10^9) (1E+9)
+# 0x00,0xf9,0x02,0x15,0xa2      ; 10000000000 (10^10) (1E+10)
+# 0x40,0xb7,0x43,0x3a,0xa5      ; 100000000000 (10^11) (1E+11)
+# 0x10,0xa5,0xd4,0x68,0xa8      ; 1000000000000 (10^12) (1E+12)
+# 0x2a,0xe7,0x84,0x11,0xac      ; 10000000000000 (10^13) (1E+13)
+sub num_fp($$) {
+  my($data_r, $i_r) = @_;
+  my $out = '';
+  my @fp = unpack('VC', substr($$data_r, $$i_r, 5));
+  $$i_r += 5;
+
+  #my @fp = (0x48000000, 0x87); # example: 100
+
+  if (@fp != 2) {
+    warn "WARNING: Problems reading floating pont number!\n";
+  }
+
+  if ($fp[1] == 0) { # exponent zero?
+    $out = '0';
+  } else {
+    my $mantissa = $fp[0] | (1 << 31); #$fp[0] & ~(1 << 31);
+    if ($fp[0] & (1 << 31)) { # sign=1?
+      $mantissa = -$mantissa; # negative
+    }
+    my $exponent = $fp[1] - 0x81; # 2-complement: 2^-127 .. 2^128
+    $out = $mantissa * 2 ** ($exponent - 31);
+  }
+  return $out;
+}
+
+
+
+sub var1($$) {
+  my($data_r, $i_r) = @_;
+  my $out = '';
+  my $offset = unpack('v', substr($$data_r, $$i_r, 2)); # ignore offset
+  $$i_r += 2;
+  substr($$data_r, $$i_r) =~ /^([\x20-\x7f]*)(.)/; # get characters until chr+0x80
+  if (defined $1) {
+    $out = $1 . chr(ord($2) & 0x7f);
+  } else {
+    warn "WARNING: No end of variable found!\n";
+    $out = substr($$data_r, $$i_r); # take all
+  }
+  $$i_r += length($out);
+  return $out;
+}
+
+sub var_suffix_i1($$) {
+  my($data_r, $i_r) = @_;
+  return var1($data_r, $i_r) .'%';
+}
+
+sub var_suffix_s1($$) {
+  my($data_r, $i_r) = @_;
+  return var1($data_r, $i_r) .'$';
+}
+
+sub var_suffix_r1($$) {
+  my($data_r, $i_r) = @_;
+  return var1($data_r, $i_r) .'!';
+}
+
+
+sub rsx1($$) {
+  my($data_r, $i_r) = @_;
+  my $out = '';
+  my $len = unpack('C', substr($$data_r, $$i_r, 1));
+  $$i_r += 1;
+  substr($$data_r, $$i_r) =~ /^([\x20-\x7f]*)(.)/; # get characters until chr+0x80
+  if (defined $1) {
+    $out = $1 . chr(ord($2) & 0x7f);
+  } else {
+    warn "WARNING: No end of RSX found!\n";
+    $out = substr($$data_r, $$i_r); # take all
+  }
+  $$i_r += length($out);
+  return '|'. $out;
+}
+
+
+sub quoted_string($$) {
+  my($data_r, $i_r) = @_;
+  my $out = '';
+  substr($$data_r, $$i_r) =~ /^([^"]*")/; # get until end of string
+  if (defined $1) {
+    $out = $1;
+  } else {
+    # take whole line... (warn "WARNING: No end of string found!\n";)
+    $out = substr($$data_r, $$i_r); # take all
+  }
+  $$i_r += length($out);
+  return '"'. $out;
+}
+
+
+sub ascii2eol($$) {
+  my($data_r, $i_r) = @_;
+  my $out = substr($$data_r, $$i_r); # get all
+  $$i_r += length($out);
+  return $out;
+}
+
+sub rem1($$) {
+  my($data_r, $i_r) = @_;
+  return "'". ascii2eol($data_r, $i_r);
+}
+
+sub rem2($$) {
+  my($data_r, $i_r) = @_;
+  return 'REM'. ascii2eol($data_r, $i_r);
+}
+
+
+
+my %tokens = (
+  0x00 => '',  # end of tokenised line marker
+  0x01 => ':', # ":" statement seperator
+  0x02 => \&var_suffix_i1, # integer variable definition (defined with "%" suffix)
+  0x03 => \&var_suffix_s1, # 'TTT: s$', # string variable definition (defined with "$" suffix)
+  0x04 => \&var_suffix_r1, # 'TTT: rx', # floating point variable definition (defined with "!" suffix)
+  0x05 => 'var?',
+  0x06 => 'var?',
+  0x07 => 'var?', # ??
+  0x08 => 'var?', # ??
+  0x09 => 'var?', # ??
+  0x0a => 'var?', # ??
+  0x0b => \&var1, # 'TTT: i', # integer variable definition (no suffix)
+  0x0c => \&var1, # 'TTT: s' # string variable definition (no suffix)
+  0x0d => \&var1, # floating point or no type (no suffix)
+  0x0e => '0', # number constant "0"
+  0x0f => '1', # number constant "1"
+  0x10 => '2', # number constant "2"
+  0x11 => '3', # number constant "3"
+  0x12 => '4', # number constant "4"
+  0x13 => '5', # number constant "5"
+  0x14 => '6', # number constant "6"
+  0x15 => '7', # number constant "7"
+  0x16 => '8', # number constant "8"
+  0x17 => '9', # number constant "9"
+  0x18 => '10', # number constant "10"
+  0x19 => \&num8_dec, # '!C', # 8-bit integer decimal value
+  0x1a => \&num16_dec, # '!v' 16-bit integer decimal value
+  0x1b => \&num16_bin, # '&X!v', # 16-bit integer binary value (with "&X" prefix)
+  0x1c => \&num16_hex, # '&!v', # 16-bit integer hexadecimal value (with "&H" or "&" prefix)
+  0x1d => \&num16_dec, # '!v', # 16-bit BASIC program line memory address pointer (should not occur)
+  0x1e => \&num16_dec, # '!v', # 16-bit integer BASIC line number
+  0x1f => \&num_fp, # 'floating point value',
+  0x20 => ' ', #" " (space) symbol
+  0x21 => '!', # ASCII "!" symbol
+  0x22 => \&quoted_string, #'"' #quoted string value
+#  0x23-7b  ASCII printable symbols
+  0x7c => \&rsx1,  #'|', # "|" symbol; prefix for RSX commands
+  0x80 => 'AFTER',
+  0x81 => 'AUTO',
+  0x82 => 'BORDER',
+  0x83 => 'CALL',
+  0x84 => 'CAT',
+  0x85 => 'CHAIN',
+  0x86 => 'CLEAR',
+  0x87 => 'CLG',
+  0x88 => 'CLOSEIN',
+  0x89 => 'CLOSEOUT',
+  0x8a => 'CLS',
+  0x8b => 'CONT',
+  0x8c => 'DATA',
+  0x8d => 'DEF',
+  0x8e => 'DEFINT',
+  0x8f => 'DEFREAL',
+  0x90 => 'DEFSTR',
+  0x91 => 'DEG',
+  0x92 => 'DELETE',
+  0x93 => 'DIM',
+  0x94 => 'DRAW',
+  0x95 => 'DRAWR',
+  0x96 => 'EDIT',
+  0x97 => 'ELSE',
+  0x98 => 'END',
+  0x99 => 'ENT',
+  0x9a => 'ENV',
+  0x9b => 'ERASE',
+  0x9c => 'ERROR',
+  0x9d => 'EVERY',
+  0x9e => 'FOR',
+  0x9f => 'GOSUB',
+  0xa0 => 'GOTO',
+  0xa1 => 'IF',
+  0xa2 => 'INK',
+  0xa3 => 'INPUT',
+  0xa4 => 'KEY',
+  0xa5 => 'LET',
+  0xa6 => 'LINE',
+  0xa7 => 'LIST',
+  0xa8 => 'LOAD',
+  0xa9 => 'LOCATE',
+  0xaa => 'MEMORY',
+  0xab => 'MERGE',
+  0xac => 'MID$',
+  0xad => 'MODE',
+  0xae => 'MOVE',
+  0xaf => 'MOVER',
+  0xb0 => 'NEXT',
+  0xb1 => 'NEW',
+  0xb2 => 'ON',
+  0xb3 => 'ON BREAK',
+  0xb4 => 'ON ERROR GOTO',
+  0xb5 => 'ON SQ',
+  0xb6 => 'OPENIN',
+  0xb7 => 'OPENOUT',
+  0xb8 => 'ORIGIN',
+  0xb9 => 'OUT',
+  0xba => 'PAPER',
+  0xbb => 'PEN',
+  0xbc => 'PLOT',
+  0xbd => 'PLOTR',
+  0xbe => 'POKE',
+  0xbf => 'PRINT',
+  0xc0 => \&rem1, # "'!a*", # "'" symbol (same function as REM keyword)
+  0xc1 => 'RAD',
+  0xc2 => 'RANDOMIZE',
+  0xc3 => 'READ',
+  0xc4 => 'RELEASE',
+  0xc5 => \&rem2, # 'REM!a*', #?? sub { $$_[1] += length($$_[0]); 'REM' . $$_[0]; }, # 'a*'
+  0xc6 => 'RENUM',
+  0xc7 => 'RESTORE',
+  0xc8 => 'RESUME',
+  0xc9 => 'RETURN',
+  0xca => 'RUN',
+  0xcb => 'SAVE',
+  0xcc => 'SOUND',
+  0xcd => 'SPEED',
+  0xce => 'STOP',
+  0xcf => 'SYMBOL',
+  0xd0 => 'TAG',
+  0xd1 => 'TAGOFF',
+  0xd2 => 'TROFF',
+  0xd3 => 'TRON',
+  0xd4 => 'WAIT',
+  0xd5 => 'WEND',
+  0xd6 => 'WHILE',
+  0xd7 => 'WIDTH',
+  0xd8 => 'WINDOW',
+  0xd9 => 'WRITE',
+  0xda => 'ZONE',
+  0xdb => 'DI',
+  0xdc => 'EI',
+  0xdd => 'FILL', # (v1.1)
+  0xde => 'GRAPHICS', # (v1.1)
+  0xdf => 'MASK', # (v1.1)
+  0xe0 => 'FRAME', # (v1.1)
+  0xe1 => 'CURSOR', # (v1.1)
+  0xe2 => '<unused>',
+  0xe3 => 'ERL',
+  0xe4 => 'FN',
+  0xe5 => 'SPC',
+  0xe6 => 'STEP',
+  0xe7 => 'SWAP',
+  0xe8 => '<unused>',
+  0xe9 => '<unused>',
+  0xea => 'TAB',
+  0xeb => 'THEN',
+  0xec => 'TO',
+  0xed => 'USING',
+  0xee => '>', # (greater than)
+  0xef => '=', # (equal)
+  0xf0 => '>=', # > =, => (greater or equal)
+  0xf1 => '<', # (less than)
+  0xf2 => '<>', # < > (not equal)
+  0xf3 => '<=', # =<, <=, < = (less than or equal)
+  0xf4 => '+', # (addition)
+  0xf5 => '-', # (subtraction or unary minus)
+  0xf6 => '*', # (multiplication)
+  0xf7 => '/', # (division)
+  0xf8 => '^', # (x to the power of y)
+  0xf9 => '\\', # '(integer division)
+  0xfa => 'AND',
+  0xfb => 'MOD',
+  0xfc => 'OR',
+  0xfd => 'XOR',
+  0xfe => 'NOT',
+  #0xff => '!C', #  (prefix for additional keywords)
+);
+
+
+my %tokens_ff = (
+  # Functions with one argument
+  0x00 => 'ABS',
+  0x01 => 'ASC',
+  0x02 => 'ATN',
+  0x03 => 'CHR$',
+  0x04 => 'CINT',
+  0x05 => 'COS',
+  0x06 => 'CREAL',
+  0x07 => 'EXP',
+  0x08 => 'FIX',
+  0x09 => 'FRE',
+  0x0a => 'INKEY',
+  0x0b => 'INP',
+  0x0c => 'INT',
+  0x0d => 'JOY',
+  0x0e => 'LEN',
+  0x0f => 'LOG',
+  0x10 => 'LOG10',
+  0x11 => 'LOWER$',
+  0x12 => 'PEEK',
+  0x13 => 'REMAIN',
+  0x14 => 'SGN',
+  0x15 => 'SIN',
+  0x16 => 'SPACE$',
+  0x17 => 'SQ',
+  0x18 => 'SQR',
+  0x19 => 'STR$',
+  0x1a => 'TAN',
+  0x1b => 'UNT',
+  0x1c => 'UPPER$',
+  0x1d => 'VAL',
+
+  # Functions without arguments
+  0x40 => 'EOF',
+  0x41 => 'ERR',
+  0x42 => 'HIMEM',
+  0x43 => 'INKEY$',
+  0x44 => 'PI',
+  0x45 => 'RND',
+  0x46 => 'TIME',
+  0x47 => 'XPOS',
+  0x48 => 'YPOS',
+  0x49 => 'DERR', # (v1.1)
+
+  # Functions with more arguments
+  0x71 => 'BIN$',
+  0x72 => 'DEC$', # (v1.1)
+  0x73 => 'HEX$',
+  0x74 => 'INSTR',
+  0x75 => 'LEFT$',
+  0x76 => 'MAX',
+  0x77 => 'MIN',
+  0x78 => 'POS',
+  0x79 => 'RIGHT$',
+  0x7a => 'ROUND',
+  0x7b => 'STRING$',
+  0x7c => 'TEST',
+  0x7d => 'TESTR',
+  0x7e => 'COPYCHR$', # (v1.1)
+  0x7f => 'VPOS',
+);
+
+
+
+sub parse_line($$) {
+  my($data_r, $out_flg) = @_;
+
+  my $hex_view_flg = $out_flg & 0x01;
+
+  my $out = '';
+  my $space_flg = 0; # TTT todo!
+
+  my $i = 0;
+  while ($i < length($$data_r)) {
+    my $old_i = $i;
+    my $old_space_flg = $space_flg;
+    my $ch = substr($$data_r, $i++, 1);
+
+    my $tok = unpack('C', $ch);
+    if ($tok eq 0x01) {
+      if ($i < length($$data_r)) {
+        my $next_ch = substr($$data_r, $i, 1);
+        my $next_tok = unpack('C', $next_ch);
+        if ($next_tok == 0x97 || $next_tok == 0xc0) { # ELSE or rem '?
+          $ch = $next_ch;
+          $tok = $next_tok; # ignore ':'
+          $i++;
+        }
+      }
+    }
+
+    my $tok1 = $tok;
+
+    my $tstr = $tokens{$tok};
+
+    if ( ($tok >= 0x0b && $tok <= 0x1f) || # constant 0..9; variable
+         ($tok eq 0x7c) ) { # RSX
+      $space_flg = 1;
+    } else {
+      $space_flg = 0;
+    }
+    if (!defined $tstr) {
+      if ($tok == 0xff) { # extended token?
+        $ch = substr($$data_r, $i++, 1);
+        $tok = unpack('C', $ch);
+        $tstr = $tokens_ff{$tok};
+      }
+    }
+    if (defined $tstr) {
+      my $s2 = $tstr;
+      if (ref($tstr) eq 'CODE') {
+        $s2 = $tstr->($data_r, \$i);
+        if (!defined $s2) {
+          warn "WARNING: undefined return value for token '". sprintf("%02X", $tok) ."'!\n";
+          $s2 = '';
+        } else {
+          #$out .= $s2;
+        }
+      } else {
+        #$out .= $tstr;
+      }
+      if ($s2 =~ /[a-zA-Z0-9.]$/) { # last character char, number, dot?
+        $space_flg = 1; # maybe need space next time...
+      }
+      if ($old_space_flg) {
+        if ( ($s2 =~ /^[a-zA-Z\$%!]+$/) ||
+             ($tok1 >= 0x0b && $tok1 <= 0x1f) ) {
+          $s2 = ' '. $s2;
+        }
+      }
+      $out .= $s2;
+    } else { # normal ASCII?
+      $out .= $ch;
+    }
+    if ($hex_view_flg) {
+      my $h1 = get_hex1($data_r, $old_i, $i - $old_i);
+      print $h1;
+    }
+  }
+  return $out;
+}
+
+
+# ($$)
+sub parse_program {
+  my($self, $data_r, $out_flg) = @_;
+  #{ my $size = %tokens; print STDERR "DDD: tokens_size='$size'\n"; }
+  my $out = '';
+  my $i = 0;
+  $i += 0x80; # assume AMSDOS header
+
+  my $length;
+  while ($length = unpack('v', substr($$data_r, $i, 2))) {
+    my $lnum = unpack('v', substr($$data_r, $i + 2, 2));
+    if (!defined $lnum) {
+      warn "WARNING: Linue number undefined!\n";
+      last;
+    }
+    #print "DEBUG: length=$length, lnum=$lnum\n";
+    my $tok_line = substr($$data_r, $i + 4, $length - 4 - 1);
+    my $line = parse_line(\$tok_line, $out_flg);
+    #my $lnum_str = sprintf("%5d", $lnum);
+
+    if (!($out_flg & 0x02)) {
+      # replace all LF by CR LF (for UNIX, Win), also in strings
+      $line =~ s/(\n)/$1\r/go; #how to replace newline inside strings? TTT
+      $line .= "\r\n";
+    } else {
+      $line .= "\n";
+    }
+    print $lnum .' '. $line;
+    $out .= $line;
+    $i += $length;
+  }
+  return \$out;
+}
+
+1;
+
+
+
+#continue with main here to define lexical %tokens
+package main;
+
+  use Getopt::Std ();
+  #see below: use List (); # use Language::Basic::Locomotive::List ();
+
+###
+
+
+sub file_open($) {
+  local *FH;
+  open(FH, $_[0]) || return undef();
+  return *FH;
+}
+
+
+sub read_file($) {
+  my($fname) = @_;
+  my $fh = file_open("<$fname") || (warn("WARNING: $!: '$fname'\n"), return);
+  binmode($fh);
+  my $str = '';
+  {
+    local $/; # enable localized slurp mode
+    $str = <$fh>; # get it all
+  }
+  close($fh) || (warn("WARNING: $!: '$fname'\n"), return);
+  return \$str;
+}
+
+
+
+
+sub do_conv1($$) {
+  my($in_fn, $out_flg) = @_;
+  my $data_r = read_file($in_fn) || return;
+  my $bll = Language::Basic::Locomotive::List->new();
+  my $ascii_r = $bll->parse_program($data_r, $out_flg) || return;
+  #print $$ascii_r;
+  return 1;
+}
+
+
+#
+# main
+#
+sub main() {
+  my %opts = (
+    'o' => 0,
+  );
+  if (!Getopt::Std::getopts("Do:hd:", \%opts) or ($#ARGV <= -1) or exists($opts{'h'})) {
+    print STDERR "lbas2ascii.pl v$::VERSION -- Convert tokenized BASIC to ASCII\n";
+    require File::Basename;
+    print STDERR "Usage: ". File::Basename::basename($0) ." [<options>] file\n";
+    #print STDERR "-O file  : optional output file (default: '$opts{'O'}')\n";
+    print STDERR "-D       : dup STDOUT to STDERR\n";
+    print STDERR "-o num   : output flags; 1=print hex; 2=no CR (default: '$opts{'o'}')\n";
+    print STDERR "-h       : help\n";
+    #print STDERR "-d level : set debug level\n";
+    exit 1;
+  }
+
+  if ($opts{'D'}) { #dup flag
+    open(STDERR, ">&STDOUT") || die "Cannot dup STDOUT to STDERR!";
+    select((select(*STDERR), $| = 1)[0]); # autoflush needed on some weird Perl 5.6.1 on Windows...
+    $| = 1; # set autoflush for STDOUT (normally not needed, but to see messages at correct places...)
+  }
+
+  binmode(STDOUT); # we need to output special characters in strings...
+
+  my $rc = 1;
+  foreach my $file (@ARGV) {
+    do_conv1($file, $opts{'o'});
+  }
+  return ($rc) ? 0 : 1;
+}
+
+exit(main());
+
+__END__
+
+=head1 NAME
+
+ Language::Basic::Locomotive::List - List tokenized Locomotive Basic programs
+
+=head1 SYNOPSIS
+
+   use Language::Basic::Locomotive::List;
+
+   my $lbas = Language::Basic::Locomotive::List->new()
+
+   $lbas->parse_file(\$data);
+
+
+=head1 DESCRIPTION
+
+Language::Basic::Locomotive::List lists files containing tokenized Locomotive basic programs.
+This Basic dialect was used for homecomputers like the Amstrad CPC.
+Files of that type (.BAS) are still available for emulators like CPCEMU.
+I had a bunch of .BAS files which I wanted to convert to ASCII without starting an emulator
+so I wrote this module.
+
+Note:
+This is not a complete parser (or deparser), it is just a token converter.
+
+Main parts of the .BAS file format are described in ...
+
+Resulting ASCII files containing Basic code can also be used on an Amstrad CPC or an Emulator.
+
+For people knowing Locomotive Basic:
+This module provides the functionality of  LIST  or SAVE "FILE.TXT",A  in Perl.
+
+
+=over 4
+
+=item $lbas->new([%args])
+
+Creates a new Language::Basic::Locomotive::List object. The following are valid (optional) arguments: 
+
+ ...DOCUMENT_URI    => $doc_uri,
+
+=item $lbas->parse_file($type, $arg)
+
+$type is either 'sizefmt', 'timefmt', or 'errmsg'. $arg is similar to 
+those of the SSI C<spec>, referenced below.
+
+=back
+
+
+
+=head1 SEE ALSO
+
+
+http://andercheran.aiind.upv.es/~amstrad/docs/bastech.html
+
+
+=head1 BUGS
+
+This is a young module. It works for me, but it has not been extensively tested.
+Report bugs to get them fixed.
+
+
+=head1 AUTHOR
+
+Marco Vieth E<lt>mail@benchmarko.deE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2004-2006 Marco Vieth.
+
+All rights reserved.  This package is free software; you can redistribute it
+and/or modify it under the same terms as Perl itself.
+
+=cut

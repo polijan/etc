@@ -1,0 +1,2529 @@
+#!/usr/bin/perl -w
+# dskcpy.pl - Copy files from/into DSK images
+# Marco Vieth, 11.03.2006
+#
+# 0.01  11.03.2006 first tests based on dskinfo
+# 0.02  19,94,2008 put all in one script
+# 0.03  07.06.2009 detect new formats; overwrite format parameters
+# 0.031 30.06.2009 support some extensions mentioned on http://simonowen.com/misc/extextdsk.txt
+# 0.032 11.09.2012 glob files for put (-p), required on Windows; changed info format
+#
+  $VERSION = '0.032';
+  use strict;
+
+
+###
+
+# Amstrad::CPC::Debug
+#
+# 0.01  21.12.2005 first tests (based on frm Bm_debug)
+#
+#
+package Amstrad::CPC::Debug;
+#  $VERSION = '0.01';
+  use strict;
+
+
+sub new {
+  my $class = shift;
+  my $self = bless({}, $class);
+  $self->_init(@_);
+}
+
+#($)
+sub _init {
+  my $self = shift;
+  my $level = shift || 0;
+  $self->set_level($level);
+  my $dup_flg = shift;
+  if ($dup_flg) {
+    $self->dup2stderr();
+  }
+  $self->print_info1();
+  return $self;
+}
+
+
+#()
+sub get_level { shift->{'debug_level'} }
+
+#($)
+sub set_level {
+  my($self, $level) = @_;
+  $self->{'debug_level'} = $level;
+}
+
+
+sub dup2stderr {
+  open(STDERR, ">&STDOUT") || die "Cannot dup STDOUT to STDERR!";
+  select((select(*STDERR), $| = 1)[0]); # autoflush needed on some weird Perl 5.6.1 on Windows...
+  $| = 1; # set autoflush for STDOUT (normally not needed, but to see messages at correct places...)
+}
+
+
+#($;$)
+sub print_msg {
+  my($self, $msg, $level) = @_;
+  $level ||= 0;
+  if ($self->{'debug_level'} > $level) {
+    print STDERR "DEBUG($level): ", $msg, "\n";
+  }
+  return 1;
+}
+
+
+#(@)
+sub data_dump {
+  my $self = shift;
+  require Data::Dumper;
+  $self->print_msg(Data::Dumper->Dump([@_]));
+}
+
+
+#()
+sub print_info1 {
+  my $self = shift;
+  my $login = getlogin() || ((!$^O ne 'MSWin32') ? getpwuid($<) : "???");
+  $self->print_msg("Process $$ running on $^O by $^X $] from $0 as '$login' (uid='$>') at $^T, ". localtime($^T), 0);
+  if ($self->get_level > 5) {
+    $self->print_msg("Setting handlers __WARN__ and __DIE__ to Carp::cluck and Carp::confess.", 5);
+    require Carp;
+    $SIG{__WARN__} = \&Carp::cluck;
+    $SIG{__DIE__} = \&Carp::confess;
+  }
+  if ($self->get_level > 7) {
+    require Cwd;
+    $self->print_msg("Current working directory: '". Cwd::cwd() ."'", 7);
+  }
+  #if (exists $ENV{'MOD_PERL'}) {
+  #  Bm::debug_msg("We are running under mod_perl version '$ENV{'MOD_PERL'}'!", 0);
+  #}
+  if ($self->get_level > 2) {
+    my @tmp1 = sort keys(%INC);
+    $self->print_msg("Loaded modules: \%INC[". scalar(@tmp1) ."]='@tmp1'", 2);
+  }
+  return 1;
+}
+
+
+sub report_times {
+  my($self) = @_;
+  my($user, $system, $cuser, $csystem) = times();
+  my $usr = $user + $cuser;
+  my $sys = $system + $csystem;
+  my $tot = $usr + $sys;
+  $self->print_msg("CPU time (usr/sys/tot): $usr/$sys/$tot sec");
+  #$self->print_msg("DDD: Child CPU time (usr/sys/tot): $cuser/$csystem/". ($cuser + $csystem) ." sec");
+  return 1;
+}
+
+#sub close {
+#}
+
+sub DESTROY { }
+
+
+1;
+
+#__END__
+
+#
+# Amstrad::CPC::Amsdos - Parse AMSDOS header
+# 0.01  19.03.2006 first tests
+#
+#
+package Amstrad::CPC::Amsdos;
+
+#  $VERSION = '0.01';
+  use strict;
+
+
+###
+
+sub AMSDOS_HEADER_LEN { 0x80 }
+
+
+sub new {
+  my $class = shift;
+  my $self = bless({}, ref($class) || $class);
+  $self->_init(@_);
+}
+
+
+sub _init {
+  my $self = shift;
+  $self->{'hd'} = {};
+  if (@_) { $self->open(@_); }
+  return $self;
+}
+
+
+sub open {
+  my($self, $data_r) = @_;
+  my $len = length($$data_r);
+  if ($len < AMSDOS_HEADER_LEN()) {
+    $::bm_debug && $::bm_debug->print_msg("_amsdos_open: data too short: '$len'", 2);
+    return;
+  }
+  my $header = substr($$data_r, 0, AMSDOS_HEADER_LEN());
+  my $hd_checksum = _unpack_header_checksum(\$header);
+  my $chksum = _compute_checksum(\substr($header, 0, 67));
+  if ($hd_checksum != $chksum) {
+    $::bm_debug && $::bm_debug->print_msg("_amsdos_open: header checksum '$hd_checksum' != computed '$chksum'", 2);
+    return; # checksum from header does not match computed checksum
+  }
+  my $hd_r = _unpack_header(\$header) || return;
+  $self->set_header($hd_r);
+  return $self;
+}
+
+
+sub get_header { $_[0]->{'hd'} }
+
+sub set_header { $_[0]->{'hd'} = $_[1] }
+
+
+sub get_real_len { $_[0]->{'hd'}{'real_len'} }
+
+
+
+sub _compute_checksum($) {
+  my($data_r) = @_;
+  my $sum = unpack("%32C*", $$data_r) % 65535;
+  #my $sum = 0;
+  #foreach (unpack("C*", $$data_r)) {
+  #  $sum += $_;
+  #}
+  return $sum;
+}
+
+
+#
+# http://www.benchmarko.de/cpcemu/cpcdoc/chapter/cpcdoc7_e.html#I_AMSDOS_HD
+#AMSDOS header
+#00      user number (0 , possible values 0-15)
+#01 - 0F filename+extension (possibly filled with 0)
+#10      block number (0)
+#11      last block flag (0)
+#12      file type (0=basic, 1=protected basic, 2=binary,...)
+#13 - 14 length of block (0)
+#15 - 16 load address (0-FFFF)
+#17      first block flag (0)
+#18 - 19 logical length (0-FFFF)
+#1A - 1B entry address (0-FFFF)
+#1C - 3F free for the user (0)
+#40 - 42 real length of file (1-FFFFFF)
+#43 - 44 checksum of bytes 00-42
+#45 - 7F unused (random values from sector buffer)
+
+
+sub _unpack_header_checksum($) {
+  my($header_r) = @_;
+  my $checksum = unpack('x67v', $$header_r);
+  return $checksum;
+}
+
+
+sub _unpack_header($) {
+  my($header_r) = @_;
+  my(@hd_txt) = qw(user fname blknum last_blk_flg ftype blklen ladr first_blk_flg len entry user_space real_len _real_len_hi checksum unused);
+  my $hd_r;
+  (@{$hd_r}{@hd_txt}) = unpack('Ca15CCCvvCvva36vCva69', $$header_r);
+  if ($hd_r->{'_real_len_hi'}) {
+    $hd_r->{'real_len'} |= ($hd_r->{'_real_len_hi'} << 16);
+  }
+  delete $hd_r->{'_real_len_hi'};
+
+  $::bm_debug && $::bm_debug->print_msg('amsdos_unpack_header: '. $hd_r->{'user'} .':'. $hd_r->{'fname'}. ','. $hd_r->{'real_len'}, 2);
+  return $hd_r;
+}
+
+
+sub _pack_header($$) {
+  my($hd_r) = @_;
+  my(@hd_txt) = qw(user fname blknum last_blk_flg ftype blklen ladr first_blk_flg len entry user_space real_len _real_len_hi checksum unused);
+  my $save_real_len = $hd_r->{'real_len'};
+  $hd_r->{'_real_len_hi'} = ($hd_r->{'real_len'} >> 16) & 0xff;
+  $hd_r->{'real_len'} &= 0xffff;
+  my $header = pack('Ca15CCCvvCvva36vCva69', (@{$hd_r}{@hd_txt})); # get from hash slice
+  $hd_r->{'real_len'} = $save_real_len;
+  delete $hd_r->{'_real_len_hi'};
+  # now compute new checksum und modify header...
+  my $checksum = _compute_checksum(\substr($header, 0, 67));
+  $hd_r->{'checksum'} = $checksum;
+  substr($header, 67, 2) = pack('v', $checksum);
+  return \$header;
+}
+
+
+#############
+
+1;
+
+#__END__
+
+
+package Amstrad::CPC::Diskimage::DiskInfo;
+
+#  $VERSION = '0.01';
+  use strict;
+
+
+sub new {
+  my $class = shift;
+  my $self = bless({}, ref($class) || $class);
+  $self->_init(@_);
+}
+
+
+sub _init {
+  my $self = shift;
+  if (@_) {
+    $self->open(@_) || return;
+  }
+  return $self;
+}
+
+
+sub open {
+  my $self = shift;
+  if (@_ == 1) { # only one parameter -> assume $disk_info_r
+    my $disk_info_r = $_[0];
+    $self->unpack_disk_info($disk_info_r);
+  } else {
+    $self->create_disk_info(@_);
+  }
+}
+
+
+
+sub get_disk_info_size { 0x100 }
+
+
+sub get_ident { $_[0]->{'ident'} }
+
+sub set_ident { $_[0]->{'ident'} = $_[1] }
+
+
+sub get_creator { $_[0]->{'creator'} }
+
+sub set_creator { $_[0]->{'creator'} = $_[1] }
+
+
+sub get_tracks { $_[0]->{'tracks'} }
+
+sub set_tracks { $_[0]->{'tracks'} = $_[1] }
+
+
+sub get_heads { $_[0]->{'heads'} }
+
+sub set_heads { $_[0]->{'heads'} = $_[1] }
+
+
+sub get_tsize { $_[0]->{'tsize'} }
+
+sub set_tsize { $_[0]->{'tsize'} = $_[1] }
+
+
+sub get_tsizes { $_[0]->{'tsizes'} }
+
+sub set_tsizes { $_[0]->{'tsizes'} = $_[1] }
+
+
+sub get_para_by_name { $_[0]->{$_[1]} }
+
+sub set_para_by_name { $_[0]->{$_[1]} = $_[2] }
+
+
+###
+
+
+sub get_default_ident {
+  my($self, $extended_flg) = @_;
+  my $disk_ident = ($extended_flg) ? 'EXTENDED CPC DSK ' : 'MV - CPCEMU Disk-';
+  $disk_ident .= "File\r\n" . "Disk-Info\r\n";
+  return $disk_ident;
+}
+
+
+sub get_disk_info_names {
+  return qw(ident creator tracks heads tsize);
+  # not included: 'tsizes'
+}
+
+
+sub create_disk_info {
+  my $self = shift;
+  my @defaults = (
+    ident   => $self->get_default_ident(($_{'tsizes'}) ? 1 : 0), # standard or extended #TTT
+    creator => 'diskinfo', #max 14 chars
+    tracks  => 0,
+    heads   => 0,
+    tsize   => 0, # standard
+    #tsizes => undef, # extended: list of tsizes
+  );
+
+  %$self = (@defaults, @_); # merge defaults
+  return $self;
+}
+
+
+#
+sub pack_disk_info {
+  my($self) = @_;
+  my @di_txt = $self->get_disk_info_names();
+  my $disk_info = pack('a34A14CCv', (@{$self}{@di_txt})); # get from hash slice
+  my $tsizes_r = $self->get_tsizes();
+  if ($tsizes_r) { # extended: individual tsizes?
+    my @tsizes_hi = map { ($_ >> 8) & 0xff } @{$tsizes_r};
+    $disk_info .= pack('C*', @tsizes_hi);
+  }
+
+  $disk_info .= chr(0x00) x ($self->get_disk_info_size() - length($disk_info)); # fill up
+  return \$disk_info;
+}
+
+
+sub unpack_disk_info {
+  my($self, $disk_info_r) = @_;
+
+  my @di_txt = $self->get_disk_info_names();
+  (@{$self}{@di_txt}) = unpack('a34A14CCv', $$disk_info_r); # put into hash slice
+
+  if ($::bm_debug) {
+    my $disk_info_dbg = join("', '", %$self);
+    $disk_info_dbg =~ s/([\x00-\x1f\x80-\xff])/ sprintf("&%02X", ord($1)) /eg;
+    $::bm_debug && $::bm_debug->print_msg("unpack_disk_info: '". $disk_info_dbg ."'", 3);
+  }
+
+  my $ident8 = substr($self->get_ident(), 0 ,8); # check first 8 characters as characteristic
+  if ( ($ident8 ne substr($self->get_default_ident(0), 0, 8))
+    && ($ident8 ne substr($self->get_default_ident(1), 0, 8))) {
+    warn "WARNING: Disk ident not found: '". $self->get_ident() ."'\n";
+    return;
+  }
+
+  if (!$self->get_tsize()) { # no common tsize specified -> Extended format
+    my $tsize_num = $self->get_tracks() * $self->get_heads(); # number of track sizes
+    my @tsizes = map { $_ * 0x100 } unpack("x52C${tsize_num}", $$disk_info_r);
+      # get high bytes of track sizes (offset 52) and compute lengths
+    $self->set_tsizes(\@tsizes);
+  }
+  return $self;
+}
+
+
+1;
+
+#__END__
+
+
+package Amstrad::CPC::Diskimage::SectorInfo;
+
+#  $VERSION = '0.01';
+  use strict;
+
+
+###
+
+sub new {
+  my $class = shift;
+  my $self = bless({}, ref($class) || $class);
+  $self->_init(@_);
+}
+
+
+sub _init {
+  my $self = shift;
+  if (@_) {
+    $self->open(@_) || return;
+  }
+  return $self;
+}
+
+
+sub open {
+  my $self = shift;
+  if (@_ == 1) { # only one parameter -> assume $sector_info_r
+    my $info_r = $_[0];
+    $self->unpack_sector_info($info_r);
+  } else {
+    $self->create_sector_info(@_);
+  }
+}
+
+
+sub get_sector_info_size { 8 }
+
+
+sub get_track { $_[0]->{'track'} }
+
+sub set_track { $_[0]->{'track'} = $_[1] }
+
+
+sub get_head { $_[0]->{'head'} }
+
+sub set_head { $_[0]->{'head'} = $_[1] }
+
+
+sub get_sector { $_[0]->{'sector'} }
+
+sub set_sector { $_[0]->{'sector'} = $_[1] }
+
+
+sub get_bps { $_[0]->{'bps'} }
+
+sub set_bps { $_[0]->{'bps'} = $_[1] }
+
+
+sub get_state1 { $_[0]->{'state1'} }
+
+sub set_state1 { $_[0]->{'state1'} = $_[1] }
+
+
+sub get_state2 { $_[0]->{'state2'} }
+
+sub set_state2 { $_[0]->{'state2'} = $_[1] }
+
+
+sub get_ssize { $_[0]->{'ssize'} }
+
+sub set_ssize { $_[0]->{'ssize'} = $_[1] }
+
+
+###
+
+sub get_para_by_name { $_[0]->{$_[1]} }
+
+sub set_para_by_name { $_[0]->{$_[1]} = $_[2] }
+
+
+###
+
+sub get_sector_info_names {
+  return qw(track head sector bps state1 state2 ssize);
+}
+
+
+#($$$)
+sub create_sector_info {
+  my $self = shift;
+  my @defaults = (
+    track => 0, # track number in ID
+    head => 0,  # head number in ID
+    sector => 0, # sector number (with offset)
+    bps => 0, # bps
+    state1 => 0, # state 1 errors
+    state2 => 0, # state 2 errors
+    ssize => 0, # sector size, extended: (0x0080 << $self->{'bps'})
+  );
+
+  %$self = (@defaults, @_); # merge defaults
+  return $self;
+}
+
+
+
+sub pack_sector_info {
+  my($self) = @_;
+  my @si_txt = $self->get_sector_info_names();
+  my $sector_info = pack('C6v', (@{$self}{@si_txt}));
+  return \$sector_info;
+}
+
+
+sub unpack_sector_info($) {
+  my($self, $sector_info_r) = @_;
+  my @si_txt = $self->get_sector_info_names();
+  (@{$self}{@si_txt}) = unpack('C6v', $$sector_info_r); # get sector info into hash slice
+  return $self;
+}
+
+1;
+
+#__END__
+
+
+package Amstrad::CPC::Diskimage::TrackInfo;
+
+#  $VERSION = '0.01';
+  use strict;
+#  use Amstrad::CPC::Diskimage::SectorInfo;
+
+###
+
+sub new {
+  my $class = shift;
+  my $self = bless({}, ref($class) || $class);
+  $self->_init(@_);
+}
+
+
+sub _init {
+  my $self = shift;
+  if (@_) {
+    $self->open(@_) || return;
+  }
+  return $self;
+}
+
+
+sub open {
+  my $self = shift;
+  if (@_ == 1) { # only one parameter -> assume $track_info_r
+    my $info_r = $_[0];
+    $self->unpack_track_info($info_r);
+  } else {
+    $self->create_track_info(@_);
+  }
+}
+
+
+sub get_default_ident { "Track-Info\r\n" }
+
+
+sub get_initial_track_info_size { 0x100 }
+
+
+sub get_track_info_size { $_[0]->{'track_info_size'} }
+
+sub set_track_info_size { $_[0]->{'track_info_size'} = $_[1] }
+
+
+sub get_ident { $_[0]->{'ident'} }
+
+sub set_ident { $_[0]->{'ident'} = $_[1] }
+
+
+sub get_track { $_[0]->{'track'} }
+
+sub set_track { $_[0]->{'track'} = $_[1] }
+
+
+sub get_head { $_[0]->{'head'} }
+
+sub set_head { $_[0]->{'head'} = $_[1] }
+
+
+sub get_bps { $_[0]->{'bps'} }
+
+sub set_bps { $_[0]->{'bps'} = $_[1] }
+
+
+sub get_spt { $_[0]->{'spt'} }
+
+sub set_spt { $_[0]->{'spt'} = $_[1] }
+
+
+sub get_gap3 { $_[0]->{'gap3'} }
+
+sub set_gap3 { $_[0]->{'gap3'} = $_[1] }
+
+
+sub get_fill { $_[0]->{'fill'} }
+
+sub set_fill { $_[0]->{'fill'} = $_[1] }
+
+
+sub _get_sec_infos { $_[0]->{'sec_infos'} }
+
+sub _set_sec_infos { $_[0]->{'sec_infos'} = $_[1] }
+
+
+sub get_para_by_name { $_[0]->{$_[1]} }
+
+sub set_para_by_name { $_[0]->{$_[1]} = $_[2] }
+
+
+###
+
+
+
+sub get_sec_info_idx {
+  my($self, $idx) = @_;
+  if ($idx >= $self->get_spt()) {
+    warn "WARNING: get_sec_info_idx: index out of range: $idx\n";
+    return;
+  }
+  $self->{'sec_infos'}[$idx];
+}
+
+sub set_sec_info_idx {
+  my($self, $idx, $val) = @_;
+  if ($idx >= $self->get_spt()) {
+    warn "WARNING: get_sec_info_idx: index out of range: $idx\n";
+    return;
+  }
+  $self->{'sec_infos'}[$idx] = $val;
+}
+
+
+
+
+
+###
+#get_first_sec?
+
+###
+
+
+sub get_track_info_names {
+  return qw(ident track head data_rate rec_mode bps spt gap3 fill);
+}
+
+
+
+# sub _create_sector_id_xxx($$$$$) {
+#   my($first_sec, $bps,  $track, $head, $sec) = @_;
+#   my $si_r = {
+#       track => $track, # track number in ID
+#       head => $head,  # head number in ID
+#       sector => $first_sec + $sec, #$fo_r->{'first_sec'} + $sec, # sector number (with offset)
+#       bps => $bps, #$fo_r->{'bps'},
+#       state1 => 0, # state 1 errors
+#       state2 => 0, # state 2 errors
+#       ssize => 0, # sector size, extended: (0x0080 << $self->{'bps'})
+#   };
+#   return $si_r;
+# }
+
+
+#($$$)
+sub create_track_info {
+  my $self = shift;
+  my @defaults = (
+    ident => $self->get_default_ident(),
+    track => 0, #$track,
+    head => 0, #$head,
+    data_rate => 0, # always 0
+    rec_mode => 0, # always 0
+    bps => 0, #$fo_r->{'bps'},
+    spt => 0, #$fo_r->{'spt'},
+    gap3 => 0, #$fo_r->{'gap3'},
+    fill => 0, #$fo_r->{'fill'},
+
+    first_sec => 0, # not in track info
+  );
+
+  %$self = (@defaults, @_); # merge defaults
+
+  my $bps = $self->get_bps();
+  my $first_sec = $self->{'first_sec'}; #TTT #$self->get_first_sec();
+
+  my $sec_info_r = [];
+  for (my $sec = 0; $sec < $self->get_spt(); $sec++) {
+    #$sec_info_r->[$sec] = _create_sector_id($first_sec, $bps, $self->get_track(), $self->get_head(), $sec) || return;
+    $sec_info_r->[$sec] = Amstrad::CPC::Diskimage::SectorInfo->new(
+      track => $self->get_track(), # track number in ID
+      head => $self->get_head(),  # head number in ID
+      sector => $first_sec + $sec, # sector number (with offset)
+      bps => $bps, # bps
+      #state1 => 0, # state 1 errors
+      #state2 => 0, # state 2 errors
+      #ssize => 0, # sector size, extended: (0x0080 << $self->{'bps'})
+    ) || return;
+  }
+  $self->_set_sec_infos($sec_info_r);
+
+  return $self;
+}
+
+
+
+sub pack_track_info {
+  my($self) = @_;
+  my @ti_txt = $self->get_track_info_names();
+  my $track_info = pack('a12x4CCCCCCCC', (@{$self}{@ti_txt}));
+
+  #my $sec_info_r = $self->_get_sec_infos();
+  for (my $sec = 0; $sec < $self->get_spt(); $sec++) {
+    #my $si = $sec_info_r->[$sec];
+    my $si = $self->get_sec_info_idx($sec);
+    my $sector_info_r = $si->pack_sector_info();
+    $track_info .= $$sector_info_r;
+  }
+
+  my $off1 = 24; # sectors start with offset 24
+
+  my $bytes_per_sector_entry = 8;
+  my $required_track_info_size = $off1 + $self->get_spt() * $bytes_per_sector_entry;
+  $required_track_info_size += (-$required_track_info_size % $self->get_initial_track_info_size); # round up to multiple
+  $self->set_track_info_size($required_track_info_size);
+
+  $track_info .= chr(0x00) x ($required_track_info_size - length($track_info)); # fill up
+  return \$track_info;
+}
+
+
+
+sub unpack_track_info_sectors {
+  my($self, $track_info_r) = @_;
+  my $off1 = 24; # sectors start with offset 24
+
+  # check for formats with more then 29 sectors which need multiple track info blocks...
+  my $bytes_per_sector_entry = 8;
+  my $required_track_info_size = $off1 + $self->get_spt() * $bytes_per_sector_entry;
+
+  # round up: http://www.issociate.de/board/goto/931095/round_up_to_nearest....html
+  $required_track_info_size += (-$required_track_info_size % $self->get_initial_track_info_size); # round up to multiple
+  $self->set_track_info_size($required_track_info_size);
+
+  my $actual_track_info_size = length($$track_info_r);
+  if ($actual_track_info_size < $required_track_info_size) {
+    $::bm_debug && $::bm_debug->print_msg("unpack_track_info: actual_track_info='$actual_track_info_size' < required_track_info='$required_track_info_size'", 1);
+    return;
+  }
+
+  #my $sec_info_r = [];
+  for (my $sec = 0; $sec < $self->get_spt(); $sec++) {
+    my $si = Amstrad::CPC::Diskimage::SectorInfo->new();
+    my $sector_info_size = $si->get_sector_info_size();
+    my $sector_info = substr($$track_info_r, $off1, $sector_info_size);
+    $si->open(\$sector_info) || return;
+    #push @{$sec_info_r}, $si;
+    $self->set_sec_info_idx($sec, $si);
+    $off1 += $sector_info_size; # add length
+  }
+  #$self->_set_sec_infos($sec_info_r);
+  return $self;
+}
+
+
+#($)
+sub unpack_track_info {
+  my($self, $track_info_r) = @_;
+  my @ti_txt = $self->get_track_info_names();
+  # data_rate, rec_mode are extended version 2:
+  # data_rate: 0=unknown, 1=single or double density, 2=high density, 3=extended density
+  # recording_mode: 0=unknown, 1=FM, 2=MFM
+  #
+  (@{$self}{@ti_txt}) = unpack('a12x4CCCCCCCC', $$track_info_r); # put into hash slice
+
+  if ($self->get_ident() ne $self->get_default_ident()) {
+    warn "WARNING: Track ident not found: '". $self->get_ident() ."'\n";
+    return;
+  }
+  return $self->unpack_track_info_sectors($track_info_r);
+}
+
+1;
+
+#__END__
+
+
+
+
+
+package Amstrad::CPC::Diskimage::Raw;
+
+#  $VERSION = '0.01';
+  use strict;
+#  use Amstrad::CPC::Diskimage::DiskInfo;
+#  use Amstrad::CPC::Diskimage::TrackInfo;
+
+
+sub new {
+  my $class = shift;
+  my $self = bless({}, ref($class) || $class);
+  $self->_init(@_);
+}
+
+
+sub _init {
+  my $self = shift;
+  #$self->{'bla'} = 0;
+  if (@_) {
+    $self->open(@_) || return;
+  }
+  return $self;
+}
+
+
+sub get_fname { $_[0]->{'fname'} }
+
+sub get_fh { $_[0]->{'fh'} }
+
+#sub get_fmode { $_[0]->{'fmode'} }
+
+sub get_dinfo { $_[0]->{'dinfo'} }
+
+sub set_dinfo { $_[0]->{'dinfo'} = $_[1] }
+
+sub get_tinfo { $_[0]->{'tinfo'} }
+
+sub set_tinfo { $_[0]->{'tinfo'} = $_[1] }
+
+
+sub get_format { $_[0]->{'format'} }
+
+sub set_format { $_[0]->{'format'} = $_[1] }
+
+
+
+sub get_dump_hex { $_[0]->{'dump_hex'} }
+
+sub set_dump_hex { $_[0]->{'dump_hex'} = $_[1] }
+
+
+
+sub _file_open($) {
+  local *FH;
+  open(FH, $_[0]) || return undef();
+  return *FH;
+}
+
+sub _fread_blk($$) {
+  my($fh, $size) = @_;
+  (defined $fh) || die "_fread_blk: File not open";
+  my $buf;
+  my $n = read($fh, $buf, $size);
+  if (($n || 0) != $size) {
+    #if ($errout) {
+      warn "WARNING: fread_blk: read ". ($n || 0) ." bytes instead of $size". ((!defined $n) ? ': '. $! : '') ."\n";
+    #}
+    return undef;
+  }
+  #if ($::g_debug) { Bm::debug_msg("fread_blk: bytes read: '$n', length(buf)='". length($buf) ."'", 2); }
+  return \$buf;
+}
+
+
+sub _fwrite_blk($$) {
+  my($fh, $bufref) = @_;
+  (defined $fh) || die "_fwrite_blk: File not open";
+  my $n;
+  if (($n = print $fh ($$bufref)) != 1) {
+    warn "WARNING: fwrite_blk: written $n blocks instead of 1 with length". length($$bufref) ."\n";
+    return;
+  }
+  #if ($::g_debug) { Bm::debug_msg("fwrite_blk: blocks written: '$n', length(block)='". length($$bufref) ."'", 2); }
+  return $n;
+}
+
+
+sub open {
+  my($self, $fname, $mode) = @_;
+  #$self->{'fmode'} = $mode || '<';
+  $mode ||= '<';
+  my $fh = _file_open($mode . $fname) || (warn("WARNING: $!: '$fname'\n"), return);
+  binmode($fh) || (warn("WARNING: Cannot set binary mode for '$fname'"), return);
+  $self->{'fname'} = $fname;
+  $self->{'fh'} = $fh;
+  #if ($self->{'fmode'} ne '>') { # not write only?
+  #  $self->{'dinfo'} = $self->read_disk_info() || return;
+  #}
+  return 1;
+}
+
+
+#sub _debug_my_dump { require Data::Dumper; print Data::Dumper->Dump([@_]); }
+
+
+#()
+sub _get_all_formats() {
+
+  my $format_descr_r = {
+    data => {
+      tracks => 40, # number of tracks (1-85)
+      heads => 1, # number of heads/sides (1-2)
+      #head => 0, # head number??
+      bps => 2, # Bytes per Sector (1-5)
+      spt => 9, # Sectors per Track (1-18)
+      gap3 => 0x4e, # gap between ID and data
+      fill => 0xe5, # filler byte
+      first_sec => 0xc1, # first sector number
+
+      bls => 1024, # BLS: data block allocaton size (1024, 2048, 4096, 8192, 16384)
+      #bsh => 3, # log2 BLS - 7
+      #blm => 7, # BLS / 128 - 1
+      al0 => 0xc0, # bit significant representation of reserved directory blocks 0..7 (0x80=0, 0xc00=0 and 1,,...)
+      al1 => 0x00, # bit significant representation of reserved directory blocks 8..15 (0x80=8,...)
+      off => 0, # number of reserved tracks (also the track where the directory starts)
+    },
+
+    # double sided data
+    data2 => {
+      _ref => 'data',
+      heads => 2,
+    },
+
+    system => {
+      _ref => 'data',
+      first_sec => 0x41,
+
+      off => 2,
+    },
+
+    # double sided system
+    system2 => {
+      _ref => 'system',
+      heads => 2,
+    },
+
+    vortex => {
+      _ref => 'data',
+      tracks => 80,
+      heads => 2,
+      first_sec => 0x01,
+    },
+
+    '3dos' => {
+      _ref => 'data',
+      first_sec => 0x00,
+    },
+
+    big780k => {
+      _ref => 'data',
+      al0 => 0x80, #block 0 reserved
+      tracks => 80,
+      off => 1,
+      first_sec => 0x01,
+    },
+
+    big780k2 => {
+      _ref => 'big780k',
+      heads => 2,
+    },
+
+  };
+  return $format_descr_r;
+}
+
+
+
+#($)
+sub get_format_descr0_rec {
+  my($self, $format1) = @_;
+
+  my $format_descr_r = _get_all_formats();
+  my $fo_r = $format_descr_r->{$format1};
+  if (!$fo_r) {
+    #warn "WARNING: Unknown format: '$format1'\n";
+    return;
+  }
+
+#   if ($fo_r->{'_ref'}) {
+#     my $ref_format = $fo_r->{'_ref'};
+#     my $ref_fo_r = $format_descr_r->{$ref_format};
+#     foreach (keys %$ref_fo_r) {
+#       if (!defined $fo_r->{$_}) {
+#         $fo_r->{$_} = $ref_fo_r->{$_}; # get parameter from reference format
+#       }
+#     }
+#     delete $fo_r->{'_ref'};
+#   }
+
+  if ($fo_r->{'_ref'}) {
+    my $ref_format = $fo_r->{'_ref'};
+    my $fo_r_parent = $self->get_format_descr0_rec($ref_format); # recursive call!
+    my %fo2 = (%$fo_r_parent, %$fo_r);
+    $fo_r = \%fo2;
+    delete $fo_r->{'_ref'};
+  }
+  return $fo_r;
+}
+
+
+
+sub get_format_descr($) {
+  my($self, $format1) = @_;
+
+  my $fo_r = $self->get_format_descr0_rec($format1);
+  if (!$fo_r) {
+    warn "WARNING: Unknown format: '$format1'\n";
+    my $format_list_r = $self->get_format_list();
+    print "Valid formats are: ". join(' ', sort @$format_list_r) ."\n";
+    return;
+  }
+
+  if ($fo_r->{'_ref'}) {
+    warn "WARNING: Programming error: Still reference in format!\n";
+    return;
+  }
+
+  $fo_r->{'name'} = $format1;
+  my $sectors = ($fo_r->{'tracks'} - $fo_r->{'off'}) * $fo_r->{'spt'};
+  my $ssize = 0x80 << $fo_r->{'bps'};
+  $fo_r->{'dsm'} = int(($sectors * $ssize) / $fo_r->{'bls'});
+  # DSM: total size of disc in blocks excluding any reserved tracks
+  $::bm_debug && $::bm_debug->print_msg("get_format_descr: name='$format1', unreserved sectors='$sectors', ssize='$ssize', dsm='$fo_r->{'dsm'}'", 4);
+  return $fo_r;
+}
+
+
+#()
+sub get_format_list {
+  my($self) = @_;
+  my $format_descr_r = _get_all_formats();
+  my @format_list = keys %$format_descr_r;
+  return \@format_list;
+}
+
+
+sub determine_format {
+  my($self, $opt_format) = @_;
+  my $track = 0;
+  my $head = 0;
+  my $ti = $self->seek_track($track, $head) || return;
+  my $di = $self->get_dinfo();
+  my $heads = $di->get_heads();
+  my $tracks = $di->get_tracks();
+
+  #my $si = $ti->get_sec_info_idx(0);
+  #my $sec = $si->get_sector();
+  #my $sec_off = $sec & 0xc0;
+
+  my $first_sec = 0xff;
+  for (my $sec = 0; $sec < $ti->get_spt(); $sec++) {
+    my $si = $ti->get_sec_info_idx($sec);
+    my $sec_num = $si->get_sector();
+    if ($sec_num < $first_sec) {
+      $first_sec = $sec_num;
+    }
+  }
+
+  my $format1 = '';
+
+  if ($first_sec == 0xc1) {
+    $format1 = ($heads == 2) ? 'data2' : 'data';
+  } elsif ($first_sec == 0x41) {
+    $format1 = ($heads == 2) ? 'system2' : 'system';
+  } elsif (($first_sec == 0x01) && ($tracks == 80)) { #big780k TTT
+    $format1 = ($heads == 2) ? 'big780k2' : 'big780k';
+  } else {
+    warn "Unknown format with first_sec='$first_sec' (first_sec='$first_sec', tracks='$tracks', heads='$heads')!\n";
+    return;
+  }
+
+  my $keyvals_r = undef;
+
+  if ($opt_format) {
+    my($force_format, @keyvals) = split ',', $opt_format;
+    if ($format1 ne $force_format) {
+      print "Specified format '$force_format' <> assumed format '$format1'. Trying to use '$opt_format'...\n";
+      if ($force_format) {
+        $format1 = $force_format;
+      }
+    }
+    if (@keyvals) {
+      $keyvals_r = \@keyvals;
+    }
+  }
+
+  $::bm_debug && $::bm_debug->print_msg("determine_format: Format='$format1': first_sec='$first_sec', tracks='$tracks', heads='$heads'", 1);
+  my $fo_r = $self->get_format_descr($format1);
+
+  if ($fo_r && $keyvals_r) {
+    my %paras = map { split('=', $_, 2) } @$keyvals_r;
+    my %fo2 = (%$fo_r, %paras);
+    $fo_r = \%fo2;
+  }
+
+  $::bm_debug && $::bm_debug->print_msg("determine_format: format='$format1' (". join(' ', ($fo_r) ? %$fo_r : '') .").", 0);
+
+#  _debug_my_dump($fo_r);
+#exit 1;
+#  _debug_my_dump($ti);
+#  _debug_my_dump($di);
+#  _debug_my_dump($si);
+
+  $self->set_format($fo_r);
+  return $fo_r;
+}
+
+
+
+# sub _gethex1($$$) {
+#   my($blk, $pos1, $len) = @_;
+#   my @tmp1 = unpack('C*', substr($blk, $pos1, $len));
+#   my @tmp2 = map { sprintf("%02X", $_) } @tmp1;
+#   return '['. join(',', @tmp2) .'] ';
+# }
+#
+#
+# sub _getstr1($) {
+#   my($str) = @_;
+#   $str =~ tr/[\x20-\x7f]/./c;  # convert all 'unprintable' characters to '.'
+#   return $str;
+# }
+
+
+
+#TTT
+sub _dump_hex($) {
+  my($data_r) = @_;
+  my $data_len = length($$data_r);
+  #my $linemax = -1;
+  #if ($linemax == -1) {
+  #  $linemax = length($data); # -1 = all in one line
+  #}
+  #my $linemax = int($data_len / 16); # integer length
+  #if ($linemax <= 0) {
+  #  $linemax = 16;
+  #}
+  my $linemax = 16;
+  my $i = 0;
+  while ($i < $data_len) {
+    my $line = substr($$data_r, $i, $linemax);
+    my $hex_str = join(' ', map { sprintf("%02X", $_) } unpack('C*', $line));
+    $line =~ tr/[\x20-\x7e]/./c; # convert all unprintable characters to '.'
+    print sprintf("%04X", $i) .'  '. $hex_str .'  '. $line ."\n";
+    $i += $linemax;
+  }
+  print "\n";
+}
+
+
+
+sub read_disk_info {
+  my($self) = @_;
+  my $di = Amstrad::CPC::Diskimage::DiskInfo->new();
+  my $disk_info_r = _fread_blk($self->get_fh(), $di->get_disk_info_size()) || return;
+  if ($self->get_dump_hex) {
+    _dump_hex($disk_info_r);
+  }
+  $di->open($disk_info_r);
+}
+
+
+#($)
+sub write_disk_info {
+  my($self, $di) = @_;
+  my $disk_info_r = $di->pack_disk_info($di) || return;
+  _fwrite_blk($self->get_fh(), $disk_info_r);
+}
+
+
+
+sub read_track_info {
+  my($self) = @_;
+  my $ti = Amstrad::CPC::Diskimage::TrackInfo->new();
+  my $track_info_r = _fread_blk($self->get_fh(), $ti->get_initial_track_info_size()) || return;
+  if ($self->get_dump_hex) {
+    _dump_hex($track_info_r);
+  }
+  if (!$ti->open($track_info_r)) {
+    my $required_size = $ti->get_track_info_size() || return;
+    # read next part of track info in case of more than 29 sectors...
+    my $track_info2_r = _fread_blk($self->get_fh(), $required_size - $ti->get_initial_track_info_size()) || return;
+    if ($self->get_dump_hex) {
+      _dump_hex($track_info2_r);
+    }
+    $$track_info_r .= $$track_info2_r;
+    $ti->unpack_track_info_sectors($track_info_r) || return;
+  }
+  return $ti;
+}
+
+
+sub write_track_info {
+  my($self, $ti) = @_;
+  my $track_info_r = $ti->pack_track_info($ti) || return;
+  _fwrite_blk($self->get_fh(), $track_info_r);
+}
+
+
+
+## old: c_tsize = c_ts.spt * (0x0080 << c_ts.bps) + 0x100; //IMG_DISK_INFO;
+#c_tsize = 0x100; //IMG_DISK_INFO;
+#      for (int i = 0; i < c_ts.spt; i++) {
+#        c_tsize += c_ts.ss[i].e_ssize;
+#          // compute track size by adding all sector sizes
+#      }
+
+sub format_image {
+  my($self, $p_format1) = @_;
+
+  my($format1, @keyvals) = split ',', $p_format1;
+
+  my $fo_r = $self->get_format_descr($format1) || return;
+
+  if (@keyvals) {
+    my %paras = map { split('=', $_, 2) } @keyvals;
+    my %fo2 = (%$fo_r, %paras);
+    $fo_r = \%fo2;
+  }
+
+  print "Formatting image ". $self->get_fname() ." with $format1 format\n";
+  my $tsize = $fo_r->{'spt'} * (0x0080 << $fo_r->{'bps'}) + 0x100; # 0x100 track info size
+  #TTT correct tsize here if track info size differs!
+
+  my $di = Amstrad::CPC::Diskimage::DiskInfo->new(
+    'tracks' => $fo_r->{'tracks'},
+    'heads'  => $fo_r->{'heads'},
+    'tsize'  => $tsize,
+    ) || return;
+  $self->write_disk_info($di) || return;
+
+  my $ssize = (0x0080 << $fo_r->{'bps'}); # sector size
+  my $empty_sec_data = pack('C', $fo_r->{'fill'}) x $ssize;
+  for (my $track = 0; $track < $di->get_tracks(); $track++) {
+    for (my $head = 0; $head < $di->get_heads(); $head++) {
+      #print "Formatting track $track head $head...\n";
+      #my $ti_r = $self->create_track_info($fo_r, $track, $head) || return;
+      my $ti = Amstrad::CPC::Diskimage::TrackInfo->new(
+        'track' => $track,
+        'head'  => $head,
+        'bps'  => $fo_r->{'bps'},
+        'spt'  => $fo_r->{'spt'},
+        'gap3'  => $fo_r->{'gap3'},
+        'fill'  => $fo_r->{'fill'},
+        'first_sec'  => $fo_r->{'first_sec'},
+      ) || return;
+      $self->write_track_info($ti) || return;
+      # write sector data...
+      for (my $sec = 0; $sec < $ti->get_spt(); $sec++) {
+        _fwrite_blk($self->get_fh(), \$empty_sec_data) || return;
+      }
+    }
+  }
+  return 1;
+}
+
+
+sub _escape_cr_lf($) {
+  my($in) = @_;
+  $in =~ s/\r\n/\\r\\n/go; # for ident
+  if (index($in, ' ') >= 0) {
+    $in = "'". $in ."'";
+  }
+  return $in;
+}
+
+
+sub print_disk_info {
+  my($self, $di) = @_;
+  my @di_txt = $di->get_disk_info_names();
+  #print "Disk_Info\n";
+  #foreach (@di_txt) {
+  #  my $val = $di->get_para_by_name($_);
+  #  if (!defined $val) {
+  #    $val = '<undef>';
+  #  }
+  #  $val =~ s/\r\n/\\r\\n/go; # for ident
+  #  printf "%-9s = '%s'\n", ucfirst($_), $val;
+  #}
+  #print "\n";
+
+  #print "Disk_Info: ", join(' ', %$di), "\n";
+  #print "Disk_Info: ", join(' ', @{$di}{@di_txt}), "\n"; # get from hash slice
+  #print "Disk_Info: ", join(' ', map { ($_, "'". $di->get_para_by_name($_) ."'" ) } @di_txt), "\n";
+  #print "Disk_Info: ", join(' ', map { ($_, _escape_cr_lf($di->get_para_by_name($_))) } @di_txt), "\n";
+  print "Disk_Info: ", join(' ', map { $_ ."=". _escape_cr_lf($di->get_para_by_name($_)) } @di_txt), "\n";
+
+  my $tsizes_r = $di->get_tsizes();
+  #if ($tsizes_r) {
+  #  print "Format    = 'Extended DSK format'\n";
+  #  #print "Tsizes_dec    = '@{$tsizes_r}'\n";
+  #  print "Tsizes    = '". join(' ', map { '0x'. sprintf("%04X", $_) } @{$tsizes_r}) ."'\n";
+  #}
+  if ($tsizes_r) {
+    print "Disk_Info_Extended: Format='Extended DSK format' tsizes='". join(' ', map { '0x'. sprintf("%04X", $_) } @$tsizes_r) ."'\n";
+  }
+
+  #print "\n";
+  return 1;
+}
+
+
+
+sub print_track_info($) {
+  my($self, $ti) = @_;
+  my @ti_txt = $ti->get_track_info_names();
+
+  #print "Track_Info\n";
+  #foreach (@ti_txt) {
+  #  my $val = $ti->get_para_by_name($_);
+  #  $val =~ s/\r\n/\\r\\n/go; # for ident
+  #  printf "%-9s = '%s'\n", ucfirst($_), $val;
+  #}
+  #print "Track_Info: ", join(' ', map { ($_, _escape_cr_lf($ti->get_para_by_name($_))) } @ti_txt), "\n";
+  print "Track_Info: ", join(' ', map { $_ ."=". _escape_cr_lf($ti->get_para_by_name($_)) } @ti_txt), "\n";
+  
+  ##my $sec_info_r = $ti->_get_sec_infos();
+  #for (my $i = 0; $i < $ti->get_spt(); $i++) {
+  #  #my $si = $sec_info_r->[$i];
+  #  my $si = $ti->get_sec_info_idx($i);
+  #  my @si_txt = $si->get_sector_info_names();
+  #  print "Sector: ". join(' ', map { $_ ."='0x". sprintf("%02X", $si->get_para_by_name($_)) ."'" } @si_txt) . "\n";
+  #}
+
+  for (my $i = 0; $i < $ti->get_spt(); $i++) {
+    my $si = $ti->get_sec_info_idx($i);
+    my @si_txt = $si->get_sector_info_names();
+    #print "Sector: ". join(' ', map { $_ ."='". $si->get_para_by_name($_) ."'" } @si_txt) . "\n";
+    print "Sector: ". join(' ', map { $_ ."=0x". sprintf("%02X", $si->get_para_by_name($_)) } @si_txt) . "\n";
+  }
+  
+  
+  #print "\n";
+  return 1;
+}
+
+
+
+sub print_image_info {
+  my($self, $hex_dump) = @_;
+  $self->set_dump_hex($hex_dump);
+
+  my $file_size = (-s $self->get_fname());
+  print "DSK_file: name='". $self->get_fname() ."' size=$file_size (0x". sprintf("%04X", $file_size) .")\n";
+  #print "DSK_size  = '$file_size' (0x". sprintf("%04X", $file_size) .")\n\n";
+
+  my $di = $self->get_dinfo();
+  if (!$di) { # disk info not loaded?
+    $di = $self->read_disk_info() || return;
+    $self->set_dinfo($di);
+  }
+  #if ($hex_dump) {
+  #  _dump_hex('00'); #TTT
+  #}
+  $self->print_disk_info($di) || return;
+  for (my $track = 0; $track < $di->get_tracks(); $track++) {
+    for (my $head = 0; $head < $di->get_heads(); $head++) {
+      my $ti = $self->read_track_info() || return;
+      $self->print_track_info($ti) || return;
+      my $tsize = $di->get_tsize();
+      if (!$tsize) { # no common tsize -> assume extended
+        $tsize = @{$di->get_tsizes()}[$track * $di->get_heads() + $head];
+      }
+      my $data_r = _fread_blk($self->get_fh, $tsize - $ti->get_track_info_size()) || return;
+      if ($self->get_dump_hex) {
+        _dump_hex($data_r);
+      }
+      my $data_len = length($$data_r);
+      print "Track_data: length=$data_len (0x". sprintf("%04X", $data_len) .")\n";
+    }
+  }
+  return 1;
+}
+
+
+
+sub seek_track {
+  my($self, $track, $head) = @_;
+  {
+    my $ti = $self->get_tinfo();
+    if ($ti) {
+      if (($ti->get_track() == $track) && ($ti->get_head() == $head)) { # already seeked?
+        return $ti;
+      }
+    }
+  }
+
+  my $di = $self->get_dinfo();
+  if (!$di) { # disk info not loaded?
+    $di = $self->read_disk_info() || return;
+    $self->set_dinfo($di);
+  }
+
+  my $tsize = $di->get_tsize();
+  my $pos1 = $di->get_disk_info_size();
+  if ($tsize) {
+    $pos1 += ($track * $di->get_heads() + $head) * $tsize;
+  } else { # no common tsize -> assume extended format
+    my $tsize_num = ($track * $di->get_heads() + $head);
+    for (my $i = 0; $i < $tsize_num; $i++) { # sum up all tsizes before track
+      $pos1 += $di->get_tsizes()->[$i];
+    }
+  }
+  seek($self->get_fh, $pos1, 0) || (warn("WARNING: seek: $!\n"), return);
+  my $ti = $self->read_track_info() || return;
+  $ti->{'_track_pos'} = $pos1 + $ti->get_track_info_size(); # TTT: don't save it here!
+
+  #my $si_r = $ti->_get_sec_infos();
+  my $sec_num2pos_r = {};
+  for (my $sec = 0; $sec < $ti->get_spt(); $sec++) {
+    #$sec_num2pos_r->{$si_r->[$sec]{'sector'}} = $sec;
+    my $si = $ti->get_sec_info_idx($sec);
+    $sec_num2pos_r->{$si->get_sector()} = $sec;
+  }
+  $ti->{'_sec_num2pos'} = $sec_num2pos_r;  # TTT: don't save it here!
+
+  $self->set_tinfo($ti);
+  $::bm_debug && $::bm_debug->print_msg("seek_track: track='$track', head='$head': _track_pos='$ti->{'_track_pos'}'", 2);
+  return $ti;
+}
+
+
+#sub read_sector_id {
+#  my($self) = @_;
+#  return 1;
+#}
+
+sub sec_num2pos {
+  my($self, $sec) = @_;
+  my $ti = $self->get_tinfo() || (warn("WARNING: sec_num2pos: No track info!\n"), return);
+  my $sec_num2pos_r = $ti->{'_sec_num2pos'};
+  my $sec_pos = $sec_num2pos_r->{$sec};
+  if (!defined $sec_pos) {
+    warn "WARNING: sec_num2pos: sector '0x". sprintf("%02x", $sec) ."' not found!\n";
+    $sec_pos = 0;
+  }
+  $::bm_debug && $::bm_debug->print_msg("sec_num2pos: sec='$sec', sec_pos='$sec_pos'", 2);
+  return $sec_pos;
+}
+
+
+
+sub _seek_sector {
+  my($self, $sec_pos) = @_;
+  my $ti = $self->get_tinfo() || (warn("WARNING: _seek_sector: No track info!\n"), return);
+  if ($sec_pos > $ti->get_spt()) {
+    warn "WARNING: _seek_sector: sector $sec_pos > spt ". $ti->get_spt() ."!\n";
+    return;
+  }
+  my $pos1 = $ti->{'_track_pos'} || (warn("WARNING: _seek_sector: No track seek!\n"), return);
+  #my $si_r = $ti->_get_sec_infos();
+  my $ssize = 0;
+  if ($ti->get_sec_info_idx(0)->get_ssize()) { # extended format with sector sizes?
+    for (my $i = 0; $i < $sec_pos; $i++) { # compute sum of all previous sectors
+      #$pos1 += $si_r->[$i]{'ssize'};
+      $pos1 += $ti->get_sec_info_idx($i)->get_ssize();
+    }
+    #$ssize = $si_r->[$sec_pos]{'ssize'};
+    $ssize = $ti->get_sec_info_idx($sec_pos)->get_ssize();
+  } else { # standard format: same bps for all sectors
+    $ssize = (0x0080 << $ti->get_bps()); # sector size
+    $pos1 += $ssize * $sec_pos;
+  }
+
+  seek($self->get_fh(), $pos1, 0) || (warn("WARNING: seek: $!\n"), return);
+  $::bm_debug && $::bm_debug->print_msg("_seek_sector: sec_pos='$sec_pos', _track_pos='$ti->{'_track_pos'}', ssize='$ssize', pos1='$pos1'", 2);
+  return $ssize;
+}
+
+
+sub read_sector {
+  my($self, $sec) = @_;
+  my $ssize = $self->_seek_sector($self->sec_num2pos($sec)) || return;
+  my $data_r = _fread_blk($self->get_fh, $ssize) || return;
+  return $data_r;
+}
+
+
+sub write_sector {
+  my($self, $sec, $data_r) = @_;
+  my $ssize = $self->_seek_sector($self->sec_num2pos($sec)) || return;
+  if (length($$data_r) != $ssize) {
+    warn "WARNING: write_sector: data size ". length($$data_r) ."does not match sector size $ssize!\n";
+    return;
+  }
+  _fwrite_blk($self->get_fh, $data_r) || return;
+}
+
+
+sub close {
+  my($self) = @_;
+  my $fh = $self->get_fh();
+  if ($fh) {
+    $self->{'fh'} = undef();
+    close($fh) || (warn("WARNING: $!: '". $self->get_fname ."'\n"), return);
+  }
+  return 1;
+}
+
+1;
+
+#__END__
+
+
+
+#
+# Amstrad::CPC::Diskimage - Disk image handling
+# 0.01  19.03.2006 first tests
+#
+#
+package Amstrad::CPC::Diskimage;
+
+#  $VERSION = '0.01';
+  our(@ISA) = qw(Amstrad::CPC::Diskimage::Raw); #@ISA=
+  use strict;
+#  use Amstrad::CPC::Diskimage::Raw;
+  #use Amstrad::CPC::Amsdos; # to analyze AMSDOS header
+
+
+###
+
+sub new {
+  my $class = shift;
+  my $self = bless({}, ref($class) || $class);
+  $self->_init(@_);
+}
+
+
+sub _init {
+  my $self = shift;
+  $self->SUPER::_init(@_);
+}
+
+
+
+sub get_extents { $_[0]->{'extents'} }
+
+sub set_extents { $_[0]->{'extents'} = $_[1] }
+
+
+sub get_free_blocks { $_[0]->{'free_blocks'} }
+
+sub set_free_blocks { $_[0]->{'free_blocks'} = $_[1] }
+
+
+sub get_free_extents { $_[0]->{'free_extents'} }
+
+sub set_free_extents { $_[0]->{'free_extents'} = $_[1] }
+
+
+
+sub amsdos_check_header {
+  my($self, $data_r) = @_;
+#  require Amstrad::CPC::Amsdos; # to analyze AMSDOS header
+  my $hd = Amstrad::CPC::Amsdos->new();
+  $hd->open($data_r) || return;
+  #$::bm_debug && $::bm_debug->print_msg('amsdos_check_header: '. $hd_r->{'user'} .':'. #$hd_r->{'fname'}. ','. $hd_r->{'real_len'}, 2);
+  return $hd;
+}
+
+
+
+sub _unpack_ftype_flags($) {
+  my($ftype) = @_;
+  my(@ftype_txt) = qw(R S B);
+  my $ftype_flg = '';
+  for (my $i = 0; $i < 3; $i++) {
+    my $ch = substr($ftype, $i, 1);
+    my $num = ord($ch);
+    if ($num & 0x80) {
+      substr($ftype, $i, 1) = chr($num & 0x7f);
+      $ftype_flg .= $ftype_txt[$i];
+    }
+  }
+  return ($ftype, $ftype_flg);
+}
+
+sub _pack_ftype_flags($$) {
+  my($ftype, $ftype_flg) = @_;
+  my(@ftype_txt) = qw(R S B);
+  for (my $i = 0; $i < 3; $i++) {
+    if ($ftype_flg =~ /\bftype_txt[$i]\b/) {
+      my $ch = substr($ftype, $i, 1);
+      $ch = ord($ch) | 0x80;
+      substr($ftype, $i, 1) = $ch;
+    }
+  }
+  return $ftype;
+}
+
+
+
+sub _unpack_dir_extents($) {
+  my($data_r) = @_;
+  my(@ext_txt) = qw(user fname ftype extent last_rec_bytes extent_hi_x records);
+  my $offset = 0;
+  my $extent_len = 32;
+  my $extents_r = [];
+  while ($offset < length($$data_r)) {
+    my $dir_entry = substr($$data_r, $offset, $extent_len);
+    my $ext_r;
+    (@{$ext_r}{@ext_txt}) = unpack('Ca8a3CCCC', $dir_entry);
+    my @blocks = unpack('x16C16', $dir_entry);
+    $ext_r->{'blocks'} = \@blocks; # allocation blocks
+
+    ($ext_r->{'ftype'}, $ext_r->{'ftype_flags'}) = _unpack_ftype_flags($ext_r->{'ftype'});
+
+    push @$extents_r, $ext_r;
+    $offset += $extent_len;
+    if ($::bm_debug) {
+      my $fname_dbg = $ext_r->{'fname'};
+      $fname_dbg =~ s/([\x00-\x1f\x80-\xff])/ sprintf("&%02X", ord($1)) /eg;
+      $::bm_debug && $::bm_debug->print_msg('_unpack_dir_extents: '. $ext_r->{'user'} .':'. $fname_dbg .'.'. $ext_r->{'ftype'}
+       .' '. sprintf("%3d", ($ext_r->{'records'} + 7) / 8) .'K'
+       .' '. $ext_r->{'ftype_flags'}
+       .', extent='. $ext_r->{'extent'}
+       .', last_rec_bytes='. $ext_r->{'last_rec_bytes'}
+       .', records='. $ext_r->{'records'}
+       .', blocks='. join(' ', @blocks) , 4);
+    }
+
+    $ext_r->{'fname'} =~ s/([\x80-\xff])/ chr(ord($1) & 0x7f) /eg; # remove high bits from filename
+
+  }
+  return $extents_r;
+}
+
+
+sub _pack_dir_extents($$;$) {
+  my($extents_r, $fill) = @_;
+  my(@de_txt) = qw(user fname ftype extent last_rec_bytes extent_hi_x records);
+  my(@ftype_txt) = qw(ro sys bak);
+
+  my $data = '';
+  foreach my $ext_r (@$extents_r) {
+    my $save_ftype = $ext_r->{'ftype'};
+    $ext_r->{'ftype'} = _pack_ftype_flags($ext_r->{'ftype'}, $ext_r->{'ftype_flags'});
+    $data .= pack('Ca8a3CCCC', (@{$ext_r}{@de_txt}))
+           . pack('C16', @{$ext_r->{'blocks'}});
+    $ext_r->{'ftype'} = $save_ftype;
+  }
+  return \$data;
+}
+
+
+
+# http://bytes.com/groups/cpp/546879-reverse-bit-order
+sub _reverse_bit_order8($) {
+  my($c) = @_;
+  $c = ($c & 0x0F) << 4 | ($c & 0xF0) >> 4;
+  $c = ($c & 0x33) << 2 | ($c & 0xCC) >> 2;
+  $c = ($c & 0x55) << 1 | ($c & 0xAA) >> 1;
+  return $c;
+}
+
+
+sub _compute_blockmask {
+  my($extents_r, $fill, $dsm, $al0, $al1) = @_;
+  my $bitstr = '';
+  vec($bitstr, $dsm - 1, 1) = 0; # span bitstring
+
+#   my $blocks_per_dir = 2;
+#   for (my $block = 0; $block < $blocks_per_dir; $block++) {
+#     vec($bitstr, $block, 1) = 1;
+#   }
+
+
+#   my $mask1 = 0x8000;
+#   for (my $block = 0; $block < 16; $block++) {
+#     if ($al01 & $mask1) {
+#       vec($bitstr, $block, 1) = 1; # mark reserved block
+#       $::bm_debug && $::bm_debug->print_msg("_compute_blockmask: block='$block' is reserved, al01='$al01', mask1='$mask1'", 4);
+#     }
+#     $mask1 >>= 1;
+#     #could also exit early if we modify al01
+#   }
+
+  vec($bitstr, 0, 8) = _reverse_bit_order8($al0);
+  vec($bitstr, 1, 8) = _reverse_bit_order8($al1);
+
+  $::bm_debug && $::bm_debug->print_msg("_compute_blockmask: vector with reserved blocks: vec='". unpack("b*", $bitstr) ."'", 6);
+
+  foreach my $ext_r (@$extents_r) {
+    if ($ext_r->{'user'} != $fill) {
+      foreach my $block (@{$ext_r->{'blocks'}}) {
+        if ($block) {
+          if (vec($bitstr, $block, 1)) { # already set?
+            warn "WARNING: '$ext_r->{'fname'}.$ext_r->{'ftype'}': Block number $block already in use!\n";
+          }
+          vec($bitstr, $block, 1) = 1;
+        } else { # block=0 -> no more
+          last;
+        }
+      }
+    }
+  }
+  $::bm_debug && $::bm_debug->print_msg("_compute_blockmask: vector with occupied blocks: vec='". unpack("b*", $bitstr) ."'", 3);
+  return $bitstr;
+}
+
+
+sub _get_free_blocks($$) {
+  my($bitstr, $dsm) = @_;
+  my @free_blocks = ();
+  for (my $i = 0; $i < $dsm; $i++) {
+    if (!vec($bitstr, $i, 1)) {
+      push @free_blocks, $i;
+    }
+  }
+  $::bm_debug && $::bm_debug->print_msg("_get_free_blocks: dsm='$dsm', free_blocks='@free_blocks'", 5);
+  return \@free_blocks;
+}
+
+
+
+sub _compute_free_extents($$) {
+  my($extents_r, $fill) = @_;
+  my @free_extents = ();
+  foreach my $ext_r (@$extents_r) {
+    if ($ext_r->{'user'} == $fill) {
+      push @free_extents, $ext_r;
+    }
+  }
+  return \@free_extents;
+}
+
+
+sub _prepare_dir_list($$;$$) {
+  my($extents_r, $fill, $file_pattern, $show_empty_flg) = @_;
+  my $dir_r = {};
+  foreach my $ext_r (@$extents_r) {
+    if (($ext_r->{'user'} != $fill) || $show_empty_flg) {
+      my $name = $ext_r->{'user'} .':'. $ext_r->{'fname'} .'.'. $ext_r->{'ftype'};
+      if ($file_pattern && ($name !~ /$file_pattern/)) {
+        next;
+      }
+      my $ext_idx = $ext_r->{'extent'};
+      $dir_r->{$name}[$ext_idx] = $ext_r;
+    }
+  }
+  return $dir_r;
+}
+
+
+
+sub _create_file_pattern($) {
+  my($files_r) = @_;
+  my $file_pattern = '';
+  if ($files_r && @$files_r) {
+    my @files = @$files_r; # create copy to modify
+    $file_pattern =
+      '^('.
+        join('|',
+          map {
+            $_ = quotemeta(uc($_)); # upper case, quote all special characters
+            $_ =~ s!\.!s*\\.\\s*!o; # if there is an extension dot, put whitespace pattern in front and after
+            $_ =~ s!\\(\*|\+)!.$1!og; # unquote special characters '*', '+'
+            $_ =~ s!%!:!o; # replace percent by colon
+            $_ = ($_ !~ /:/) ? ('\\d+:'. $_) : $_; # if not containing a colon ':' prepend a pattern
+            ($_ !~ /\./) ? ($_ .'\\s*\.\\s*') : $_; # if not containing a dot, append one...
+          } @files
+        )
+      .')$';
+  }
+  $::bm_debug && $::bm_debug->print_msg("_create_file_pattern: file_pattern='$file_pattern'.", 1);
+  return $file_pattern;
+}
+
+
+#($;$)
+sub dir_read {
+  my($self, $files_r, $opt_format) = @_;
+
+  my $file_pattern = _create_file_pattern($files_r);
+
+  #my $ti_r = $self->seek_track(0, 0) || return;
+  #print "DDD: track='$ti_r->{'track'}'\n";
+  my $fo_r = $self->determine_format($opt_format) || return;
+  #print "DDD: fo_r='%$fo_r'\n";
+  my $off = $fo_r->{'off'};
+  $self->seek_track($off, 0) || return;
+  my $first_sec = $fo_r->{'first_sec'};
+
+  my $dir_sectors = 4;
+  my $dir_data = '';
+  for (my $sec = 0; $sec < $dir_sectors; $sec++) {
+    $::bm_debug && $::bm_debug->print_msg("dir_read: reading sector '". sprintf("%02X", $first_sec + $sec) ."'...", 1);
+    my $data_r = $self->read_sector($first_sec + $sec) || return;
+    $dir_data .= $$data_r;
+  }
+
+
+  my $extents_r = _unpack_dir_extents(\$dir_data) || return;
+  $self->set_extents($extents_r); # only needed for files_put??
+
+  my $fill = $fo_r->{'fill'};
+  my $show_empty_flg = 0;
+  if ($file_pattern && ($file_pattern =~ /\b$fill\\:/)) {
+    $show_empty_flg = 1;
+  }
+
+  my $dir_r = _prepare_dir_list($extents_r, $fill, $file_pattern, $show_empty_flg) || return;
+
+  my $dsm = $fo_r->{'dsm'};
+  my $al0 = $fo_r->{'al0'};
+  my $al1 = $fo_r->{'al1'};
+  my $bitmask = _compute_blockmask($extents_r, $fill, $dsm, $al0, $al1) || return;
+  my $free_blocks_r = _get_free_blocks($bitmask, $dsm) || return;
+  $self->set_free_blocks($free_blocks_r);
+
+
+  # only needed for files_put...
+  my $free_extents_r = _compute_free_extents($extents_r, $fill) || return;
+  $self->set_free_extents($free_extents_r);
+
+  #return ($dir_r, \$dir_data);
+  return $dir_r;
+}
+
+
+
+sub dir_write {
+  my($self, $extents_r) = @_;
+
+  my $fo_r = $self->get_format() || return;
+
+  my $off = $fo_r->{'off'};
+  $self->seek_track($off, 0) || return;
+  my $first_sec = $fo_r->{'first_sec'};
+
+  my $fill = $fo_r->{'fill'};
+  my $dir_data_r = _pack_dir_extents($extents_r, $fill) || return;
+
+  my $dir_sectors = 4;
+  my $ssize = (0x0080 << $fo_r->{'bps'}); # sector size
+  for (my $sec = 0; $sec < $dir_sectors; $sec++) {
+    $self->write_sector($first_sec + $sec, \substr($$dir_data_r, $sec * $ssize, $ssize)) || return;
+  }
+  return 1;
+}
+
+
+sub dir_print {
+  my($self, $files_r, $opt_format) = @_;
+
+  my $dir_r = $self->dir_read($files_r, $opt_format) || return;
+
+  foreach my $file (sort keys %$dir_r) {
+    #if ($file_pattern && ($file !~ /$file_pattern/)) {
+    #  next;
+    #}
+    my $extents_r = $dir_r->{$file};
+    my $records = 0;
+    foreach my $ext_r (@$extents_r) {
+      if ($ext_r) {
+        $records += $ext_r->{'records'};
+      }
+    }
+    print $file .'  '. sprintf("%3d", ($records + 7) / 8) ."K\n";
+  }
+
+  my $free_blocks_r = $self->get_free_blocks();
+
+  my $fo_r = $self->get_format() || return;
+  my $free_kb =  int((@$free_blocks_r * $fo_r->{'bls'}) / 1024);
+  print $free_kb ."K free\n";
+
+  return 1;
+}
+
+
+sub conv_blk2sec {
+  my($self, $block) = @_;
+  my $fo_r = $self->get_format() || return;
+
+  my $block_sectors = 2;
+
+  # directory is in block 0 and block 1
+  my $log_sec = $block * $block_sectors;
+
+  my $spt = $fo_r->{'spt'};
+
+  my $track = int($log_sec / $spt);
+  my $sec = $log_sec % $spt;
+
+  $sec += $fo_r->{'first_sec'};
+  $track += $fo_r->{'off'};
+
+  my $head = 0; # todo!!
+  #print "DDD: track='$track', head='$head', sector='$sec'\n";
+  return($track, $head, $sec);
+}
+
+
+sub next_sector {
+  my($self, $track_r, $head_r, $sec_r) = @_;
+  my $fo_r = $self->get_format() || return;
+  $$sec_r++;
+  if ($$sec_r >= ($fo_r->{'first_sec'} + $fo_r->{'spt'})) {
+    $$track_r++;
+    $$sec_r = $fo_r->{'first_sec'};
+  }
+  return 1;
+}
+
+
+sub read_block {
+  my($self, $block) = @_;
+  my $block_sectors = 2;
+  my $data = '';
+  my($track, $head, $sec) = $self->conv_blk2sec($block);
+  $::bm_debug && $::bm_debug->print_msg("read_block: reading block '$block' (track=$track, head=$head, sec=". sprintf("%02X", $sec) .")", 1);
+  foreach (my $i = 0; $i < $block_sectors; $i++) {
+    $self->seek_track($track, $head) || return;
+    my $data_r = $self->read_sector($sec) || return;
+    #my $data_r = $self->read_sector($first_sec + $sec) || return;
+    $data .= $$data_r;
+    $self->next_sector(\$track, \$head, \$sec) || return;
+  }
+  return \$data;
+}
+
+
+sub write_block {
+  my($self, $block, $data_r) = @_;
+  my $block_sectors = 2;
+  my $ssize = int(length($$data_r) / $block_sectors);
+  my($track, $head, $sec) = $self->conv_blk2sec($block);
+  $::bm_debug && $::bm_debug->print_msg("write_block: writing block '$block' (track=$track, head=$head, sec=". sprintf("%02X", $sec) .")", 1);
+  foreach (my $i = 0; $i < $block_sectors; $i++) {
+    $self->seek_track($track, $head) || return;
+    $self->write_sector($sec, \substr($$data_r, $ssize * $i, $ssize)) || return;
+    $self->next_sector(\$track, \$head, \$sec) || return;
+  }
+  return 1;
+}
+
+
+sub _file_open($) {
+  local *FH;
+  open(FH, $_[0]) || return undef();
+  return *FH;
+}
+
+
+sub _fread_blk($$) {
+  my($fh, $size) = @_;
+  (defined $fh) || die "_fread_blk: File not open";
+  my $buf;
+  my $n = read($fh, $buf, $size);
+  if (($n || 0) != $size) {
+    #if ($errout) {
+      warn "WARNING: fread_blk: read ". ($n || 0) ." bytes instead of $size". ((!defined $n) ? ': '. $! : '') ."\n";
+    #}
+    return undef;
+  }
+  #if ($::g_debug) { Bm::debug_msg("fread_blk: bytes read: '$n', length(buf)='". length($buf) ."'", 2); }
+  return \$buf;
+}
+
+
+sub files_get {
+  my($self, $files_r, $opt_format) = @_;
+
+  my $dir_r = $self->dir_read($files_r, $opt_format) || return;
+  my $rec_p_blk = 8;
+  foreach my $file (sort keys %$dir_r) {
+    my $fname = $file;
+    $fname =~ s/^(\d+)://; # remove user
+    if ($1) { # user > 0?
+      $fname = $1 .'%'. $fname; # prepend
+    }
+    $fname =~ s/\s*//g;
+    #print "DDD: $fname\n";
+    my $fh = _file_open('>'. $fname) || (warn("WARNING: $!: '$fname'\n"), return);
+    binmode($fh);
+    print "Copying '$file' => '$fname'...\n";
+    my $extents_r = $dir_r->{$file};
+    my $first_blk_flg = 1;
+    my $real_len = undef();
+    my $file_data = '';
+    foreach my $ext_r (@$extents_r) {
+      my $records = $ext_r->{'records'};
+      foreach my $block (@{$ext_r->{'blocks'}}) {
+        my $data_r = $self->read_block($block) || return;
+        if ($records < $rec_p_blk) {
+          $$data_r = substr($$data_r, 0, 0x80 * $records); # block with some remaining data
+        }
+        if ($first_blk_flg) {
+          $first_blk_flg = 0;
+          my $hd = $self->amsdos_check_header($data_r);
+          if ($hd) {
+            $real_len = $hd->get_real_len() + $hd->AMSDOS_HEADER_LEN();
+            $::bm_debug && $::bm_debug->print_msg("files_get: Using real_length='$real_len' (including header)", 2);
+          }
+        }
+        $file_data .= $$data_r; #print $fh $$data_r;  # _fwrite_blk
+
+        $records -= $rec_p_blk;
+        if ($records <= 0) {
+          last;
+        }
+      }
+    }
+
+    my $file_len = length($file_data);
+    if (!defined $real_len) { # no real length: ASCII: find EOF (0x1a) in last record
+      my $last_rec_pos = ($file_len > 0x80) ? ($file_len - 0x80) : 0;
+      my $idx = index($file_data, chr(0x1a), $last_rec_pos);
+      if ($idx >= 0) {
+        $real_len = $idx;
+        $::bm_debug && $::bm_debug->print_msg("files_get: ASCII file length '$file_len' truncated to '$real_len'", 1);
+      }
+    }
+
+    if (defined $real_len) { # now real length (from header or ASCII)?
+      $::bm_debug && $::bm_debug->print_msg("files_get: file length '$file_len' set to '$real_len'", 0);
+      if ($file_len < $real_len) {
+        warn "WARNING: files_get: file length '$file_len' < real length '$real_len'!\n";
+      }
+      $file_data = substr($file_data, 0, $real_len);
+    }
+    print $fh $file_data;
+    close($fh) || (warn("WARNING: $!: '$fname'\n"), return);
+  }
+  return 1;
+}
+
+
+
+sub _debug_fill_disk {
+  my($self) = @_;
+  my $fo_r = $self->determine_format() || return;
+  my $dsm = $fo_r->{'dsm'};
+  my $bls = $fo_r->{'bls'};
+  for (my $block = 0; $block < $dsm; $block++) {
+    my $data = chr($block) x $bls;
+    my $tmp_r = $self->read_block(0) || return;
+
+    $self->write_block($block, \$data) || return;
+  }
+  return 1;
+}
+
+
+sub files_put {
+  my($self, $files_r, $opt_format) = @_;
+
+  my $dir_r = $self->dir_read($files_r, $opt_format) || return;
+  my $free_blocks_r = $self->get_free_blocks();
+  if (!@$free_blocks_r) {
+    warn "WARNING: No space left!\n";
+    return;
+  }
+
+  my $free_extents_r = $self->get_free_extents();
+  if (!@$free_extents_r) {
+    warn "WARNING: Directory full!\n";
+    return;
+  }
+
+  my $extents_r = $self->get_extents();
+
+  my $fo_r = $self->get_format() || return;
+
+  require File::Basename;
+
+  foreach my $fname (@$files_r) {
+    if (! -f $fname) {
+      warn "WARNING: '$fname' not a plain file. Ingoring\n";
+      next;
+    }
+    my $file = uc(File::Basename::basename($fname));
+    # correct name...
+    my($f_user, $f_name, $f_type) = ($file =~ /^(?:(\d+)%)?([^.]+).?(.*)$/);
+    $f_user = $f_user || 0;
+    $f_name = sprintf("%-8s", substr($f_name, 0, 8));
+    $f_type = sprintf("%-3s", substr($f_type, 0, 3));
+    $file = $f_user .':'. $f_name .'.'. $f_type;
+    print "Copying '$fname' => '$file'...\n";
+    if ($dir_r->{$file}) {
+      warn "WARNING: File does already exist in image: '$file'! Ignoring.\n";
+      next;
+    }
+
+    my $file_size = (-s $fname);
+    if (!defined $file_size) {
+      warn "WARNING: $!: $fname\n";
+        return;
+    }
+    my $bls = $fo_r->{'bls'};
+    my $required_blocks = int(($file_size + $bls - 1) / $bls);
+    if ($required_blocks > @$free_blocks_r) {
+      my $required_kb = int(($required_blocks * $bls) / 1024);
+      my $free_kb =  int((@$free_blocks_r * $bls) / 1024);
+      warn "WARNING: Not enough space left (${required_kb}K > ${free_kb}K). Ignoring.\n";
+      next; # maybe some smaller file...
+    }
+
+    my $blocks_p_extent = 16;
+    my $required_extents = int(($required_blocks + $blocks_p_extent - 1) / $blocks_p_extent);
+    if ($required_extents > @$free_extents_r) {
+      warn "WARNING: Directory full!\n";
+      return;
+    }
+
+    #my @new_blocks = ();
+    my $fh = _file_open('<'. $fname) || (warn("WARNING: $!: '$fname'\n"), return);
+    binmode($fh);
+
+    my $size = $file_size;
+    my $ext_r = undef();
+    my $extent_cnt = 0;
+    my $block_cnt = 0;
+    while ($size) {
+      if (!defined $ext_r || ($block_cnt >= 16)) {
+        my $records = int(($size + 0x80 - 1) / 0x80);
+        $ext_r = shift @$free_extents_r;
+        $ext_r->{'user'} = $f_user;
+        $ext_r->{'fname'} = $f_name;
+        $ext_r->{'ftype'} = $f_type;
+        $ext_r->{'extent'} = $extent_cnt++;
+        $ext_r->{'last_rec_bytes'} = 0; # ($size >= 0x80) ? 0 : $size;
+        $ext_r->{'extent_hi_x'} = 0;
+        $ext_r->{'records'} = ($records > 0x80) ? 0x80 : $records;
+        $ext_r->{'ftype_flags'} = ''; # R S B (RO SYS bak?)
+        $ext_r->{'blocks'} = [(0) x 16];
+        $block_cnt = 0;
+      }
+      my $this_size = ($size > $bls) ? $bls : $size;
+      my $data_r = _fread_blk($fh, $this_size) || return;
+      if ($this_size < $bls) {
+        $$data_r .= chr(0x00) x ($bls - $this_size); # fill up last block with 0 (or fill?)
+      }
+      my $block = shift @$free_blocks_r;
+      $self->write_block($block, $data_r) || return;
+      $ext_r->{'blocks'}[$block_cnt++] = $block;
+      $size -= $this_size;
+    }
+    close($fh) || (warn("WARNING: $!: '$fname'\n"), return);
+
+    # write directory extents...
+    #$size = $file_size;
+    #for (my $i = 0; $i < $required_extents; $i++) {
+    #  my $ext_r = {
+    #    user => $f_user,
+    #    fname => $f_name,
+    #    ftype => $f_type,
+    #    extent => $i,
+    #    last_rec_bytes => 0,
+    #    extent_hi_x => 0,
+    #    records => 0;
+    #    ftype_flags => '', # R S B (RO SYS bak?)
+    #  };
+
+    #$::bm_debug && $::bm_debug->print_msg('xxx: blocks='. join(' ', @{$ext_r->{'blocks'}}), 1);
+
+    $self->dir_write($extents_r) || return;
+  }
+  return 1;
+}
+
+
+
+sub files_remove {
+  my($self, $files_r, $opt_format) = @_;
+
+  my $dir_r = $self->dir_read($files_r, $opt_format) || return;
+
+  my $fo_r = $self->get_format() || return;
+  my $fill = $fo_r->{'fill'};
+
+  foreach my $file (sort keys %$dir_r) {
+    my $fname = $file;
+    print "Removing '$file'...\n";
+    my $extents_r = $dir_r->{$file};
+    foreach my $ext_r (@$extents_r) {
+      $ext_r->{'user'} = $fill;
+    }
+  }
+
+  my $extents_r = $self->get_extents();
+  $self->dir_write($extents_r) || return;
+
+  return 1;
+}
+
+
+#############
+
+1;
+
+#__END__
+
+
+
+#BEGIN AD1  Amstrad CPC 178K Data Side 1 (5.25")
+#DENSITY MFM,LOW CYLINDERS 40 SIDES 1 SECTORS 9,512 SKEW 2
+#SIDE1 0 0c1h, 0c2h, 0c3h, 0c4h, 0c5h, 0c6h, 0c7h, 0c8h, 0c9h
+#BSH 3 BLM 7 EXM 0 DSM 179 DRM 63 AL0 0c0H AL1 0 OFS 0
+#END
+
+#BEGIN AD2  Amstrad CPC 178K Data Side 2 (5.25")
+#DENSITY MFM,LOW CYLINDERS 40 SIDES 2 SECTORS 9,512 SKEW 2
+#SIDE1 0 0c1h, 0c2h, 0c3h, 0c4h, 0c5h, 0c6h, 0c7h, 0c8h, 0c9h
+#SIDE2 0 0c1h, 0c2h, 0c3h, 0c4h, 0c5h, 0c6h, 0c7h, 0c8h, 0c9h
+#ORDER EAGLE
+#BSH 3 BLM 7 EXM 0 DSM 179 DRM 63 AL0 0C0H AL1 0 OFS 40
+#END
+
+#BEGIN AS1  Amstrad CPC 169K System Side 1 (5.25")
+#DENSITY MFM,LOW CYLINDERS 40 SIDES 1 SECTORS 9,512 SKEW 2
+#SIDE1 0 041h, 042h, 043h, 044h, 045h, 046h, 047h, 048h, 049h
+#BSH 3 BLM 7 EXM 0 DSM 170 DRM 63 AL0 0C0H AL1 0 OFS 2
+#END
+
+
+# The CP/M 3.1 directory has four types of entry:
+#http://members.iinet.net.au/~daveb/cpm/format31.html
+
+
+# CP/M System Alteration Guid?
+#
+
+# CP/M Disk Parameter Block (DPB)
+#BSH refers to the block shift or the number of left shifts needed to translate an allocation block number to a relative sector address.
+#
+#BLM refers to the block mask or a bit mask of ones corresponding to the number of bits specified by BSH. For example, if BSH is 3, BLM is 7 (3 bits).
+#
+#EXM refers to the extent mask or a bit mask of ones used in delimiting extents, or groups of 128 128-byte records.
+#
+#DSM refers to the total number of sectors present on a diskette. This quantity, like all of the CP/M system variables, assumes a 128-byte sector.
+#
+#DRM refers to the total number of directory entries available on a diskette. DRM is also related to the AL0 and AL1 fields.
+#
+#AL0 and AL1 form a bit mask, beginning with the most significant bit in byte AL0 and ending with the least significant bit in AL1. These two bytes map the first 16 allocation blocks of the disk. A 1 bit in a position indicates that an allocation block is reserved, usually for the directory (see DRM, above).
+#
+#OFS indicates the number of tracks that are used for storing the CP/M system and BIOS at the #beginning of a diskette.
+#
+#SOFS  indicates the number of sectors that are used for storing the CP/M system and BIOS at the beginning of a diskette. SOFS is used when the number of sectors used by the CP/M is not an integral  number of tracks, such as for the Coleco Adam.
+#
+
+
+
+# http://members.iinet.net.au/~daveb@iinet.net.au/cpm/amsform.html
+# http://members.iinet.net.au/~daveb/cpm/format31.html
+#0U F1 F2 F3 F4 F5 F6 F7 F8 T1 T2 T3 EX S1 S2 RC   .FILENAMETYP....
+#AL AL AL AL AL AL AL AL AL AL AL AL AL AL AL AL   ................
+#
+# Entry number = ((32*S2)+EX) / (exm+1)
+# The total number of records used in this extent is (EX & exm) * 128 + RC
+#
+
+# 1024 byte CP/M block size
+# 64 directory entries
+
+
+#
+# BLS: data block allocaton size (1024, 2048, 4096, 8192, 16384)
+# SPT: total number of 128-bytes records on each track
+# BSH: log2 BLS - 7
+# BLM: BLS / 128 - 1
+# EXM: if DSM<256 then BLS/1024-1 else BLS/2048-1
+# DSM: total size of disc in blocks excluding any reserved tracks
+# DRM: total number of directory entries-1
+# AL0,1: bit significant representation of number of diectory blocks (0x0080=1, 0x00c0=2,...)
+# CKS: length of checksum vector, normally DRM/4+1, or 0 if not used
+# OFF: number of reserved tracks (also the track where the directory starts)
+
+
+# http://www.sharpmz.org/dpb.htm
+# AL0, AL1:
+#Position 00 corresponds to the high-order bit of the byte AL0, and position 15 to the low-order bit of the byte AL1.
+#
+
+#############
+
+
+###
+###
+
+
+package main;
+
+  use Getopt::Std ();
+  #use Amstrad::CPC::Diskimage;
+
+
+sub dir_open($) {
+  #my($dname) = @_;
+  local *FH;
+  opendir(FH, $_[0]) || return undef();
+  return *FH;
+}
+
+sub glob_files($$;$) {
+  my($dir, $pattern, $nocase_flg) = @_;
+  $pattern = quotemeta($pattern);
+  $pattern =~ s#\\(\*|\?)#.$1#og; # unescape *, ?
+  $nocase_flg = ($nocase_flg) ? '(?i)' : ''; # maybe ignore case
+  $::bm_debug && $::bm_debug->print_msg("myglob: quoted pattern='$pattern', nocase_flg='$nocase_flg'", 0);
+  my $dir_f = dir_open($dir) || (warn("opendir: $!: '$dir'"), return);
+  my @files = grep { /^$nocase_flg($pattern)$/ } readdir($dir_f);
+  closedir($dir_f) || (warn("closedir: $!: '$dir'"), return);
+  $::bm_debug && $::bm_debug->print_msg("myglob: matching files='@files'", 0);
+  return \@files;
+}
+
+#
+# glob arguments
+# wildcards: * and ?
+#
+sub glob_args($) {
+  my($args_r) = @_;
+  my @files = ();
+  my $cwd;
+  $::bm_debug && $::bm_debug->print_msg("glob_args: ...", 1);
+  foreach my $file (@$args_r) {
+    if ($file =~/\*|\?/) { # wildcards in filename -> do glob
+      my $dir;
+      if ($file =~ /[\/\\]/) { # some path separators?
+        if (!$cwd) {
+          require Cwd;
+          $cwd = Cwd::cwd(); # save current path the first time
+        }
+        require File::Basename;
+        $dir = File::Basename::dirname($file);
+        chdir($dir) || (warn("chdir: $!: '$dir'"), return);
+        $file = File::Basename::basename($file);
+      }
+      #if ($::g_debug) { Bm::debug_msg("Using glob pattern '$file'", 0); }
+      $::bm_debug && $::bm_debug->print_msg("Using glob pattern '$file'", 1);
+      #require File::Glob;
+      #my $found_files_r = File::Glob::glob_files('.', $file); # this glob cannot handle path
+      my $found_files_r = glob_files('.', $file); # this glob cannot handle path
+      if ($dir) { # dir changed?
+        push @files, map { $dir .'/'. $_ } @$found_files_r;
+        chdir($cwd) || (warn("chdir: $!: '$cwd'"), return); # restore
+      } else {
+        push @files, @$found_files_r;
+      }
+    } else {
+      push @files, $file; # push plain file
+    }
+  }
+  return @files;
+}
+
+
+sub dsk_handle($$) {
+  my($args_r, $opts_r) = @_;
+
+  my $mode = '';
+  my $dskname;
+  foreach (qw(f g i l p r)) {
+    if (exists $opts_r->{$_}) {
+      $mode .= $_;
+      $dskname = $opts_r->{$_};
+    }
+  }
+
+  #my $rc = 0;
+  if (!$mode) {
+    $mode = 'l'; # default mode: list
+    $dskname = shift @$args_r; # assume next argument: disk image
+  } elsif (length($mode) != 1) {
+    warn "WARNING: Multiple options specified: '-$mode'!\n";
+    return;
+  }
+
+  #my $dskname = shift @$args_r;
+  my $opt_format = $opts_r->{'F'};
+
+  #my $dsk = Amstrad::CPC::Diskimage->new($dskname) || return;
+  my $dsk = Amstrad::CPC::Diskimage->new() || return;
+  if ($mode eq 'l') {
+    $dsk->open($dskname) || return;
+    $dsk->dir_print($args_r, $opt_format) || return;
+
+  } elsif ($mode eq 'g') {
+    $dsk->open($dskname) || return;
+    $dsk->files_get($args_r, $opt_format) || return;
+
+  } elsif ($mode eq 'p') {
+    $dsk->open($dskname, '+<') || return;
+    my @files = glob_args($args_r);
+    $dsk->files_put(\@files, $opt_format) || return;
+    #$dsk->files_put($args_r, $opt_format) || return;
+
+  } elsif ($mode eq 'r') {
+    $dsk->open($dskname, '+<') || return;
+    $dsk->files_remove($args_r, $opt_format) || return;
+
+  } elsif ($mode eq 'f') {
+    if ($dskname !~ /\.dsk$/o) {
+      warn "WARNING: Can only create .dsk and not '$dskname'!\n";
+      return;
+    }
+    if (!$opt_format) {
+      warn "WARNING: Please specify a format with option '-F <format>'!\n";
+      my $format_list_r = $dsk->get_format_list();
+      #print "Valid formats are: '". join("', '", @$format_list_r) ."'\n";
+      print "Valid formats are: ". join(' ', sort @$format_list_r) ."\n";
+      return;
+    }
+    $dsk->open($dskname, '>') || return;
+    $dsk->format_image($opt_format) || return;
+
+  } elsif ($mode eq 'i') {
+    $dsk->open($dskname) || return;
+    $dsk->print_image_info($opts_r->{'H'}) || return;
+    
+    my $fo_r = $dsk->determine_format();
+    if ($fo_r) {
+      #print "Format: ", join(' ', %$fo_r), "\n";
+      print "Format: ", join(' ', map { $_ ."=". $fo_r->{$_} } keys %$fo_r), "\n";
+      #my $dir_r = $dsk->dir_read($args_r) || return;
+      my $dir_r = $dsk->dir_read($args_r);
+      if ($dir_r) {
+        #print "Directory: ", join(' ', map { $_ ."=". $dir_r->{$_} } keys %$dir_r), "\n";
+        foreach my $file (sort keys %$dir_r) {
+          my $extents_r = $dir_r->{$file};
+          #foreach my $ext_r (@$extents_r) {
+          #  if ($ext_r) {
+          #  $records += $ext_r->{'records'};
+          #}
+          #print "Directory_entry: ", join(' ', map { %$_ } @$extents_r), "\n";
+          print "Directory_entry: ", join(' ', map { (ref($_) eq 'ARRAY') ? @$_ : $_ } map { (ref($_) eq 'HASH') ? %$_ : '?' } @$extents_r), "\n";
+        }
+        #print $file .'  '        ;
+      }
+    }   
+  } else {
+    warn "WARNING: Unknown mode '$mode'!\n";
+  }
+  $dsk->close() || return;
+  return 1;
+}
+
+
+
+#
+# main
+#
+sub main() {
+  my %opts = (
+    #'o' => 0,
+  );
+  if (!Getopt::Std::getopts("f:g:i:l:p:r:F:HDhd:", \%opts) or ($#ARGV < -1) or exists($opts{'h'}) or (!@ARGV && ((keys %opts) <= 0))) {
+    print STDERR "dskcpy.pl v$::VERSION -- Copy files from/into DSK images\n";
+    require File::Basename;
+    print STDERR "Usage: ". File::Basename::basename($0) ." [-f|-g|-i|-l|-p|-r] image.dsk [-F type] [-H] file(s)\n";
+    #print STDERR "-O file  : optional output file (default: '$opts{'O'}')\n";
+    print STDERR "-f d.dsk         : Format an image. Use with -F <format>\n";
+    print STDERR "-g d.dsk <files> : Get files from disk image\n";
+    print STDERR "-i d.dsk         : Print image info\n";
+    print STDERR "-l d.dsk <files> : List files in disk image (-l is optional)\n";
+    print STDERR "-p d.dsk <files> : Put files into disk image\n";
+    #print STDERR "-f type  d.dsk   : Format an image with type\n";
+    print STDERR "-r d.dsk <files> : Remove files from disk image\n";
+    print STDERR "-F <format>,[p=v]: Set or overwrite detected format, use with caution!\n";
+    #print STDERR "-o num   : output flags... (default: '$opts{'o'}')\n";
+    print STDERR "-H       : hex dump output for debugging\n";
+    print STDERR "-h       : help\n";
+    print STDERR "-d level : set debug level\n";
+    print STDERR "-D       : dup STDOUT to STDERR\n";
+    print STDERR "\n";
+    print STDERR "Examples:\n";
+    print STDERR "- Get files from disk image:\n";
+    print STDERR "dskcpy.pl -g foo.dsk file1.bas file2.txt\n";
+    print STDERR "- Put files into disk image:\n";
+    #print STDERR "??dskcpy.pl file1.bas file2.txt foo.dsk\n";
+    print STDERR "dskcpy.pl -p foo.dsk file1.bas \"files*.txt\"\n";
+    print STDERR "- Remove files from disk image:\n";
+    print STDERR "dskrm.pl/dskcopy.pl -r foo.dsk '*.bas'\n";
+    print STDERR "- Show directory of disk image:\n";
+    print STDERR "dskdir.pl/dskcpy.pl [-l] foo.dsk '*.bas'\n";
+    print STDERR "- Create/format a new disk image:\n";
+    print STDERR "dskformat.pl/dskcpy.pl -f foo.dsk -F data\n";
+
+    print STDERR "- Print disk image info\n";
+    print STDERR "dskcpy.pl -i foo.dsk\n";
+
+    print STDERR "- Get all deleted files from disk image starting with 'A':\n";
+    print STDERR "dskcpy.pl -g foo.dsk '229:A*'\n";
+
+    exit 1;
+  }
+
+  if ($opts{'d'} || $opts{'D'}) {
+#    require Amstrad::CPC::Debug;
+    $::bm_debug = Amstrad::CPC::Debug->new($opts{'d'}, $opts{'D'});
+  }
+
+  my $rc = dsk_handle(\@ARGV, \%opts);
+
+  #$::bm_debug && $::bm_debug->report_times();
+  return ($rc) ? 0 : 1;
+}
+
+exit(main());
+
+__END__
