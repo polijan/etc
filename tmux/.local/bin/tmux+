@@ -11,22 +11,26 @@ exists() { command -v "$@" > /dev/null ;}
 ansi() { printf '\033[%sm' "$1" ;}
 
 [ $# -eq 0 ]   || exec tmux -2 "$@"  # with args?   => invoke tmux "$@"
-tmux has       || exec tmux -2       # no session?  => invoke tmux
-[ -z "$TMUX" ] || exec tmux -2       # TMUX is set? => invoke tmux
-exists fzf     || exec tmux -2       # no fzf?      => invoke tmux
+tmux has       || exec tmux -2 new-session -s "TMP" -c "$HOME"
+                                     # no session?  => create new session "TMP"
+[ -z "$TMUX" ] || exec tmux -2       # TMUX set?    => just invoke tmux
+exists fzf     || exec tmux -2       # no fzf?      => just invoke tmux
 
 # list sessions, nicely colored, so we can choose one
 NEW=$(ansi 31)
 HIGH=$(ansi 33)
 RESET=$(ansi 0)
+
+HEADER="Attach to those session(s) or create a new one$(printf '\n ')"
 S=$({ printf '%s\n' "${NEW}new session${RESET}"
-      tmux list-sessions         |
-      sed -e "s/^/${HIGH}/"      \
+      tmux list-sessions      |
+      sed -e "s/^/${HIGH}/"   \
           -e "s/:/${RESET}:/"
-    }                            |
-      fzf --ansi                 \
-          --prompt 'tmux > '     \
-          --tiebreak=begin       )
+    }                         |
+      fzf --ansi              \
+          --header "$HEADER"  \
+          --prompt 'tmux > '  \
+          --tiebreak=begin    )
 
 [ -n "$S" ] || exit 0
 [ "$S" = 'new session' ] && exec tmux -2
