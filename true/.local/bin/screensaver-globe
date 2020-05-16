@@ -804,7 +804,7 @@ C=$(printf '\033[H')
 D=${1:-0.15} # delay
 p() { printf %s%s "$C" "$1"; sleep "$D"; }
 
-#while true; do
+while true; do
   p "$frame_01"
   p "$frame_02"
   p "$frame_03"
@@ -835,4 +835,4 @@ p() { printf %s%s "$C" "$1"; sleep "$D"; }
   p "$frame_28"
   p "$frame_29"
   p "$frame_30"
-#done
+done
