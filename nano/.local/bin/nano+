@@ -19,4 +19,5 @@ OPTS=''
 [ -n "$LINES" ]   || LINES=$(  stty size | cut -f1 -d' ')
 [ "$COLUMNS" -ge 68 ] && has '--linenumbers' && OPTS="$OPTS --linenumbers"
 [ "$LINES" -lt 20 ]   && has '--nohelp'      && OPTS="$OPTS --nohelp"
-exec nano -q $OPTS "$@"
+
+exec nano $OPTS "$@"

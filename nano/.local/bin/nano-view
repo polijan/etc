@@ -3,4 +3,4 @@
 # Usage: nano-view ARG...
 # nano(1) in pager/view mode
 
-exec nano -q --view --nohelp "$@"
+exec nano --view --nohelp "$@"
