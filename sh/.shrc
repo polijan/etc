@@ -123,3 +123,9 @@ if [ -n "$BASH_VERSION" ]; then
    done
    unset i
 fi
+
+################################################################################
+# IF WE HAVE A .sh EXECUTABLE IN THE DIRECTORY WE START IN, INCLUDE IT
+################################################################################
+
+[ -x .sh ] && . ".sh"
