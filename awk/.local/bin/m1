@@ -1,0 +1,376 @@
+#!/usr/bin/awk -f
+
+#############################################################################
+# M1 - a simple macro processor in awk
+#############################################################################
+
+#! /bin/awk -f
+# NAME
+#
+# m1
+#
+# USAGE
+#
+# awk -f m1.awk [file...]
+#
+# DESCRIPTION
+#
+# M1 copies its input file(s) to its output unchanged except as modified by
+# certain "macro expressions."  The following lines define macros for
+# subsequent processing:
+#
+#     @comment Any text
+#     @@                     same as @comment
+#     @define name value
+#     @default name value    set if name undefined
+#     @include filename
+#     @if varname            include subsequent text if varname != 0
+#     @unless varname        include subsequent text if varname == 0
+#     @fi                    terminate @if or @unless
+#     @ignore DELIM          ignore input until line that begins with DELIM
+#     @stderr stuff          send diagnostics to standard error
+#
+# A definition may extend across many lines by ending each line with
+# a backslash, thus quoting the following newline.
+#
+# Any occurrence of @name@ in the input is replaced in the output by
+# the corresponding value.
+#
+# @name at beginning of line is treated the same as @name@.
+#
+# BUGS
+#
+# M1 is three steps lower than m4.  You'll probably miss something
+# you have learned to expect.
+#
+# AUTHOR
+#
+# Jon L. Bentley, jlb@research.bell-labs.com
+#
+
+function error(s) {
+        print "m1 error: " s | "cat 1>&2"; exit 1
+}
+
+function dofile(fname,  savefile, savebuffer, newstring) {
+        if (fname in activefiles)
+                error("recursively reading file: " fname)
+        activefiles[fname] = 1
+        savefile = file; file = fname
+        savebuffer = buffer; buffer = ""
+        while (readline() != EOF) {
+                if (index($0, "@") == 0) {
+                        print $0
+                } else if (/^@define[ \t]/) {
+                        dodef()
+                } else if (/^@default[ \t]/) {
+                        if (!($2 in symtab))
+                                dodef()
+                } else if (/^@include[ \t]/) {
+                        if (NF != 2) error("bad include line")
+                        dofile(dosubs($2))
+                } else if (/^@if[ \t]/) {
+                        if (NF != 2) error("bad if line")
+                        if (!($2 in symtab) || symtab[$2] == 0)
+                                gobble()
+                } else if (/^@unless[ \t]/) {
+                        if (NF != 2) error("bad unless line")
+                        if (($2 in symtab) && symtab[$2] != 0)
+                                gobble()
+                } else if (/^@fi([ \t]?|$)/) { # Could do error checking here
+                } else if (/^@stderr[ \t]?/) {
+                        print substr($0, 9) | "cat 1>&2"
+                } else if (/^@(comment|@)[ \t]?/) {
+                } else if (/^@ignore[ \t]/) { # Dump input until $2
+                        delim = $2
+                        l = length(delim)
+                        while (readline() != EOF)
+                                if (substr($0, 1, l) == delim)
+                                        break
+                } else {
+                        newstring = dosubs($0)
+                        if ($0 == newstring || index(newstring, "@") == 0)
+                                print newstring
+                        else
+                                buffer = newstring "\n" buffer
+                }
+        }
+        close(fname)
+        delete activefiles[fname]
+        file = savefile
+        buffer = savebuffer
+}
+
+# Put next input line into global string "buffer"
+# Return "EOF" or "" (null string)
+
+function readline(  i, status) {
+        status = ""
+        if (buffer != "") {
+                i = index(buffer, "\n")
+                $0 = substr(buffer, 1, i-1)
+                buffer = substr(buffer, i+1)
+        } else {
+                # Hume: special case for non v10: if (file == "/dev/stdin")
+                if (getline <file <= 0)
+                        status = EOF
+        }
+        # Hack: allow @Mname at start of line w/o closing @
+        if ($0 ~ /^@[A-Z][a-zA-Z0-9]*[ \t]*$/)
+                sub(/[ \t]*$/, "@")
+        return status
+}
+
+function gobble(  ifdepth) {
+        ifdepth = 1
+        while (readline() != EOF) {
+                if (/^@(if|unless)[ \t]/)
+                        ifdepth++
+                if (/^@fi[ \t]?/ && --ifdepth <= 0)
+                        break
+        }
+}
+
+function dosubs(s,  l, r, i, m) {
+        if (index(s, "@") == 0)
+                return s
+        l = ""  # Left of current pos; ready for output
+        r = s   # Right of current; unexamined at this time
+        while ((i = index(r, "@")) != 0) {
+                l = l substr(r, 1, i-1)
+                r = substr(r, i+1)      # Currently scanning @
+                i = index(r, "@")
+                if (i == 0) {
+                        l = l "@"
+                        break
+                }
+                m = substr(r, 1, i-1)
+                r = substr(r, i+1)
+                if (m in symtab) {
+                        r = symtab[m] r
+                } else {
+                        l = l "@" m
+                        r = "@" r
+                }
+        }
+        return l r
+}
+
+function dodef(fname,  str, x) {
+        name = $2
+        sub(/^[ \t]*[^ \t]+[ \t]+[^ \t]+[ \t]*/, "")  # OLD BUG: last * was +
+        str = $0
+        while (str ~ /\\$/) {
+                if (readline() == EOF)
+                        error("EOF inside definition")
+                x = $0
+                sub(/^[ \t]+/, "", x)
+                str = substr(str, 1, length(str)-1) "\n" x
+        }
+        symtab[name] = str
+}
+
+BEGIN { EOF = "EOF"
+        if (ARGC == 1)
+                dofile("/dev/stdin")
+        else if (ARGC >= 2) {
+                for (i = 1; i < ARGC; i++)
+                        dofile(ARGV[i])
+        } else
+                error("usage: m1 [fname...]")
+}
+
+
+
+
+
+#############################################################################
+#############################################################################
+#
+# The program above and the article below are from the book
+# "SED & AWK, 2nd Edition" by O'Reilly Media. I got it on 2020-06-01
+# at: https://www.cae.tntech.edu/local/oreilly/sedawk/ch13_10.htm
+# For an other article about m1, see also:
+# https://www.drdobbs.com/open-source/m1-a-mini-macro-processor/200001791
+#
+#############################################################################
+
+# 13.10 m1 - Simple Macro Processor
+#
+#    Contributed by Jon Bentley
+#
+#    The m1 program is a "little brother" to the m4 macro processor found on
+#    UNIX systems. It was originally published in the article m1: A Mini
+#    Macro Processor, in Computer Language, June 1990, Volume 7, Number 6,
+#    pages 47-61. This program was brought to my attention by Ozan Yigit.
+#    Jon Bentley kindly sent me his current version of the program, as well
+#    as an early draft of his article (I was having trouble getting a copy
+#    of the published one). A PostScript version of this paper is included
+#    with the example programs, available from O'Reilly's FTP server (see
+#    the Preface). I wrote these introductory notes, and the program notes
+#    below. [A.R.]
+#
+#    A macro processor copies its input to its output, while performing
+#    several jobs. The tasks are:
+#     1. Define and expand macros. Macros have two parts, a name and a body.
+#        All occurrences of a macro's name are replaced with the macro's
+#        body.
+#     2. Include files. Special include directives in a data file are
+#        replaced with the contents of the named file. Includes can usually
+#        be nested, with one included file including another. Included files
+#        are processed for macros.
+#     3. Conditional text inclusion and exclusion. Different parts of the
+#        text can be included in the final output, often based upon whether
+#        a macro is or isn't defined.
+#     4. Depending on the macro processor, comment lines can appear that
+#        will be removed from the final output.
+#
+#    If you're a C or C++ programmer, you're already familiar with the
+#    built-in preprocessor in those languages. UNIX systems have a
+#    general-purpose macro processor called m4. This is a powerful program,
+#    but somewhat difficult to master, since macro definitions are processed
+#    for expansion at definition time, instead of at expansion time. m1 is
+#    considerably simpler than m4, making it much easier to learn and to
+#    use.
+#
+#    Here is Jon's first cut at a very simple macro processor. All it does
+#    is define and expand macros. We can call it m0a. In this and the
+#    following programs, the "at" symbol (@) distinguishes lines that are
+#    directives, and also indicates the presence of macros that should be
+#    expanded.
+#
+# /^@define[ \t]/ {
+#         name = $2
+#         $1 = $2 = ""; sub(/^[ \t]+/, "")
+#         symtab[name] = $0
+#         next
+# }
+# {
+#         for (i in symtab)
+#                 gsub("@" i "@", symtab[i])
+#         print
+# }
+#
+#    This version looks for lines beginning with "@define." This keyword is
+#    $1 and the macro name is taken to be $2. The rest of the line becomes
+#    the body of the macro. The next input line is then fetched using next.
+#    The second rule simply loops through all the defined macros, performing
+#    a global substitution of each macro with its body in the input line,
+#    and then printing the line. Think about the tradeoffs in this version
+#    of simplicity versus program execution time.
+#
+#    The next version (m0b) adds file inclusion:
+#
+# function dofile(fname) {
+#         while (getline <fname > 0) {
+#                 if (/^@define[ \t]/) {          # @define name value
+#                         name = $2
+#                         $1 = $2 = ""; sub(/^[ \t]+/, "")
+#                         symtab[name] = $0
+#                 } else if (/^@include[ \t]/)    # @include filename
+#                         dofile($2)
+#                 else {                          # Anywhere in line @name@
+#                         for (i in symtab)
+#                                 gsub("@" i "@", symtab[i])
+#                         print
+#                 }
+#         }
+#         close(fname)
+# }
+# BEGIN {
+#         if (ARGC == 2)
+#                 dofile(ARGV[1])
+#         else
+#                 dofile("/dev/stdin")
+# }
+#
+#    Note the way dofile() is called recursively to handle nested include
+#    files.
+#
+#    With all of that introduction out of the way, here is the full-blown m1
+#    program.
+#
+#############################################################################
+#
+# ... HERE GOES THE SOURCE OF THE M1 (see above!) ...
+#
+#############################################################################
+#
+# 13.10.1 Program Notes for m1
+#
+#    The program is nicely modular, with an error() function similar to the
+#    one presented in 'Chapter 11, A Flock of awks'
+#        [https://www.cae.tntech.edu/local/oreilly/sedawk/ch11_01.htm],
+#    and each task cleanly divided into separate functions.
+#
+#    The main program occurs in the BEGIN procedure at the bottom. It simply
+#    processes either standard input, if there are no arguments, or all of
+#    the files named on the command line.
+#
+#    The high-level processing happens in the dofile() function, which reads
+#    one line at a time, and decides what to do with each line. The
+#    activefiles array keeps track of open files. The variable fname
+#    indicates the current file to read data from. When an "@include"
+#    directive is seen, dofile() simply calls itself recursively on the new
+#    file, as in m0b. Interestingly, the included filename is first
+#    processed for macros. Read this function carefully - there are some
+#    nice tricks here.
+#
+#    The readline() function manages the "pushback." After expanding a
+#    macro, macro processors examine the newly created text for any
+#    additional macro names. Only after all expanded text has been processed
+#    and sent to the output does the program get a fresh line of input.
+#
+#    The dosubs() function actually performs the macro substitution. It
+#    processes the line left-to-right, replacing macro names with their
+#    bodies. The rescanning of the new line is left to the higher-level
+#    logic that is jointly managed by readline() and dofile(). This version
+#    is considerably more efficient than the brute-force approach used in
+#    the m0 programs.
+#
+#    Finally, the dodef() function handles the defining of macros. It saves
+#    the macro name from $2, and then uses sub() to remove the first two
+#    fields. The new value of $0 now contains just (the first line of) the
+#    macro body. The Computer Language article explains that sub() is used
+#    on purpose, in order to preserve whitespace in the macro body. Simply
+#    assigning the empty string to $1 and $2 would rebuild the record, but
+#    with all occurrences of whitespace collapsed into single occurrences of
+#    the value of OFS (a single blank). The function then proceeds to gather
+#    the rest of the macro body, indicated by lines that end with a "\".
+#    This is an additional improvement over m0: macro bodies can be more
+#    than one line long.
+#
+#    The rest of the program is concerned with conditional inclusion or
+#    exclusion of text; this part is straightforward. What's nice is that
+#    these conditionals can be nested inside each other.
+#
+#    m1 is a very nice start at a macro processor. You might want to think
+#    about how you could expand upon it; for instance, by allowing
+#    conditionals to have an "@else" clause; processing the command line for
+#    macro definitions; "undefining" macros, and the other sorts of things
+#    that macro processors usually do.
+#
+#    Some other extensions suggested by Jon Bentley are:
+#     1. Add "@shell DELIM shell line here," which would read input lines up
+#        to "DELIM," and send the expanded output through a pipe to the
+#        given shell command.
+#     2. Add commands "@longdef" and "@longend." These commands would define
+#        macros with long bodies, i.e., those that extend over more than one
+#        line, simplifying the logic in dodoef().
+#     3. Add "@append MacName MoreText," like ".am" in troff. This macro in
+#        troff appends text to an already defined macro. In m1, this would
+#        allow you to add on to the body of an already defined macro.
+#     4. Avoid the V10 /dev/stdin special file. The Bell Labs UNIX
+#        systems[1] have a special file actually named /dev/stdin, that
+#        gives you access to standard input. It occurs to me that the use of
+#        "-" would do the trick, quite portably. This is also not a real
+#        issue if you use gawk or the Bell Labs awk, which interpret the
+#        special file name /dev/stdin internally (see Chapter 11).
+#
+#      [1] And some other UNIX systems, as well.
+#
+#    As a final note, Jon often makes use of awk in two of his books,
+#    Programming Pearls, and More Programming Pearls - Confessions of a
+#    Coder (both published by Addison-Wesley). These books are both
+#    excellent reading.
+#
