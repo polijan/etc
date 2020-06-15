@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# Usage: $0 [FMT_OPTION]... [FILE]
+# fmt (or stdin) for text email
+
+
+# 1. Lowest common denominator is often considered to be 80-column text mode
+# 2. Furthermore, RFC 2822 and RFC 5322 says length of lines in an e-mail
+#    message should be no more than 78 characters.
+# 3. Netiquette guideline in RFC 1855 suggest limiting lines to 65 characters.
+#    This is a VERY conservative value. Up to 75 is used sometimes, but a high
+#    number could run into problem if the message is quoted repeatedly.
+#    We want to leave some room to others.
+
+# get the file or - (stdin)
+for i; do
+    last=$i
+done
+[ -e "$last" ] || last='-'
+
+# grep for replies '>' and if found, do use -p accordingly
+if   grep -q '> > > > > ' "$last"; then
+      fmt -w 74 -p '> > > > >' "$@"
+elif grep -q '> > > > ' "$last"; then
+      fmt -w 73 -p '> > > >' "$@"
+elif grep -q '> > > ' "$last"; then
+      fmt -w 72 -p '> > >' "$@"
+elif grep -q '> > > ' "$last"; then
+      fmt -w 71 -p '> > >' "$@"
+elif grep -q '> > ' "$last"; then
+      fmt -w 70 -p '> >' "$@"
+elif grep -q '> ' "$last"; then
+      fmt -w 69 -p '>' "$@"
+else  fmt -w 68 "$@"
+fi
