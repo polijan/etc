@@ -1,10 +1,13 @@
 #!/bin/sh
 
-# Usage: $0 [...]
-# executes: grep -rinsI --color=always "$@" (if grep is GNU)
-#       or  grep -rins "$@"                 (otherwise)
+# Usage: $0 [GREP_ARGUMENTS]...
+# recursive grep
+#
+# executes the following
+# if grep is GNU: grep -rinsI --color=always --exclude-dir=.git "$@" | less -SFX
+# othwerwise    : grep -rins "$@"
 
 if is-gnu grep
-   then grep -rinsI --color=always "$@" | less -SFX
+   then grep -rinsI --color=always --exclude-dir=.git "$@" | less -SFX
    else grep -rins "$@"
 fi

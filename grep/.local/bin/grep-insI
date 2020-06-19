@@ -1,8 +1,9 @@
 #!/bin/sh
 
-# Usage: $0 [...]
-# executes: grep -insI --color=always "$@" ./* (if grep is GNU)
-#       or  grep -ins "$@" ./*                 (otherwise)
+# Usage: $0 [GREP_ARGUMENTS]...
+# executes:
+#   if grep is GNU: grep -insI --color=always --exclude-dir=.git "$@" ./* | less -SFX
+#   otherwise     : grep -ins "$@" ./*
 
 # -i: case insensitive
 # -n: prints line number
@@ -11,6 +12,6 @@
 
 g() { grep -ins "$@" ./* | sed 's:./::' ; }
 if is-gnu grep
-   then g -I --color=always "$@" | less -SFX
+   then g -I --color=always --exclude-dir=.git "$@" | less -SFX
    else g "$@"
 fi
