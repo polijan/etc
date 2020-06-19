@@ -9,7 +9,7 @@ FZF_DEFAULT_OPTS='' \
 fzf --height=1      \
     --min-height=1  \
     --reverse       \
-    --inline-info   \
+    --info=hidden   \
     --prompt "$1 "  \
     --expect "$1"
 exit 0
