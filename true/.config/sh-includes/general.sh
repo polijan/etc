@@ -14,3 +14,8 @@ if command -v cp+ >/dev/null
    then alias cp='cp+'
    else alias cp='cp -i'
 fi
+
+
+# ALWAYS ONLY DO SYMLINKS
+alias ln='ln -s'
+# add too: -i option from coreutils ???
