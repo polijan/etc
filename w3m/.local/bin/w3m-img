@@ -1,19 +1,33 @@
 #!/bin/sh
 
 # Usage: w3m-img IMAGE...
-# use w3m to display an image (works under certain conditions)
+# use w3m to display an image in a terminal emulator under X
 #
-# Note: w3m can display images in a terminal window
-# this works only on certain terminal which are based on xterm or rxvt
-# also see: https://www.youtube.com/watch?v=R2bMUtCOGko
-
-
-# the critical component in w3m is: /usr/lib/w3m/w3mimgdisplay. It accepts
+# Note: also see https://www.youtube.com/watch?v=R2bMUtCOGko
+#
+# The critical component in w3m is: /usr/lib/w3m/w3mimgdisplay. It accepts
 # some input on stdin and display the image, so there'd be a way to use only
 # that and not full blown w3m, but I don't know how to do (#TODO in future?)
-w3mimgdisplay='/usr/lib/w3m/w3mimgdisplay'
 
-[ -e "$w3mimgdisplay" ] || "cannot find $w3mimgdisplay (sometimes package w3m-img is required)"
+
+exists() { command -v "$@" > /dev/null; }
+die()    { printf '%s' "$*... " >&2; exit 5; }
+
+[ $# -eq 1 ]            || usage -d "$0"
+w3mimgdisplay=$(command -v w3mimgdisplay)
+[ -n "$w3mimgdisplay" ] || w3mimgdisplay='/usr/lib/w3m/w3mimgdisplay'
+[ -e "$w3mimgdisplay" ] || die "cannot find $w3mimgdisplay (sometimes package w3m-img is required)"
+[ -t 1 ]                || die 'not a terminal'
+[ -n "$DISPLAY" ]       || die 'not XWindow'
+if [ -z "$WINDOWID" ]; then
+   # Note: w3m create a new X window "embdded" in the 'WINDOWID' window
+   #       xterm or rxvt expose WINDOWID as an environment variable.
+   #       otherwise, we can try to find the active windows ID using xprop
+   exists xprop && WINDOWID=$(xprop -root 32x '\t$0\n' _NET_ACTIVE_WINDOW | cut -f2)
+   WINDOWID=$(printf %d "$WINDOWID")
+   [ -n "$WINDOWID" ] || die 'no environment variable WINDOWID and cannot compute it'
+fi
+export WINDOWID
 
 # we set the following w3m options with -o:
 #   use external image viewer     => false
