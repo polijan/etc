@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Usage: $0 [ARG]...
+# wrapper for diff, which colors its output
+# (if that's available) when output is a tty
+
+exists() { command -v "$@" > /dev/null; }
+
+if is-gnu diff; then
+   diff --color=auto "$@"
+elif [ -t 1 ] && exists colordiff; then
+   colordiff "$@"
+else
+   diff "$@"
+fi

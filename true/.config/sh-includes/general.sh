@@ -2,6 +2,7 @@
 
 alias ls='ls+'
 alias cal='cal+'
+alias diff='diff+'
 
 alias rm='rm -i'
 
