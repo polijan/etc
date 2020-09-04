@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Usage: $0 [--query FZF_OPTION] [RSSTAIL OPTION]...
+# choose a feed from newsboat's subscriptions ('urls' file)
+# and pass it to rsstail(1)
+
+[ -f "$HOME/.config/newsboat/urls" ] || {
+   echo "can't find newsboat's 'urls' file" >&2
+   exit 1
+}
+
+C=$(printf '\033[32m') # color for comment lines (green)
+T=$(printf '\033[33m') # color for tags or title (yellow)
+R=$(printf '\033[0m')  # reset
+
+QUERY=''
+[ "$1" = '--query' ] && { QUERY=$2; shift 2; }
+
+
+#(tilde is a litteral here, not meant to expand)
+#shellcheck disable=SC2088
+FEED=$(sed -e "/^[^#]/s/[[:space:]].*/${T}&${R}/" \
+           -e "s/^#.*/${C}&${R}/"                 \
+           "$HOME/.config/newsboat/urls"          |
+       fzf --ansi                                 \
+           --prompt '~/.config/newsboat/urls > '  \
+           --query "$QUERY"                       ) || exit
+FEED=$(printf %s "$FEED" | awk '{print $1}')
+
+case $FEED in
+  http://*|https://*) rsstail "$@" -u "$FEED"      ;;
+                   *) echo 'not a URL' >&2; exit 1 ;;
+esac
