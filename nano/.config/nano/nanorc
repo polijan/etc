@@ -1,12 +1,20 @@
-# GNU nano's config file
-# (~/.nanorc or ~/.config/nano/nanorc)
+################################################################################
+# GNU nano's config file (~/.nanorc or ~/.config/nano/nanorc)                  #
+# see: nanorc(5), nano(1)                                                      #
+################################################################################
 
-# see: man nanorc(5)
 
-########################################################################
+################################################################################
+# EDITING "BEHAVIOUR"
+################################################################################
 
-# don't convert files from DOS/MAC format, you can override with -u
-# (which then would also save as UNIX format) :
+# let backspace/delete erase the marked region (instead of deleting a single
+# character and without affecting the cutbuffer), tip: use Undo (M-U) if needed
+# set zap
+# ^--- well, perhaps I want this, perhaps I don't :)
+
+# don't convert files from DOS/MAC format
+# (explicitely use dos2unix(1) or something if you need)
 set noconvert
 
 # ^K: use cut from-cursor-to-end-of-line instead of the whole line:
@@ -19,45 +27,95 @@ set smarthome
 set tabsize 4
 set tabstospaces
 
-# ^J: remove trailing white space from wrapped lines:
+# SEARCH: enable (extended) regular expression search by default
+# (note: M-R to switch between fixed string search and regex search)
+set regexp
+
+# (^J)ustification: set width to 80 and remove trailing white space from wrapped lines
 set fill 80
-set nowrap
-#   ^-- this option is now deprecated,
-#       but this is needed for older versions, otherwise 'set fill'
-#       will trigger hard wrapping. in the future, remove it.
 set trimblanks
-set justifytrim
-#   ^-- nano now uses 'set trimblanks' option
-#       older versions used 'set justifytrim' (which is now deprecated)
-#       in the future, I should only keep 'set trimblanks'
+#set nowrap
+#    ^-- this option is now deprecated, but was needed prior to version 4 to
+#        prevent 'set fill' to trigger hard wrapping.
+#set justifytrim
+#   ^-- nano now uses 'set trimblanks' option instead of 'set justifytrim'
 
-# top title row:
+
+################################################################################
+# STUFF ACROSS PROCESS / SESSIONS & MISC.
+################################################################################
+
+# enable (vim-style) lock files. This let you know if the file you're opening
+# is already currently being edited (via nano or also via vim).
+set locking
+
+# Remember stuff across sessions:
+# -> remember cursor position for the 200 most-recently edited files
+set positionlog
+# -> remember last 100 search/repalcement/excuteds commands strings
+set historylog
+
+# allow nano to be suspended (with ^Z by default)
+set suspendable
+
+
+################################################################################
+# USER INTERFACE
+################################################################################
+
+# enable mouse (or touch) support
+set mouse
+
+# color for selected text:
+set selectedcolor bold,lightwhite,magenta
+# set selectedcolor brightwhite,magenta
+#   ^--- Note: nano version 5 updated color definitions for tty with >16 colors
+#   "bright" is stypically light and bold (but it seems it will be deprecated in
+#   nano, let's AVOID it) and 'light', 'bold', 'italic' can be used instead if
+#   tty is recognized by ncurses as 256 colors ($TERMINAL maybe need to be
+#   something like 'screen-256color', etc.). Also if terminal is recognized as
+#   >16+ colors, "extra" color names (pink, purple, mauve, lagoon, mint, lime,
+#   peach, orange, latte, and normal) can be used.
+
+
+# top title row -- (actually, the default (reverse video) looks good)
 #set titlecolor brightwhite,blue
-# (actually, the default (reverse video) looks good)
 
-# bottom row/menu:
+# bottom row/menu -- (actually, the default (reverse video) looks good)
 #set keycolor cyan
 #set functioncolor green
-# (actually, the default (reverse video) looks good)
 
 # status bar:
 set constantshow
-set statuscolor brightyellow,blue
-set errorcolor brightwhite,red
+set statuscolor bold,lightyellow,blue
+set errorcolor  bold,lightwhite,red
 
-# vertical stripe (to help judge the width of the text):
+# vertical "stripe" to help judge the width of the text:
 set guidestripe 81
-set stripecolor ,blue
+set stripecolor lightblack
+#set stripecolor ,blue <-- bg color makes the stripe visible (but not so subtle)
+
+# right side "scrollbar" showing position and how much of the buffer is visible
+set indicator
 
 # line numbers (to the left of the text area):
-#set linenumbers
-set numbercolor brightblack
+set linenumbers
+set numbercolor lightblack,black
+#set numbercolor brightblack
 
-# color for selected text:
-set selectedcolor brightwhite,magenta
 
-########################################################################
+################################################################################
+# SYNTAX HIGLIGHTING FILES
+################################################################################
 
-# include syntax files (if any) from ~/.config/nano/include
+# If we have installed nano
+# * globally (and haven't specified --rcfile): first nano will read the global
+#   config file (may be /etc/nanorc) first and then would include syntax
+#   highlighting definition
+# * locally: (for example because distro has a too-old version of nano), then
+#   syntax files would be in ~/.local/share/nano
+# In nay, we can include this as long as 'etc' create such empty dir
+include "~/.local/share/nano/*.nanorc"
 
+# include any extra custom syntax files (if any) from ~/.config/nano/include
 include "~/.config/nano/include/*.nanorc"
