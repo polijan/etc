@@ -1,0 +1,55 @@
+pipx: install and run Python applications in isolated environments
+https://github.com/pipxproject/pipx/
+
+________________________________________________________________________________
+
+C O N C E P T
+________________________________________________________________________________
+
+pipx is a package manager for applications written in Python.
+
+pipx uses the 'pip' package installer but adds isolation. When installing pipx
+creates a virtual environment, installs the package, and adds "entry points" to
+your ~/.local/bin (or $PIPX_BIN_DIR).
+
+Pipx installs from PyPI <https://pypi.org/> by default, but can also use other
+sources that pip can (local dir, wheel, git url, etc.)
+
+pipx's default virtual environment location is ~/.local/pipx (or $PIPX_HOME)
+
+pipx never needs to run as sudo
+
+________________________________________________________________________________
+
+I N S T A L L I N G  /  U P G R A D I N G   P I P X
+________________________________________________________________________________
+
+Installing pipx (using pip):
+  $ python3 -m pip install --user pipx
+  $ python3 -m pipx ensurepath
+
+Upgrade pipx (using pip):
+  $ python3 -m pip install --user -U pipx
+
+Shell "Tab completions" for pipx:
+  follow the instructions printed with this command:
+  $ pipx completions
+
+________________________________________________________________________________
+
+P I P X   U S A G E
+________________________________________________________________________________
+
+Most used commands:
+
+$ pipx list                     List installed packages
+$ pipx install <PACKAGE>        Install a package
+$ pipx upgrade <PACKAGE>        Upgrade a package
+$ pipx upgrade-all              Upgrade all packages
+$ pipx uninstall <PACKAGE>      Uninstall a package
+
+$ pipx run <PACKAGE> [ARG]...   Download the latest version of a package to a
+                                temporary virtual environment, then run an app
+                                from it.
+
+For all commands, see: pipx --help
