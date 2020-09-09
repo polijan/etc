@@ -1,11 +1,13 @@
 ################################################################################
-# GNU nano's config file (~/.nanorc or ~/.config/nano/nanorc)                  #
-# see: nanorc(5), nano(1)                                                      #
+## My GNU nano's config file (~/.nanorc or ~/.config/nano/nanorc)
+## Requires (at least) nano version 5
+##
+## see: nanorc(5), nano(1)
 ################################################################################
 
 
 ################################################################################
-# EDITING "BEHAVIOUR"
+## EDITING "BEHAVIOUR"
 ################################################################################
 
 # let backspace/delete erase the marked region (instead of deleting a single
@@ -31,6 +33,10 @@ set tabstospaces
 # (note: M-R to switch between fixed string search and regex search)
 set regexp
 
+# SOFT-WRAPPING: make (soft) line wrapping (when -S option is given) happen at
+# blanks instead of the edge of the screen
+set atblanks
+
 # (^J)ustification: set width to 80 and remove trailing white space from wrapped lines
 set fill 80
 set trimblanks
@@ -42,12 +48,18 @@ set trimblanks
 
 
 ################################################################################
-# STUFF ACROSS PROCESS / SESSIONS & MISC.
+## SETTINGS THAT WORK ACROSS SESSIONS / PROCESSES / MISC.
 ################################################################################
 
 # enable (vim-style) lock files. This let you know if the file you're opening
 # is already currently being edited (via nano or also via vim).
 set locking
+
+# Keep uniquely numbered backup~ files in ~/.cache/nano every time a file
+# saved. (Those could need be cleaned-up once a while to save some space)
+# NOTE: ~/.cache/nano directory needs to exist
+set backup
+set backupdir "~/.cache/nano"
 
 # Remember stuff across sessions:
 # -> remember cursor position for the 200 most-recently edited files
@@ -60,7 +72,7 @@ set suspendable
 
 
 ################################################################################
-# USER INTERFACE
+## USER INTERFACE
 ################################################################################
 
 # enable mouse (or touch) support
@@ -101,11 +113,10 @@ set indicator
 # line numbers (to the left of the text area):
 set linenumbers
 set numbercolor lightblack,black
-#set numbercolor brightblack
 
 
 ################################################################################
-# SYNTAX HIGLIGHTING FILES
+## SYNTAX HIGLIGHTING FILES
 ################################################################################
 
 # If we have installed nano
