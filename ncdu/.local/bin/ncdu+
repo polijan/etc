@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: $0 [NCDU_ARGS]...
+# wrapper to launch ncdu (with colors, etc.) and launched in READ-ONLY mode
+# (b can still spawn a shell where stuff can be deleted from there)
+
+exec ncdu-delete -r "$@"

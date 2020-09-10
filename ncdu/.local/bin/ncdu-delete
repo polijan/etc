@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Usage: $0 [NCDU_ARGS]...
+# wrapper to launch ncdu(1)
+# - add colors
+# - confirm before quitting (added because it's useful after a long scan)
+#
+# 'd' key to delete is NOT disabled here
+# to launch in READ-ONLY mode, use ncdu+ or -r option (or --r)
+
+exec ncdu --confirm-quit --color dark "$@"
