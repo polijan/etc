@@ -9,6 +9,7 @@ HIGH=$(ansi 33)
 RESET=$(ansi 0)
 
 exists() { command -v "$@" > /dev/null; }
+die()    { printf '%s\n' "$*" >&2; exit 1; }
 
 # args: PACKAGE
 # returns 0 if package is installed, non-zero otherwise
@@ -18,10 +19,13 @@ is_installed() {
 }
 ########################################################################
 
-[ -z "$ETC_HOME" ] && ETC_HOME="$HOME/etc"
-cd "$ETC_HOME"  || exit 1
-exists fzf      || { echo 'requires fzf(1)'  2>/dev/null; exit 1; }
-exists tree     || { echo 'requires tree(1)' 2>/dev/null; exit 1; }
+if [ -n "$ETC_HOME" ]; then
+   cd "$ETC_HOME"
+elif exists etc-home; then
+   cd "$(etc-home)"
+fi          || die "cannot find where 'etc' is located"
+exists fzf  || die 'requires fzf(1)'
+exists tree || die 'requires tree(1)'
 
 COLUMNS=$(stty size | cut -f2 -d' ')
 

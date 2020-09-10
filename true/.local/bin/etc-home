@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Usage: $0
+# prints directory directory where 'etc' is installed
+
+# assume etc-stow is installed (we use stow to deploy)
+STOW='.local/bin/etc-stow'
+[ -e "$HOME/$STOW" ] || {
+   printf 'cannot find %s\n' "$HOME/$STOW" >&2
+   exit 1
+}
+
+# assumes it's installed in $HOME
+printf %s "$HOME"
+# as per POSIX, 'ls -l' should output 'linkpath -> filepath',
+# thus in ~/.local/bin, we could get PATH from $HOME after ' -> ../../'
+#
+#(possible to derail that, but it'd be some *vicious* filename)
+# shellcheck disable=SC2012
+ls  -l "$HOME/$STOW"       |
+sed -e 's:.* -> ../../:/:' \
+    -e "s:/stow/$STOW::"

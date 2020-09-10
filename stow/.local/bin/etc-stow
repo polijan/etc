@@ -12,6 +12,7 @@ HIGH=$(ansi 33)
 RESET=$(ansi 0)
 
 exists() { command -v "$@" > /dev/null; }
+die()    { printf '%s\n' "$*" >&2; exit 1; }
 
 # args: PACKAGE
 # returns 0 if package is installed, non-zero otherwise
@@ -26,8 +27,12 @@ xargs_stow() {
 }
 ########################################################################
 
-[ -z "$ETC_HOME" ] && ETC_HOME="$HOME/etc"
-cd "$ETC_HOME"  || exit 1
+if [ -n "$ETC_HOME" ]; then
+   cd "$ETC_HOME"
+elif exists etc-home; then
+   cd "$(etc-home)"
+fi || die "cannot find where 'etc' is located"
+
 
 HAS_NAMES=false
 for i; do

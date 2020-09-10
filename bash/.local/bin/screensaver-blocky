@@ -2,4 +2,4 @@
 
 # Usage: $0
 # display blocks
-exec bash -c "$HOME/etc/bash/_/blocky -k 3 $*"
+exec bash -c "$(etc-home)/bash/_/blocky -k 3 $*"

@@ -8,10 +8,6 @@ cd "$HOME"
 # Some essential dirs to set up                                                #
 ################################################################################
 
-# ~/etc    : my config files and script. Well, I'm supposed to have it copied
-#            already, but let's try to create it anyway.
-mkdir -pv 'etc'
-
 # ~/stow   : my files are neatly organized in 'packages' which I stow
 #            ~/stow into ~ (those would create all the directories I need)
 mkdir -pv 'stow'

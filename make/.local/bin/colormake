@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Usage: colormake [MAKE_ARGS]...
-# wrapper around make to colorize output
+# make(1) wrapper to colorize output
 
 [ "$TERM" = "dumb" ] && exec make "$@"
 
@@ -16,13 +16,13 @@ exists() { command -v "$@" > /dev/null; }
 export COLORMAKE=1
 
 if exists python; then
-   make "$@" 2>&1 | "$HOME/etc/make/_/colormake.py/colormake.py"
+   make "$@" 2>&1 | "$(etc-home)/make/_/colormake.py/colormake.py"
 elif exists perl; then
    # Run with --short as the first argument to shorten each line so it fits
    # on the screen.
    SIZE=''
    [ "$1" = "--short" ] && { SIZE=$(stty size); shift; }
-   make "$@" 2>&1 | "$HOME/etc/make/_/colormake.pl/colormake.pl" $SIZE
+   make "$@" 2>&1 | "$(etc-home)/make/_/colormake.pl/colormake.pl" $SIZE
 else
    exec make "$@"
 fi
