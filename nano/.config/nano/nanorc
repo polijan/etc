@@ -125,7 +125,7 @@ set numbercolor lightblack,black
 #   highlighting definition
 # * locally: (for example because distro has a too-old version of nano), then
 #   syntax files would be in ~/.local/share/nano
-# In nay, we can include this as long as 'etc' create such empty dir
+# In any case, we can include this as long as 'etc' create such empty dir
 include "~/.local/share/nano/*.nanorc"
 
 # include any extra custom syntax files (if any) from ~/.config/nano/include
