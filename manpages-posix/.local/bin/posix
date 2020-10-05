@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Usage: $0 [FZF_ARGS]...
+# fzf TUI showing the list of POSIX utilities and previewing their man pages.
+# What's available on the system will be colored and the shell builtins are
+# displayed in bold.
+#
+# This script requires the 'manpages-posix' package installed.
+
+COLUMNS=$(stty size </dev/tty | cut -d' ' -f2)
+
+ls /usr/share/man/man1/*.1posix.gz                     |
+sed -e 's:.*/::'                                       \
+    -e 's:[.]1posix[.]gz$::'                           |
+while IFS= read -r STR; do
+    case $STR in
+       colon) CMD=':'                                 ;;
+         dot) CMD='.'                                 ;;
+           *) CMD=$STR                                ;;
+    esac
+    case $(type "$CMD" 2>/dev/null) in
+       *builtin) printf '\033[1;32m%s\033[m\n' "$STR" ;;
+      *found|'') printf '%s\n'                 "$STR" ;;
+              *) printf '\033[32m%s\033[m\n'   "$STR" ;;
+    esac
+done                                                   |
+fzf --ansi                                             \
+    --prompt 'POSIX '                                  \
+    --preview-window "right:$((COLUMNS - 15))"         \
+    --preview 'man 1p {}'                              \
+    --bind    'tab:execute(man 1p {} 2>/dev/null)'     \
+    "$@"
