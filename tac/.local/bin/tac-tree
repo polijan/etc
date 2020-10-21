@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Usage: $0 [TAC_ARGS]...
+# reverse output which has a tree hierachy drawn with unicode box-drawing
+#
+# exmaples:
+#     $ tree | tac-tree
+#     $ pstree -U | tac-tree
+
+sed 'y/└┬/┌┴/' | tac "$@"
