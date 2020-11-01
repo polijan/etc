@@ -1,6 +1,6 @@
 ################################################################################
 ## My GNU nano's config file (~/.nanorc or ~/.config/nano/nanorc)
-## Requires (at least) nano version 5
+## Requires (at least) nano version 5.3
 ##
 ## see: nanorc(5), nano(1)
 ################################################################################
@@ -12,7 +12,7 @@
 
 # let backspace/delete erase the marked region (instead of deleting a single
 # character and without affecting the cutbuffer), tip: use Undo (M-U) if needed
-# set zap
+## set zap
 # ^--- well, perhaps I want this, perhaps I don't :)
 
 # don't convert files from DOS/MAC format
@@ -31,7 +31,7 @@ set tabstospaces
 
 # SEARCH: enable (extended) regular expression search by default
 # (note: M-R to switch between fixed string search and regex search)
-set regexp
+## set regexp
 
 # SOFT-WRAPPING: make (soft) line wrapping (when -S option is given) happen at
 # blanks instead of the edge of the screen
@@ -78,6 +78,11 @@ set suspendable
 # enable mouse (or touch) support
 set mouse
 
+# show the state of auto-indenting, the mark, hard-wrapping, macro recording,
+# and soft-wrapping in the title bar.  The flags take the place of "Modified",
+# and a modified buffer is instead indicated by an asterisk (*) after its name.
+##set stateflags  <-- TODO:enable for nano 5.3+
+
 # color for selected text:
 set selectedcolor bold,lightwhite,magenta
 # set selectedcolor brightwhite,magenta
@@ -91,11 +96,11 @@ set selectedcolor bold,lightwhite,magenta
 
 
 # top title row -- (actually, the default (reverse video) looks good)
-#set titlecolor brightwhite,blue
+##set titlecolor brightwhite,blue
 
 # bottom row/menu -- (actually, the default (reverse video) looks good)
 #set keycolor cyan
-#set functioncolor green
+##set functioncolor green
 
 # status bar:
 set constantshow
@@ -105,10 +110,11 @@ set errorcolor  bold,lightwhite,red
 # vertical "stripe" to help judge the width of the text:
 set guidestripe 81
 set stripecolor lightblack
-#set stripecolor ,blue <-- bg color makes the stripe visible (but not so subtle)
+##set stripecolor ,blue <-- bg color makes the stripe visible (but not so subtle)
 
 # right side "scrollbar" showing position and how much of the buffer is visible
 set indicator
+##set scrollercolor lightblack <-- TODO:enable for nano 5.3+
 
 # line numbers (to the left of the text area):
 set linenumbers
