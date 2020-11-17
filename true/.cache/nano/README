@@ -1,0 +1,9 @@
+# I have this in my nanorc:
+#
+# set backup
+# set backupdir "~/.cache/nano"
+#
+# which keeps uniquely numbered backup~ files in this
+# directory every time nano saves a file.
+#
+# Clean this up once in a while if saving space is needed
