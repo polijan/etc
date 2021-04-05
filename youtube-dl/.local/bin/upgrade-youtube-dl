@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Usage: $0
+# upgrade youtube-dl
+youtube-dl -U
