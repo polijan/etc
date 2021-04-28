@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# Usage: $0 URL
+# perform an action to view the URL
+# often, it let you choose a web browser to open the URL
+
+## configure here ##############################################################
+
+BROWSERS_UI=(termux-open-url chromium-browser dillo firefox xdg-open)
+BROWSERS_TTY=(w3m lynx)
+
+DOWNLOAD_DIR='/tmp/downloads'
+
+################################################################################
+
+exists() { command -v "$@" > /dev/null; }
+
+# download "$1" (must be a URL) into the "$DOWNLOAD_DIR" folder
+# set "$DOWNLOAD" variable to the filename of the download
+download() {
+   DOWNLOAD=$DOWNLOAD_DIR/$(date +%s '%Y-%m-%d_%H.%M.%S')
+   DOWNLOAD=${DOWNLOAD}_$(basename "$1")
+
+   [ -e "$DOWNLOAD" ]        && exit 1
+   mkdir -pv "$DOWNLOAD_DIR" || exit 1
+
+   if   exists curl; then  curl -o "$DOWNLOAD" "$1"
+   elif exists wget; then  wget -o "$DOWNLOAD" "$1"
+   else exit 1
+   fi || exit
+}
+
+# download "$1" (must be a URL) and pipe its content to less(1)
+view_with_less() {
+   { if   exists curl; then  curl --silent "$1"
+     elif exists wget; then  wget --quiet -o - "$1"
+     else  echo 'ERROR: no program for downloading'
+     fi || echo 'ERROR: download failed'
+   } | less
+}
+
+# from "$BROWSERS_UI" and "$BROWSERS_TTY" lists,
+# append command we can launch to the "$BROWSERS" list.
+add_default_browsers() {
+   ## is-graphical && BROWSERS+=("${BROWSERS_UI[@]}")
+   ## but 'is-graphical' does not work in terminal screen
+   BROWSERS+=("${BROWSERS_UI[@]}")
+   [ -t 1 ] && BROWSERS+=("${BROWSERS_TTY[@]}")
+   BROWSERS+=("download")
+   [ -t 1 ] && BROWSERS+=("view_with_less")
+}
+
+
+# check "$1" (must be a URL) and launch a program or
+# or adds stuff on top of the "$BROWSER" list.
+examine_url() {
+   local url
+   url=$1
+   case $1 in
+      https://*) url=${url#https://} ; url=${url#www.} ;;
+       http://*) url=${url#http://}  ; url=${url#www.} ;;
+       file://*) url=${url#file://}  ;;
+          *://*) case ${url%%://*} in *[!a-z]*)
+                    printf '%s\n' "$url" | less
+                    exit ;;
+                 esac
+                 ;;
+   esac
+
+   # eventually, check media type from 'mime.types' based on the url
+   # and process the main type in the media type: video, audio, image, ...
+   # https://en.wikipedia.org/wiki/Media_type
+   #
+   # for now
+   case $url in
+      *.jpg|*.png)
+         download "$1" && xdg-open "$DOWNLOAD" && exit ;;
+      *.mp3)
+         download "$1" && xdg-open "$DOWNLOAD" && exit ;;
+      #TODO
+   esac
+
+   # known sites
+   case $url in
+      reddit.com/*|old.reddit.com/*)
+         BROWSERS+=("tuir" "rtv");;
+      youtu.be/*|youtube.com/watch?v=*|vimeo.com/[0-9]*)
+         BROWSERS+=('mpv --ytdl-raw-options=format=18'   \
+                    'mpv --ytdl-raw-options=format=22'   \
+                    'x mpv --ytdl-raw-options=format=18' \
+                    'x mpv --ytdl-raw-options=format=22' \
+                    'youtube-dl'                       );;
+   esac
+}
+
+################################################################################
+
+[ $# -eq 1 ] || usage -d "$0"
+URL=$1
+
+DOWNLOAD=''
+BROWSERS=()
+examine_url "$URL"
+add_default_browsers
+
+export URL
+CMD=''
+CMD=$(for i in "${BROWSERS[@]}"; do
+          printf '%s\n' "$i"
+      done                             |
+      fzf --prompt  'launch > '        \
+          --preview 'printf %s "$URL"' \
+          --preview-window 'down:1'    ) || exit
+
+[ -n "$CMD" ] || exit
+$CMD "$1"
