@@ -1,0 +1,4 @@
+#!/bin/sh
+# Usage: $0
+# cycle through all shades of gray
+yes "$(seq 232 255;seq 254 -1 233)" | while read i; do printf "\033[48;5;${i}m\n"; sleep .01; done
