@@ -34,7 +34,8 @@ export HISTSIZE=1000
 export HISTFILESIZE=9999
 export HISTIGNORE="history:exit"
 
-
+# show the most used commands
+alias history-often="history | awk '{print $2}' | sort | uniq -c | sort -rn | head"
 
 ################################################################################
 # BASH COMPLETION
