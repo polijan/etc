@@ -1,0 +1,51 @@
+#!/bin/sh
+# Usage: $0 [--hat]
+# display "Miner Willy" walking
+#
+# by default, display Willy with no hat (like in "Manic Miner"),
+# --hat   =>  display Willy with  a hat (like in "JetSet Willy")
+# --cap   =>  display Willy with  a cap
+
+case $1 in
+  -h*|--h*) H="\
+   ████
+  ▀██▀█▀";;
+  -c*|--c*) H="\
+   ▄██▄
+  ▀██▀█▀▀";;
+  *) H="\
+   ▄▄▄██
+  ▀██▀█";;
+esac
+
+H="$(printf '\033[H\033[2J')$H
+   ████▀
+   ▄██▄"
+
+frame1() { printf '%s\n' "$H
+  ██████
+ ████▄▀██
+  ▄██▀█▄
+  ██▄▀██▄"
+}
+frame2() { printf '%s\n' "$H
+  ██ ███
+  ██▄▀██
+   ▀██▀
+    ██▄"
+}
+frame3() { frame1; }
+frame4() { printf '%s\n' "$H
+ ▄██████▄
+██▀████▀██
+  ▄██▀██ ▄
+  ██▄  ██▀"
+}
+
+D=0.12
+while true; do
+  frame1; sleep $D
+  frame2; sleep $D
+  frame3; sleep $D
+  frame4; sleep $D
+done
