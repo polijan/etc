@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: $0 [ARG]...
+# mpv playing only audio
+
+# use --vid=no, and also specify 'bestaudio' as youtube-dl format
+mpv --vid=no                  \
+    --ytdl-format='bestaudio' \
+    "$@"

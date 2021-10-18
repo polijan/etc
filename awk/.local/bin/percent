@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: $0 N MAX
+# prints N/MAX as a percentage
+
+[ $# -eq 2 ] || usage -d "$0"
+awk-expr "100 * ( $1 ) / ( $2 )"
