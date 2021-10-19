@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Usage: $0
+# Disable and then re-enable the swap (pages will be swapped back to RAM)
+#
+# Linux manages swap properly, so in general there's no need to do this.
+# But it can be used to know to make the system will be responsive.
+#
+# IMPORTANT: MAKE SURE TO HAVE ENOUGH FREE RAM (MORE THAN THE SWAP) TO DO THIS,
+#            OTHERWISE THE SYSTEM WILL START KILLING PROCESSES ARBITRARILY.
+
+set -eu
+echo "IMPORTANT: make sure system has enough free RAM and isn't heavily swapping"
+printf %s 'disable/re-enable swap? [y/N] '
+IFS= read -r DOIT
+[ "$DOIT" = 'y' ] || [ "$DOIT" = 'Y' ] || exit
+
+set -x
+sudo swapoff -a
+sudo swapon  -a
