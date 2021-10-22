@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Usage: $0 [DIR]
+# find and delete all directories under DIR which contain no files
+
+find "$@" -type d -empty -delete
