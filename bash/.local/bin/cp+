@@ -2,19 +2,25 @@
 
 # Usage: $0 [...]
 # with no, or several, or -* argument(s): 'cp -i'
-# with one argument (non -*):
-#  - interactively prompt the destination
-#    (by default the , useful if you want to change
-#    a few letters of the name)
+# with one argument (non -*) specifying an existing FILE:
+#  - first, interactively prompts for the destination
+#    (defaults the name of FILE with its modification date)
 #  - and then 'cp -i -a "$1" <destination>'
 
 CP() { cp -i "$@"; exit; }
 
 [ $# -ne 1 ] && CP "$@"
 case $1 in -*)  CP "$@";; esac
+[ -e "$1" ]  || CP "$@"
 
-IFS= read -r -e -p 'copy to: ' -i "$1.$(date +%F_%H%M%S)"
-[ $? -eq 0 ]        || exit
+# get modification time (using GNU date(1))
+FMT='%Y-%m-%d_%H%M%S'
+if is-gnu date
+   then MTIME=$(date -r "$1" +"$FMT")
+   else MTIME=$(date +"$FMT")
+fi
+
+IFS= read -r -e -p 'copy to: ' -i "$1.$MTIME" || exit
 [ -z "$REPLY" ]     && exit 1
 [ "$REPLY" = "$1" ] && exit 1
 CP -a "$1" "$REPLY"
