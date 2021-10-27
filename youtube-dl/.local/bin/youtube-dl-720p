@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Usage: $0 [ARGS]...
+# calls 'youtube-dl -f FORMAT [ARG]'
+# with FORMAT such that the (max. height of the) video
+# is based on the executable name ($0).
+
+case $0 in
+    *8K|*4320p) H=4320 ;;
+    *4K|*2160p) H=2160 ;;
+   *QHD|*1440p) H=1440 ;;
+   *FHD|*1080p) H=1080 ;;
+     *HD|*720p) H=720  ;;
+    *VGA|*480p) H=480  ;;
+         *360p) H=360  ;;
+         *240p) H=240  ;;
+         *144p) H=144  ;;
+             *) die 'unknown format' ;;
+esac
+exec youtube-dl --format "bestvideo[height<=?${H}]+bestaudio/best" "$@"
