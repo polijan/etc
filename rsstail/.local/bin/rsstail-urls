@@ -2,9 +2,11 @@
 
 # Usage: $0 [--query FZF_OPTION] [RSSTAIL OPTION]...
 # choose a feed from newsboat's subscriptions ('urls' file)
-# and pass it to rsstail(1)
+# and pass it to rsstail-view
 
-[ -f "$HOME/.config/newsboat/urls" ] || {
+URLS='.config/newsboat/urls'
+
+[ -f "$HOME/$URLS" ] || {
    echo "can't find newsboat's 'urls' file" >&2
    exit 1
 }
@@ -21,13 +23,13 @@ QUERY=''
 #shellcheck disable=SC2088
 FEED=$(sed -e "/^[^#]/s/[[:space:]].*/${T}&${R}/" \
            -e "s/^#.*/${C}&${R}/"                 \
-           "$HOME/.config/newsboat/urls"          |
+           "$HOME/$URLS"                          |
        fzf --ansi                                 \
-           --prompt '~/.config/newsboat/urls > '  \
+           --prompt "~/$URLS > "                  \
            --query "$QUERY"                       ) || exit
 FEED=$(printf %s "$FEED" | awk '{print $1}')
 
 case $FEED in
-  http://*|https://*) rsstail "$@" -u "$FEED"      ;;
+  http://*|https://*) rsstail-view "$@" "$FEED"    ;;
                    *) echo 'not a URL' >&2; exit 1 ;;
 esac

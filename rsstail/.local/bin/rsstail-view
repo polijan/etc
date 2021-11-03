@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Usage: $0 [RSSTAIL_OPTIONS] URL
+# launch 'rsstail -u URL'
+# * with various default options (to nicely display the feed)
+# * plus the given options (if any).
+
+# move the last argument to $1
+n=0
+N=$#
+for arg; do
+    n=$((n + 1))
+    [ $n -eq $N ] && break
+    set -- "$@" "$arg"
+    shift
+done
+
+rsstail -z -N -H  -p -d -l -a   "$@"  -u "$1"
