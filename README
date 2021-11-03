@@ -5,7 +5,7 @@ for commands and programs I may use.
 To bootstrap a new machine
 --------------------------
 
-Make sure git(1) is installed (install if necessary), and then:
+Make sure git(1) is installed, then:
 
 1) # getting 'etc'
    $ git clone https://github.com/notevenodd/etc.git
@@ -19,7 +19,7 @@ After that and after installing some known programs
 
 Deployement of 'etc' content into the home directory is best
 managed by the 'etc-stow' script, which is powered by GNU stow.
-So make sure GNU stow is installed (install if necessary), then:
+So make sure GNU stow is installed, then:
 
 1) # deploy the config as symlinks into ~
    $ ~/PATH/TO/etc/etc-stow -R
