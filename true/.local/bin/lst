@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Usage: lst [LS_ARGS]...
+# list 10 last file with the most recent modification date
+
+
+# check if we should and can use a --color flag
+# (should be available on GNU, BSD, busybox)
+COLOR=''
+[ -t 1 ] && ls --color / >/dev/null 2>/dev/null && COLOR='--color'
+
+# check if we can use a -h flag (human readable size -- GNU, busybox)
+HUMAN=''
+[ -t 1 ] && ls -h / >/dev/null 2>/dev/null && HUMAN='-h'
+
+
+#shellcheck disable=SC2012
+ls -A -F         \
+   $COLOR $HUMAN \
+   -l -r -t      \
+   "$@"          |
+tail
