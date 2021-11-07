@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: $0 [MPV_ARG]...
+# invoke mpv but image is mirrored
+#
+# (this can be very useful for left-handed people when watching
+# object manipulation tutorials done by/for right-handed people)
+
+mpv --vf=hflip "$@"
