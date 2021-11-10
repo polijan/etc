@@ -2,7 +2,7 @@
 
 # Usage: $0
 # create my base directories (useful to booststrap a new machine)
-cd "$HOME"
+cd || exit
 
 ################################################################################
 # Some essential dirs to set up                                                #
@@ -13,8 +13,8 @@ cd "$HOME"
 mkdir -pv 'stow'
 
 # ~/tmp    : a temporary dir on this machine, I will not synchronize it
-mkdir -pv 'tmp/Desktop'   ; ln -sv 'tmp/Desktop'   2> /dev/null
-mkdir -pv 'tmp/Downloads' ; ln -sv 'tmp/Downloads' 2> /dev/null
+mkdir -pv 'tmp/Desktop'   ; ln -sv 'tmp/Desktop' .   2> /dev/null
+mkdir -pv 'tmp/Downloads' ; ln -sv 'tmp/Downloads' . 2> /dev/null
 
 # termux
 if [ -e /data/data/com.termux ]; then
@@ -72,13 +72,12 @@ mkdir -pv    '.local/bin'                \
              '.local/share/man/man7'     \
              '.local/share/man/man8'     \
              '.local/share/applications' \
+             '.local/share/icons'        \
+             '.local/share/fonts'        \
              '.local/src'                \
              '.local/stow'
-ln -sv       '.local/bin' 'bin' 2> /dev/null
-( cd         '.local'
-  ln -sv     'bin' 'sbin'
-  ln -sv     'bin' 'games'
-) 2> /dev/null
+ln -sv       'bin' '.local/sbin'  2> /dev/null
+ln -sv       'bin' '.local/games' 2> /dev/null
 
 ################################################################################
 # SYSTEM Directories in XDG Base Directory spec.          (nothing to do here) #
