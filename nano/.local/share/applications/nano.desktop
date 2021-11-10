@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=GNU Nano
+Comment=GNU Nano Text Editor
+GenericName=GNU Nano Test Editor
+Categories=Utility;System;
+Icon=gnu_nano
+Type=Application
+Exec=nano
+Terminal=true
