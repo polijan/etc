@@ -81,25 +81,11 @@ exists manpath || export MANPATH="$HOME/.local/share/man:$MANPATH"
 
 ################################################################################
 
-# set PATH so it includes user's private bin (if it exists)
+# set PATH so it includes user's private ~/bin (if it exists)
 if [ -d "$HOME/bin" ] ; then
    PATH="$HOME/bin:$PATH"
 fi
-
-################################################################################
-# EDITOR
-################################################################################
-
-for i in nano+ nano pico e3pi micro emacs ne mg e3em vim vi; do
-    if command -v "$i" >/dev/null; then
-       EDITOR=$i
-       break
-    fi
-done
-unset i
-export EDITOR
-export VISUAL="$EDITOR"
-
+export PATH
 
 ################################################################################
 # INCLUDE *.sh FILES FROM ~/.config/sh-includes
@@ -107,27 +93,42 @@ export VISUAL="$EDITOR"
 
 for i in "$HOME/.config/sh-includes"/*.sh; do
     [ -n "$DEBUG_SH" ] && printf 'DEBUG (~/.shrc): including %s\n' "$i" >&2
+    #shellcheck source=/dev/null
     . "$i"
 done
-unset i
 
-
-################################################################################
 # IF WE'RE STARTING BASH: INCLUDE *.bash FILES FROM ~/.config/sh-includes
-################################################################################
-
 if [ -n "$BASH_VERSION" ]; then
    for i in "$HOME/.config/sh-includes"/*.bash; do
        [ -n "$DEBUG_SH" ] && printf 'DEBUG (~/.bashrc): including %s\n' "$i" >&2
+       #shellcheck source=/dev/null
        . "$i"
    done
-   unset i
 fi
+
+unset i
 
 ################################################################################
 # IF WE HAVE A FILE NAME .sourced IN THE DIRECTORY WE START IN, SOURCE IT
 ################################################################################
 
 if [ -f .sourced ]; then
+   #shellcheck source=/dev/null
    . .sourced
 fi
+
+################################################################################
+# EDITOR
+################################################################################
+
+if [ -z "$EDITOR" ]; then
+   for i in nano+ nano pico e3pi micro emacs ne mg e3em vim vi; do
+       if command -v "$i" >/dev/null; then
+          EDITOR=$i
+          break
+       fi
+   done
+   unset i
+fi
+export EDITOR
+export VISUAL="$EDITOR"
