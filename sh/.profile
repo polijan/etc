@@ -75,6 +75,9 @@ export ENV="$HOME/.shrc"
 
 # then include it
 if [ -f "$ENV" ]; then
+   #output $END without expansion
+   #shellcheck disable=SC2016
    [ -n "$DEBUG_SH" ] && printf 'DEBUG (~/.profile): including $ENV (%s)\n' "$ENV" >&2
+   #shellcheck source=/dev/null
    . "$ENV"
 fi
