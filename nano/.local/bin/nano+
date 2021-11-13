@@ -1,23 +1,36 @@
 #!/bin/sh
 
 # Usage: nano+ [ARG]...
-# launch nano(1) editor with some options (if your build of nano has them)
-# based on the terminal size:
-# if terminal is large enough, display line numbers
-# if terminal has <20 lines  , do not show the two help lines at the bottom.
+#
+# launch nano(1) with some options (if it has them) based on the terminal size:
+# - if terminal is large enough, display line numbers        (Alt-N to toggle)
+# - if terminal has <20 lines, don't show the bottom help    (Alt-X to toggle)
+#
+# also, if the 'mj' productivity system is installed:
+# - in case there's no ARGument, launch nano with a filename such that the
+#   buffer would be saved into mj's inbox.
 
+#------------------------------------------------------------------------------
 
-# has OPTION -> returns zero if nano has the given OPTION, non-zero otherwise
-has() { nano --help | grep -qF -- "$@" ; }
+exists() { command -v "$@" > /dev/null; }
 
-# note: line numbers display has been introduced in nano 2.7.1 [end 2016]
-# TODO: soon I won't have system with so old nano, so maybe testing those
-#       options won't be necessary.
+# nano_has OPTION
+# returns zero if nano supports the given OPTION, non-zero otherwise
+nano_has() { nano --help | grep -qF -- "$*" ; }
 
-OPTS=''
+#------------------------------------------------------------------------------
+
+INBOX=''
+[ $# -eq 0 ] && exists mj-complete && INBOX=$(mj-complete :inbox)
+
 [ -n "$COLUMNS" ] || COLUMNS=$(stty size | cut -f2 -d' ')
 [ -n "$LINES" ]   || LINES=$(  stty size | cut -f1 -d' ')
-[ "$COLUMNS" -ge 68 ] && has '--linenumbers' && OPTS="$OPTS --linenumbers"
-[ "$LINES" -lt 20 ]   && has '--nohelp'      && OPTS="$OPTS --nohelp"
+# TODO/note: --linenumbers has been introduced in nano 2.7.1 [end 2016],
+#            so maybe testing those options shouldn't be needed.
+[ "$COLUMNS" -ge 68 ] && nano_has '--linenumbers' && set -- "$@" --linenumbers
+[ "$LINES"   -lt 20 ] && nano_has '--nohelp'      && set -- "$@" --nohelp
 
-exec nano $OPTS "$@"
+# TODO/FIXME: we do not verify that filename doesn't exist
+[ -d "$INBOX" ] && set -- "$@" "$INBOX/$(date +'%Y-%m-%d_untitled_%H%M%S')"
+
+exec nano "$@"
