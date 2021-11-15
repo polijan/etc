@@ -21,7 +21,7 @@ nano_has() { nano --help | grep -qF -- "$*" ; }
 #------------------------------------------------------------------------------
 
 INBOX=''
-[ $# -eq 0 ] && exists mj-complete && INBOX=$(mj-complete :inbox)
+[ $# -eq 0 ] && exists mj-complete && INBOX=$(mj-complete -q :inbox)
 
 [ -n "$COLUMNS" ] || COLUMNS=$(stty size | cut -f2 -d' ')
 [ -n "$LINES" ]   || LINES=$(  stty size | cut -f1 -d' ')
