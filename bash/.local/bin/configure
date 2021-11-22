@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# Usage: $0 [ARG]...
+# wrapper to ./configure
+#
+# If there's a configure script in the current directory,
+# prompt for arguments and then run ./configure with those.
+#
+# The default text as answer to the interactive prompt defaults to:
+# * --prefix option as ~/.local/stow/<current directory's basename>
+# * the ARGuments provided on the command line, if any.
+
+
+[ -f ./configure ] || { printf './configure: No such file\n' >&2; exit 1; }
+
+ARGS=$(printf %q "$HOME/.local/stow/$(basename "$PWD")")
+for i; do
+    ARGS="$ARGS $(printf %q "$i")"
+done
+
+IFS= read -r                       \
+          -e  -p '$ ./configure '  \
+          -i "--prefix $ARGS"      \
+          ANS                     &&
+eval "./configure $ANS"
