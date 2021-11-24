@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Usage: $0 [COLOR]
+# turn on the full screen into the specified COLOR ('white' by default)
+# turn it off by pressing a key (not a modifier key).
+
+[ $# -le 1 ] || usage -d "$0"
+COLOR=${1:-white}
+
+xterm -fullscreen     \
+      -bg "$COLOR"    \
+      -fg "$COLOR"    \
+      -cr "$COLOR"    \
+      -e 'read -sn 1' \
+      2>/dev/null
+
+# FIXME (???):
+# we assume 'read -sn 1' will be launched with bash(1)
