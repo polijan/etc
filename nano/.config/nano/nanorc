@@ -114,7 +114,7 @@ set stripecolor lightblack
 
 # right side "scrollbar" showing position and how much of the buffer is visible
 set indicator
-##set scrollercolor lightblack <-- TODO:enable for nano 5.3+
+set scrollercolor lightblack
 
 # line numbers (to the left of the text area):
 set linenumbers
