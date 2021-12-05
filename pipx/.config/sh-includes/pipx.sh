@@ -11,8 +11,8 @@ pip() {
    return 1
 }
 
-# bash "tab completions" for pipx
-# to enable it, follow instructions printed by:
-# $ pipx completions
-[ -n "$BASH_VERSION" ] && eval "$(register-python-argcomplete pipx)"
+# # bash "tab completions" for pipx
+# # to enable it, follow instructions printed by:
+# # $ pipx completions
+# [ -n "$BASH_VERSION" ] && eval "$(register-python-argcomplete pipx)"
 

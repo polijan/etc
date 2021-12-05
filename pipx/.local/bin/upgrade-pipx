@@ -1,11 +1,23 @@
 #!/bin/sh
 
 # Usage: $0
-# 1) upgrade pipx itself, and then
-# 2) upgrade all installed packages by pipx (pipx upgrade-all)
-
-printf '\033[33m> 1. Upgrade pipx itself\033[0m\n'
-python3 -m pip install --user -U pipx
-
-printf '\n\033[33m> 2. Upgrade all packages installed by pipx\033[0m\n'
+# upgrade all installed packages by pipx (ie, just run: pipx upgrade-all)
 pipx upgrade-all
+
+
+
+
+#########################################################################
+# if pipx was installed with pip (and not the system's package manager),
+# we could have done that:
+#########################################################################
+
+# # Usage: $0
+# # 1) upgrade pipx itself, and then
+# # 2) upgrade all installed packages by pipx (pipx upgrade-all)
+#
+# printf '\033[33m> 1. Upgrade pipx itself\033[0m\n'
+# python3 -m pip install --user -U pipx
+#
+# printf '\n\033[33m> 2. Upgrade all packages installed by pipx\033[0m\n'
+# pipx upgrade-all

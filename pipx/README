@@ -21,22 +21,6 @@ pipx never needs to run as sudo
 
 ________________________________________________________________________________
 
-I N S T A L L I N G  /  U P G R A D I N G   P I P X
-________________________________________________________________________________
-
-Installing pipx (using pip):
-  $ python3 -m pip install --user pipx
-  $ python3 -m pipx ensurepath
-
-Upgrade pipx (using pip):
-  $ python3 -m pip install --user -U pipx
-
-Shell "Tab completions" for pipx:
-  follow the instructions printed with this command:
-  $ pipx completions
-
-________________________________________________________________________________
-
 P I P X   U S A G E
 ________________________________________________________________________________
 
@@ -53,3 +37,25 @@ $ pipx run <PACKAGE> [ARG]...   Download the latest version of a package to a
                                 from it.
 
 For all commands, see: pipx --help
+
+
+________________________________________________________________________________
+
+I N S T A L L I N G  /  U P G R A D I N G   P I P X
+________________________________________________________________________________
+
+now pipx may be in your distro's repository.
+
+
+
+    if not do this:
+
+       Installing pipx (using pip):
+         $ python3 -m pip install --user pipx
+         $ python3 -m pipx ensurepath
+       Upgrade pipx (using pip):
+         $ python3 -m pip install --user -U pipx
+       hmmm, old??? :
+         /// activate shell "Tab completions" for pipx:
+         follow the instructions printed with this command:
+         $ pipx completions
