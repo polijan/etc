@@ -27,6 +27,8 @@ max() {
 if [ "$TERM_PROGRAM" = 'tmux' ] && exists tmux; then
    # by default (this can be overloaded by passing flags)
    # launch the popup such that:
+   # - if we use zero argument (which will launch the shell),
+   #   add -E flag (so that we automatically exit when shell ends)
    # - we are in the same current directory
    # - the dimensions inside the popup are:
    #   width : max(~50%, min(81, ~80%))
@@ -40,6 +42,7 @@ if [ "$TERM_PROGRAM" = 'tmux' ] && exists tmux; then
    H=$(min "$H" $((3 * $(tmux display-message -p '#{client_height}') / 4)) )
    H=$(max "$H" $(($(tmux display-message -p '#{client_height}') / 2)) )
 
+   [ $# -eq 0 ] && set -- -E
    tmux display-popup -d "$PWD" -w "$W" -h "$H" "$@"
 
 else
