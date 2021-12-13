@@ -1,0 +1,64 @@
+#!/bin/sh
+
+# Usage: $0 ...
+# inside of tmux:
+#    launch a popup (see tmux display-popup)
+# outside of tmux (or for older tmux with no popup support):
+#    execute arguments (if it doesn't start with some flags, otherwise abort)
+
+#-------------------------------------------------------------------------------
+exists() { command -v "$@" > /dev/null; }
+
+min() {
+   if [ "$1" -lt "$2" ]
+      then printf '%s\n' "$1"
+      else printf '%s\n' "$2"
+   fi
+}
+
+max() {
+   if [ "$1" -gt "$2" ]
+      then printf '%s\n' "$1"
+      else printf '%s\n' "$2"
+   fi
+}
+#-------------------------------------------------------------------------------
+
+if [ "$TERM_PROGRAM" = 'tmux' ] && exists tmux; then
+   # by default (this can be overloaded by passing flags)
+   # launch the popup such that:
+   # - we are in the same current directory
+   # - the dimensions inside the popup are:
+   #   width : max(~50%, min(81, ~80%))
+   #   height: max(~50%, min(25, ~75%))
+
+   W=$((81 + 2))
+   W=$(min "$W" $((4 * $(tmux display-message -p '#{client_width}')  / 5)) )
+   W=$(max "$W" $(($(tmux display-message -p '#{client_width}')  / 2)) )
+
+   H=$((25 + 2))
+   H=$(min "$H" $((3 * $(tmux display-message -p '#{client_height}') / 4)) )
+   H=$(max "$H" $(($(tmux display-message -p '#{client_height}') / 2)) )
+
+   tmux display-popup -d "$PWD" -w "$W" -h "$H" "$@"
+
+else
+
+   # if we aren't in a tmux session, then just execute $@
+   # (if $@ doesn't start with flags, otherwise we just abort)
+   MSG='not in tmux'
+   case $TERM in screen*)
+      exists tmux && MSG='no tmux popup (requires tmux 3.2+)' ;;
+   esac
+   printf '%s: ' "$(basename "$0")" >&2
+   ARGS=$*
+   ARGS=${ARGS#${ARGS%%[![:space:]]*}} # trim leading spaces
+   case $ARGS in
+      -*) printf 'ERROR: %s... abort\n' "$MSG" >&2
+          exit 129 ;; # same return value as tmux when interrupt the popup
+       *) printf 'WARNING: %s\n\n' "$MSG" >&2
+          # small delay so that we can read the warning:
+          [ -t 1 ] && [ -t 2 ] && sleep 0.5
+          exec "$@" ;;
+   esac
+fi

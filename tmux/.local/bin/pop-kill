@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: $0
+# if inside tmux, kill tmux popup
+
+[ "$TERM_PROGRAM" = tmux ] || exit
+tmux display-popup -C
