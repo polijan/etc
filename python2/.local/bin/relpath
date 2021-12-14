@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# prints the path of $1 relative to directory $2
+exec python2 -c "import os.path; print os.path.relpath(\"$1\", \"$2\")"

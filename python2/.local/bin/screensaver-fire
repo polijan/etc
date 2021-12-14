@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 __program__ = 'Pyre'
-__version__ = '0.5.0'
+__version__ = '0.7.0'
 __description__ = 'Terminal fire'
 __author__ = 'Brandon Dreager'
 __author_email__ ='pyre@subol.es'
@@ -12,6 +12,8 @@ __website__ = 'https://github.com/Regaerd/Pyre'
 
 import curses, random, os
 
+def clamp(min, value, max): return sorted((min, value, max))[1]
+
 class Pyre(object):
     kPALETTE = list(' .:^*xsS#$')
     kDEFAULT_COLORS = [215, 172, 196, 235]
@@ -19,9 +21,11 @@ class Pyre(object):
 
     kMIN_INTENSITY = 1
     kCOLOR_RANGE = 4
+    kFLUCTUATE_VARIANCE_PERCENT = 0.15
 
     def __init__(self, stdscr):
         self._intensity = self._colors = None
+        self._fluctuate_intensity = False
         self._auto_intensity = True
         self.stdscr = stdscr
 
@@ -54,6 +58,17 @@ class Pyre(object):
         self._colors = value
         [curses.init_pair(i+1, self._colors[i], -1) for i in range(self.kCOLOR_RANGE)]
 
+    @property
+    def fluctuate_intensity(self): return self._fluctuate_intensity
+    @fluctuate_intensity.setter
+    def fluctuate_intensity(self, value):
+        self._fluctuate_intensity = value
+        if self._fluctuate_intensity:
+            target = (self.height * 3)
+            variance = int((self.height * 3) * self.kFLUCTUATE_VARIANCE_PERCENT)
+            self.min_intensity = target - variance
+            self.max_intensity = target + variance
+
     def start(self):
         self.view_resized()
 
@@ -71,6 +86,9 @@ class Pyre(object):
         if self.random_change and not random.randint(0, 100):
             self.update_color(random.randint(0, self.kCOLOR_RANGE))
 
+        if self.fluctuate_intensity:
+            self.intensity = clamp(self.min_intensity, self.intensity + (1 if random.randint(0, 1) else -1), self.max_intensity)
+
         if self.verbose:
             self.stdscr.clrtoeol()
             self.stdscr.addstr(0,0,'colors:{}, intensity:{}, height:{}'.format(self.colors, self.intensity, self.height))
@@ -79,7 +97,7 @@ class Pyre(object):
 
     def update_color(self, i):
         try: # needed for terminals that don't support 256 colors
-            self.colors[i] = sorted((11, self.colors[i]-1 if random.randint(0,1) else self.colors[i]+1, 255))[1] if self.smooth_change else random.randint(0,255)
+            self.colors[i] = clamp(11, self.colors[i]-1 if random.randint(0,1) else self.colors[i]+1, 255) if self.smooth_change else random.randint(0,255)
             curses.init_pair(i+1, self.colors[i], -1)
         except: pass
 
@@ -97,7 +115,7 @@ class Pyre(object):
 
     def random_colors(self):
         try: # needed for terminals that don't support 256 colors
-            self.colors = [random.randint(0,255) for i in range(self.kCOLOR_RANGE)]
+            self.colors = [random.randint(0,255) for _ in range(self.kCOLOR_RANGE)]
         except: pass
 
     def change_intensity(self, amt):
@@ -110,16 +128,24 @@ class Pyre(object):
 
 class Driver(object):
     kKEY_ESC = '\x1b'
+    kMIN_DELAY, kMAX_DELAY = (1, 100)
 
     def __init__(self, stdscr):
         self.stdscr = stdscr
         curses.curs_set(0)
         curses.use_default_colors()
         self.stdscr.nodelay(1)
+        self.delay_ms = 50
 
         self.fire = Pyre(stdscr)
 
-        self.running = False
+        self.running, self.paused = (False, False)
+
+    @property
+    def delay_ms(self): return self._delay_ms
+    @delay_ms.setter
+    def delay_ms(self, value):
+        self._delay_ms = max(min(value, self.kMAX_DELAY), self.kMIN_DELAY)
 
     def start(self):
         self.running = True
@@ -128,9 +154,9 @@ class Driver(object):
 
     def run(self):
         while self.running:
-            self.fire.update()
+            if not self.paused: self.fire.update()
             self.update()
-            self.stdscr.timeout(50)
+            self.stdscr.timeout(self.delay_ms)
 
     def update(self):
         try:
@@ -145,10 +171,14 @@ class Driver(object):
         elif lower=='v': self.fire.verbose = not self.fire.verbose
         elif lower=='c': self.fire.random_colors()
         elif lower=='i': self.fire.auto_intensity = not self.fire.auto_intensity
+        elif lower=='f': self.fire.fluctuate_intensity = not self.fire.fluctuate_intensity
         elif lower=='t': self.fire.random_change = not self.fire.random_change
         elif lower=='s': self.fire.toggle_smooth_change()
+        elif lower=='p': self.paused = not self.paused
         elif key==',' or key=='<': self.fire.change_intensity(-1)
         elif key=='.' or key=='>': self.fire.change_intensity( 1)
+        elif key=='-' or key=='_': self.delay_ms -= 5
+        elif key=='=' or key=='+': self.delay_ms += 5
 
 def main(stdscr=None):
     if not stdscr: curses.wrapper(main)
