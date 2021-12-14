@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# Usage: $0 [ARG]...
+# mpv in terminal with text output
+
+# We use 'mpv --vo=tct' and here's the relevant piece from the mpv man page:
+#
+# tct    Color Unicode art video output driver that works on a text  console.
+#        Depends  on support of true color by modern terminals to display the
+#        images at full color range.  On Windows it requires an ansi terminal
+#        such as mintty.
+#
+#        --vo-tct-algo=<algo>
+#               Select how to write the pixels to the terminal.
+#
+#               half-blocks
+#                      Uses unicode LOWER HALF BLOCK character to achieve
+#                      higher vertical resolution. (Default.)
+#
+#               plain  Uses spaces. Causes vertical  resolution  to  drop
+#                      twofolds, but in theory works in more places.
+#
+#        --vo-tct-width=<width> --vo-tct-height=<height>
+#               Assume  the  terminal  has  the specified character width
+#               and/or height.  These default to 80x25  if  the  terminal
+#               size cannot be determined.
+#
+#        --vo-tct-256=<yes|no> (default: no)
+#               Use  256  colors - for terminals which don't support true
+#               color.
+
+mpv --vo=tct                                      \
+    --really-quiet                                \
+    --ytdl-format='[height<=?240]+bestaudio/best' \
+    "$@"
