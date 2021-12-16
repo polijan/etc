@@ -1,6 +1,28 @@
-#!/bin/bash
-# usage: christmastree.sh      - prints a christmas tree
-# usage: christmastree.sh loop - animate the christmas tree
+#!/usr/bin/env bash
+
+# Usage: christmastree       - prints a christmas tree
+#        christmastree loop  - animate the christmas tree
+#        christmastree watch - animate the christmas tree using watch(1) command
+#
+#           *
+#          .+
+#         $:!$
+#        &!.+8#
+#       -$!.=![$
+#      88_]{}-[o.
+#     -~=o$~!.8[;.
+#    ;]o*-!#=,_}!#0
+#   !#0}=}_]~^^8!+,&
+#         #####
+#         #####
+#
+# I found this fun xmas tree from https://github.com/rpulid/christmastree
+# on 2015-12-15. The code was quite rough, so I rewrote it. Functionally,
+# it remains the same... except it's much faster.
+#
+# Original script I forked from:
+# https://raw.githubusercontent.com/rpulid/christmastree/a764bfa6685694d96b37f308b54fffd9146139ec/christmastree.sh
+
 
 ################################################################################
 YELLOW='\033[1;33m'; GREEN='\033[0;32m'; ORANGE='\033[0;33m'
@@ -24,13 +46,13 @@ xmastree() {
    local NTREE=${#TREE[@]}
 
    local i j rand elem
-   local W=$(( $(tput cols) / 2 ))
-   local H=$(( $(tput lines) * 9 / 10 ))
+   local W=$(( $(stty size | cut -d' ' -f2) / 2 ))
+   local H=$(( $(stty size | cut -d' ' -f1) * 9 / 10 ))
    [ $H -gt $W ] && H=$W
 
    # buffers
-   local star= tree=$C_TREE trunk=$C_TRUNK
-   local str= spaces=
+   local star='' tree=$C_TREE trunk=$C_TRUNK
+   local str='' spaces=''
    for ((i=0; i<W; i++)); do
        spaces="$spaces "
    done
@@ -43,7 +65,7 @@ xmastree() {
       for ((j=2; j < 2*i; j++)); do
           rand=$(( RANDOM % NTREE ))
           elem=${TREE[$rand]}
-          if [ $rand -le $NLIGHTS ]
+          if [ $rand -le "$NLIGHTS" ]
              then str="$str${LIGHTS[ $((RANDOM % NLIGHTS)) ]}$elem$C_TREE"
              else str="$str$elem"
           fi
@@ -65,5 +87,18 @@ xmastree() {
 }
 
 
-[ "$1" = "loop" ] && exec watch --color -n .1 "$0"
-xmastree "$@"
+#---------------------------------------------
+
+case $0 in *screensaver-christmastree)
+   set loop ;;
+esac
+case $1 in
+   watch) exec watch --color -n .1 "$0" ;;
+    loop) BUFFER=''
+          while true; do
+             printf '\033[H\33[J%b' "$BUFFER"
+             BUFFER=$(xmastree)
+             sleep 0.1
+          done ;;
+      '') xmastree ;;
+esac
