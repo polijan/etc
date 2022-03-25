@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Usage: $0
+# list the executables files under the current hierarchy.
+# '.git' directories are excluded from the search.
+#
+
+# our find command supports the -executable flag ?
+if (find . -maxdepth 0 -type f -executable 2>/dev/null)
+   then EXE_FLAGS='-executable' # busybox or GNU find have it
+   else EXE_FLAGS='-perm -111'  # other use -perm which is POSIX
+fi
+
+#(we want word splitting for EXE_FLAGS)
+#shellcheck disable=SC2086
+find .                            \
+     -type d -name '.git' -prune  \
+     -o                           \
+     -type f  ${EXE_FLAGS}        \
+     -print                       |
+sed  's:^./::'
