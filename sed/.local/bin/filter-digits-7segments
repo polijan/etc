@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Usage: $0 [extra sed parameters]
+# replace digits with 7-segmented digits (which are partf of the
+# 'Symbols for Legacy Computing' block in Unicode [since v13.0])
+
+# use sed instead of tr, because often tr doesn't know Unicode
+sed -e 'y/0123456789/🯰🯱🯲🯳🯴🯵🯶🯷🯸🯹/' "$@"
