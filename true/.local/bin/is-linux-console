@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Usage: $0
+# return 0 if we think we're on the linux console (even from within tmux)
+#        1 if we think we don't
+#        3 if we don't know
+
+case $TERM in
+   linux) exit 0 ;;
+ screen*) [ -z "$TMUX" ] && exit 3
+          command -v tmux >/dev/null || exit 3
+          [ "$(tmux display-message -p -F '#{client_termname}')" = 'linux' ] && exit 0; ;;
+esac
+exit 1
