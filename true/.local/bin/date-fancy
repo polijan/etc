@@ -1,0 +1,78 @@
+#!/bin/sh
+
+# Usage: $0 [OPTIONS] [DATE_OPTION]... [+FORMAT]
+# display the date and time, possibly with a fancy retro look
+#
+# COLOR options are:
+#   --color     : enable color mode
+#   --no-color  : disable color mode
+#   otherwise   , color mode is on if output is on a terminal.
+#
+#   when color mode is on, date is displayed
+#   * red, if *current time* is "bed" time       [11pm-5am[
+#   * yellow, if *current time* is getting late  [9pm-11pm[
+#   * green otherwise
+#
+# SEGMENT options are:
+#   --segment   : regular digits are replaced with retro-looking
+#                 digits from the 'Symbols for Legacy Computing'
+#                 Unicode block => 🯰🯱🯲🯳🯴🯵🯶🯷🯸🯹
+#   --no-segment: digits are not replaced
+#   otherwise   , digits are replaced if output is a terminal
+#                 which isn't the linux console.
+#
+# DATE_OPTIONS:
+#   see date(1). POSIX only specify -u, but other implementations,
+#   may accept extra option (such as -d DATE, ...)
+#
+# FORMAT: see date(1)
+#   if not specified, default is +'%Y-%m-%d  %H:%M'
+
+
+COLOR=false
+SEGMENT=false
+if [ -t 1 ]; then
+   COLOR=true
+   is-linux-console || SEGMENT=true
+fi
+while true; do
+   case $1 in
+           --color) COLOR=true    ;;
+        --no-color) COLOR=false   ;;
+         --segment) SEGMENT=true  ;;
+      --no-segment) SEGMENT=false ;;
+                 *) break         ;;
+   esac
+   shift
+done
+
+for LAST_ARG; do
+    :
+done
+case $LAST_ARG in
+   +*) FMT_DEFAULT=false              ;;
+    *) FMT_DEFAULT=true
+       set -- "$@" +'%Y-%m-%d  %H:%M' ;;
+esac
+DATE=$(date "$@") || exit
+
+if $COLOR; then
+   if $FMT_DEFAULT
+      then H=${DATE%:??}
+      else H=$(date +%H)
+   fi
+   case $H in
+      *23|*0[0-4]) BEGIN='31';;  # very late
+          *21|*22) BEGIN='33';;  # late
+                *) BEGIN='32';;  # otherwise
+   esac
+   BEGIN="\033[${BEGIN}m"
+   END='\033[0m'
+else
+   BEGIN=''
+   END=''
+fi
+
+$SEGMENT && DATE=$(printf '%s' "$DATE" | sed 'y/0123456789/🯰🯱🯲🯳🯴🯵🯶🯷🯸🯹/')
+
+printf '%b%s%b\n' "$BEGIN" "$DATE" "$END"
