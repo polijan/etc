@@ -13,5 +13,7 @@
 # I invoke less instead. less is called so that it displays on the terminal
 # and exit if file can be displayed on one screen
 
-[ -t 0 ] && [ -t 1 ] && [ $# -eq 1 ] && [ -r "$1" ] && exec less -L -FX "$1"
-exec cat "$@"
+if [ -t 0 ] && [ -t 1 ] && [ $# -eq 1 ] && [ -r "$1" ]
+   then less -r -L -FX "$1"
+   else cat "$@"
+fi
