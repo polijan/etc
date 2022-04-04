@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # default appearance and behaviour for fzf
-export FZF_DEFAULT_OPTS='--ansi --reverse --inline-info --color=dark,bg+:4,fg+:3'
+export FZF_DEFAULT_OPTS='--ansi --reverse --inline-info --pointer=► --marker=» --ellipsis=… --color=dark,bg+:4,fg+:3'
 #export FZF_DEFAULT_OPTS='--color=info:4,bg+:4,header:2 --ansi --reverse --inline-info'
 # export FZF_DEFAULT_OPTS='--color=16,info:4,bg+:4,header:2 --ansi --reverse --inline-info'
 
@@ -22,6 +22,7 @@ elif [ -d "/usr/local/share/fzf" ]      ; then FZF_SHELL="/usr/local/share/fzf"
 elif is-termux                          ; then FZF_SHELL="$PREFIX/share/fzf"
 fi
 
+#shellcheck source=/dev/null
 if [ -n "$FZF_SHELL" ]; then
    # shell completion
    [ -n "$BASH_VERSION" ] && . "$FZF_SHELL/completion.bash"
