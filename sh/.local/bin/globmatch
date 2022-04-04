@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# Usage: globmatch GLOB STRING
+# returns 0 if STRING matches the GLOB glob pattern, 1 otherwise.
+#
+# you can also source this file to import the globmatch() function:
+# . globmatch
+#
+# or you can just copy-paste the globmatch function() from this
+# script into yours.
+
+
+# globmatch GLOB STRING
+# return 0 if STRING matches the GLOB blog pattern, 1 otherwise
+globmatch() {
+#shellcheck disable=SC2254
+   case $2 in
+      $1) return 0 ;;
+       *) return 1 ;;
+   esac
+}
+
+
+# if not sourced, run the function
+case $0 in globmatch|*/globmatch)
+   if [ $# -eq 2 ]
+      then globmatch "$@"
+      else printf 'Usage: globmatch GLOB STRING\n' >&2 ; exit 2
+   fi ;;
+esac
