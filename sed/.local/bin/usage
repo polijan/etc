@@ -1,46 +1,72 @@
 #!/bin/sh
 
-# Usage: usage [-d] [SCRIPT]
-# display help message embedded as comments in a SCRIPT
+# Usage: usage [-d] [SCRIPT|CMD]
 #
-# If SCRIPT not specified, then use the calling program.
+# display help message embedded as comments inside
+# 1. the SCRIPT file if it exists
+# 2. or: inside the ~/.local/bin/CMD file if it exists
+# 3. or: if SCRIPT or CMD is not provided, take help from
+#        the program that is calling the 'usage' script.
+#
 # -d option: kill (send SIGTERM) to the calling program.
+#
+# The help message inside a script should be formatted as follow:
+# put your text in a comment section, # Usage: is the start of the message which
+# stops at the last #. The string "$0" will be replaced by the SCRIPT (base)name.
 
-# How to format the help message of a shell script:
-# put your text in a comment section, # Usage is the start of the message which
-# stops at the last #. The string $0 will be replaced by the SCRIPT name.
+
+#-- UTILITY FUNCTIONS ----------------------------------------------------------
+
+# globmatch GLOB STRING
+# return 0 if STRING matches the GLOB blog pattern, 1 otherwise
+globmatch() {
+#shellcheck disable=SC2254
+   case $2 in
+      $1) return 0 ;;
+       *) return 1 ;;
+   esac
+}
+
+#-------------------------------------------------------------------------------
 
 # the sed command at the core of this script is taken from:
 # http://www.commandlinefu.com/commands/view/3344/display-an-embeded-help-message-from-bash-script-header
 
-KILL=false
-[ "$1" = -d ] && { KILL=true; shift; }
-
-if [ -n "$*" ]; then
-   SCRIPT="$*"
-elif [ -f /proc/$PPID/comm ]; then
-   SCRIPT="$(cat /proc/$PPID/comm)"
-else
-   SCRIPT="$(ps -p $PPID -o comm=)"
-fi
-
-if [ -f "$SCRIPT" ]; then
+usage() {
    # busybox' sed is not happy with that first sed,
    # so maybe replace it with awk?
    #    awk '/^# Usage:/ { p=1 }
    #               /^# / { if (p) {print; next;} }
    #                     { if (p) exit }' |
-   #    sed -e '/^# //' -e "s/\$0/$(basename "$SCRIPT")/g"
+   #    sed -e '/^# //' -e "s/\$0/$(basename "$1")/g"
 
-   sed -n -e '/^# Usage:/,/^$/ s/^# \?//p' "$SCRIPT" |
-   sed "s/\$0/$(basename "$SCRIPT")/g"
+   sed -n -e '/^# Usage:/,/^$/ s/^# \?//p' "$1" |
+   sed "s/\$0/$(basename "$1")/g"
+}
+
+
+if [ "$1" = -d ]
+   then KILL=true; shift
+   else KILL=false
+fi
+
+if [ -n "$*" ]; then
+   SCRIPT=$*
+elif [ -f /proc/$PPID/comm ]; then
+   SCRIPT=$(cat /proc/$PPID/comm)
 else
-   printf '%s: cannot access %s: no such file\n' \
-          "$(basename "$0")"  "$SCRIPT"        >&2
+   SCRIPT=$(ps -p $PPID -o comm=)
+fi
+
+if [ -f "$SCRIPT" ]; then
+   usage "$SCRIPT"
+elif ! globmatch '*/*' && [ -f "$HOME/.local/bin/$SCRIPT" ]; then
+   usage "$HOME/.local/bin/$SCRIPT"
+else
+   printf '%s: no such file or ~/.local/bin command\n' "$SCRIPT" >&2
    exit 1
 fi
 
 if $KILL; then
    kill $PPID
 fi
-
