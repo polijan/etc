@@ -9,5 +9,6 @@
 [ -n "$WINDOWID" ] && exit 0
 case "$TERM" in
      xterm*|rxvt*) exit 0 ;;
+                *) is-linux-console; [ $? -eq 1 ] && exit 0 ;;
 esac
 exit 1
