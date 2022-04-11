@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Usage: $0 [-x]
+# prints X's window id of the current window
+# - check DISPLAY variable is set and takes it either from the WINDOWID variable
+# - or if not set, try to query it
+#
+# return 0 if succesful, non-zero otherwise
+#
+# window id is printed in decimal by default,
+# or in hexadecimal if -x option is selected.
+
+[ -n "$DISPLAY" ] || exit 1
+
+if [ -n "$WINDOWID" ]; then
+   :
+elif command -v xprop >/dev/null; then
+   WINDOWID=$(xprop -root 32x '\t$0\n' _NET_ACTIVE_WINDOW | cut -f2)
+elif command -v xdotool >/dev/null; then
+   WINDOWID=$(xdotool getactivewindow)
+fi
+
+[ -n "$WINDOWID" ] || exit 1
+
+if [ "$1" = '-x' ]
+   then printf '0x%x\n' "$WINDOWID"
+   else printf '%d\n'   "$WINDOWID"
+fi 2>/dev/null
