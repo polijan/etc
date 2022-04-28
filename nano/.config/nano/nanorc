@@ -1,9 +1,57 @@
 ################################################################################
-## My GNU nano's config file (~/.nanorc or ~/.config/nano/nanorc)
-## Requires (at least) nano version 5.3
-##
-## see: nanorc(5), nano(1)
+## My GNU nano's config file (~/.nanorc or ~/.config/nano/nanorc)             ##
+## Requires (at least) nano version 5.9                                       ##
+##                                                                            ##
+## see: nanorc(5), nano(1)                                                    ##
 ################################################################################
+
+
+################################################################################
+# MY NOTES ABOUT COLORS IN NANO:                                               #
+#______________________________________________________________________________#
+#                                                                              #
+# > to specify a color: [bold,][italic,][fgcolor][,bgcolor]                    #
+#                                                                              #
+# * the "ANSI" tty colors (0-7) can be refered to as:                          #
+#   black, red, green, yellow, blue, magenta, cyan, white                      #
+#                                                                              #
+# * the "light ANSI" colors (8-15) can be refered by using the "light" prefix  #
+#                                                                              #
+# * color 'normal' means the default foreground or background color.           #
+#                                                                              #
+# * color 'grey' or 'gray' is a synonym for 'lightblack' [nano 5.8+]           #
+#                                                                              #
+# * colors can also be specified also as three-digit hexadecimal numbers,      #
+#   in the format #rgb. This picks from the 216 index colors (that most        #
+#   terminals know) the color that is nearest to the given values. [nano 6+]   #
+#                                                                              #
+# * [nano 5+]: the following are available by name:                            #
+#   they corresponds to those terminal color numbers                           #
+#   ┌──────┬────────┬───────┬────────┬──────┬──────┬───────┬────────┬───────┐  #
+#   │ pink │ purple │ mauve │ lagoon │ mint │ lime │ peach │ orange │ latte │  #
+#   ├──────┼────────┼───────┼────────┼──────┼──────┼───────┼────────┼───────┤  #
+#   │ 204  │ 163    │ 134   │ 38     │ 48   │ 148  │ 215   │ 208    │ 137   │  #
+#   └──────┴────────┴───────┴────────┴──────┴──────┴───────┴────────┴───────┘  #
+#                                                                              #
+# * [nano 6+]: the following color names are available:                        #
+#   rosy, beet, plum, sea, sky, slate, teal, sage, brown, ocher, sand,         #
+#   tawny, brick, and crimson.                                                 #
+#                                                                              #
+#------------------------------------------------------------------------------#
+# As a reminder, here are the SOLARIZED colors and the associated index that   #
+# approximate them best in the default (ie xterm-based) 256 color palette.     #
+#______________________________________________________________________________#
+# GREY     |     dark bg     |      content tones      |        light bg       #
+# TONES:   | base03 | base02 | base01 | base00 | base0 | base1 | base2 | base3 #
+#      tty:|   234  |   235  |   240  |   241  |  244  |  245  |  250  |  230  #
+#     nano:|  #XXX  |  #XXX  |  #XXX  |  #XXX  | #XXX  |  #XXX | #XXX  | #XXX  #
+#----------+--------+--------+--------+--------+-------+-------+-------+-------#
+# COLORS:  | yellow | orange |  red   |magenta |violet | blue  | cyan  | green #
+# accents t:  136   |  166   |  160   |  125   |  61   |  33   |  37   |  64   #
+#     nano:|  #XXX  |  #XXX  |  #XXX  |  #XXX  | #XXX  | #XXX  | #XXX  | #XXX  #
+################################################################################
+
+
 
 
 ################################################################################
@@ -14,6 +62,11 @@
 # character and without affecting the cutbuffer), tip: use Undo (M-U) if needed
 ## set zap
 # ^--- well, perhaps I want this, perhaps I don't :)
+
+
+# When reading a file with ^R (on Insert), create a new buffer
+# Hmmm, If I want to insert it into same buffer, ^T cat ....
+set multibuffer
 
 # don't convert files from DOS/MAC format
 # (explicitely use dos2unix(1) or something if you need)
@@ -67,7 +120,8 @@ set positionlog
 # -> remember last 100 search/repalcement/excuteds commands strings
 set historylog
 
-# allow nano to be suspended (with ^Z by default)
+# TODO: remove this => this is OBSOLETE option that is ignored in nano 6+
+#                      as suspension is now enabled by default (^T^Z)
 set suspendable
 
 
@@ -81,11 +135,12 @@ set mouse
 # show the state of auto-indenting, the mark, hard-wrapping, macro recording,
 # and soft-wrapping in the title bar.  The flags take the place of "Modified",
 # and a modified buffer is instead indicated by an asterisk (*) after its name.
-##set stateflags  <-- TODO:enable for nano 5.3+
+set stateflags
 
 # color for selected text:
-set selectedcolor bold,lightwhite,magenta
-# set selectedcolor brightwhite,magenta
+#set selectedcolor bold,lightwhite,magenta
+set selectedcolor white,magenta
+# set selectedcolor lightwhite,magenta
 #   ^--- Note: nano version 5 updated color definitions for tty with >16 colors
 #   "bright" is stypically light and bold (but it seems it will be deprecated in
 #   nano, let's AVOID it) and 'light', 'bold', 'italic' can be used instead if
@@ -95,12 +150,21 @@ set selectedcolor bold,lightwhite,magenta
 #   peach, orange, latte, and normal) can be used.
 
 
-# top title row -- (actually, the default (reverse video) looks good)
-##set titlecolor brightwhite,blue
-
-# bottom row/menu -- (actually, the default (reverse video) looks good)
+# bottom row/menu showing keys -- (actually, the default (reverse video) looks good)
 #set keycolor cyan
 ##set functioncolor green
+
+# top title row
+# I like the default classic video reverse color
+##set titlecolor lightwhite,blue
+
+# minibar
+set minicolor latte,black
+##set minicolor lightwhite,blue
+# nano+ wrapper choose to display top row (classic) or minibar dynamically
+# (minibar can also be called with --minibar or -_)
+#set minibar
+
 
 # status bar:
 set constantshow
@@ -117,8 +181,11 @@ set indicator
 set scrollercolor lightblack
 
 # line numbers (to the left of the text area):
-set linenumbers
 set numbercolor lightblack,black
+# don't set line number automatically
+# we want them when editing, but not when viewing (nano --view)
+#set linenumbers
+
 
 
 ################################################################################
