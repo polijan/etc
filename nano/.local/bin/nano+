@@ -1,36 +1,71 @@
 #!/bin/sh
 
-# Usage: nano+ [ARG]...
+# Usage: $0 [ARG]...
+# wrapper that launches the GNU nano editor (with various flags)
 #
-# launch nano(1) with some options (if it has them) based on the terminal size:
-# - if terminal is large enough, display line numbers        (Alt-N to toggle)
-# - if terminal has <20 lines, don't show the bottom help    (Alt-X to toggle)
+# nano-classic => classic style: display the top title row and the bottom keys bar
+# nano-mini    => 'mini' style : no top bar, no bottom keys bar.
+#                                only one shared minibar/massage bar
+# nano-zero    => 'zero' style : no interface! every line displays the buffer.
+# nano-view    => nano as pager: read only mode
+#                 style is 'mini', or 'zero' if tty heigh is small,
+#                 line numbers will not be displayed by default even
+#                 display is large enough (enable manually with Alt-N)
+# *            => nano editor. style is 'classic' by default, however it could
+#                 be 'mini' or even 'zero' depending on tty height.
 #
-# also, if the 'mj' productivity system is installed:
-# - in case there's no ARGument, launch nano with a filename such that the
-#   buffer would be saved into mj's inbox.
+# When invoked with NO ARGUMENTS, and the 'mj' productivity system is installed:
+# launch nano with a default buffer name so that it could be saved as a file
+# into mj's inbox.
+#
+# Also:
+# * if terminal is "wide enough", display line numbers, otherwise not
+#   (Alt-N to toggle in nano)
+# * Also remember in nano, Ctrl-G (or F1) to display help
+#                          Alt-X  to toggle the bottom key bar help
+#                          Alt-Z  to toggle the top or mini bar.
+#
+# Note: requires nano 6.0+
 
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
-exists() { command -v "$@" > /dev/null; }
+# if 'mj' is installed and we're invoked with zero arguments,
+# choose a buffer name that would be saved into mj's inbox.
+case $0 in
+   *-view) ;;
+        *) if [ $# -eq 0 ]; then
+              command -v mj-complete >/dev/null  &&
+              INBOX=$(mj-complete -q :)/inbox    &&
+              [ -d "$INBOX" ]                    &&
+              set -- "$INBOX/$(date +'%Y-%m-%d_stuff_%H%M%S')"
+           fi ;;
+esac
 
-# nano_has OPTION
-# returns zero if nano supports the given OPTION, non-zero otherwise
-nano_has() { nano --help | grep -qF -- "$*" ; }
+# "classic", "mini" (--nohelp --minibar), or "zero" style
+# and other flags depending on: * the program's name
+#                               * and/or the terminal's height
+[ -n "$LINES" ] || LINES=$(stty size | cut -f1 -d' ')
+case $0 in
+    *-classic) ;;
+   *-0|*-zero) set -- --zero "$@" ;;
+       *-mini) set -- --nohelp --minibar "$@" ;;
+       *-view) set -- --view "$@"
+               if [ "$LINES" -le 16 ]
+                  then set -- --zero "$@"
+                  else set -- --nohelp --minibar "$@"
+               fi ;;
+            *) if   [ "$LINES" -le 16 ]; then set -- --zero "$@"
+               elif [ "$LINES" -lt 24 ]; then set -- --nohelp --minibar "$@"
+               fi ;;
+esac
 
-#------------------------------------------------------------------------------
+# flags triggered based on horizontal terminal's width
+# (if tty is large enough, display line numbers (in nano: Alt-N to toggle)
+case $0 in
+   *-view) ;;
+        *) [ -n "$COLUMNS" ] || COLUMNS=$(stty size | cut -f2 -d' ')
+           [ "$COLUMNS" -ge 85 ] && set -- --linenumbers "$@" ;;
+esac
 
-INBOX=''
-[ $# -eq 0 ] && exists mj-complete && INBOX=$(mj-complete -q :inbox)
-
-[ -n "$COLUMNS" ] || COLUMNS=$(stty size | cut -f2 -d' ')
-[ -n "$LINES" ]   || LINES=$(  stty size | cut -f1 -d' ')
-# TODO/note: --linenumbers has been introduced in nano 2.7.1 [end 2016],
-#            so maybe testing those options shouldn't be needed.
-[ "$COLUMNS" -ge 68 ] && nano_has '--linenumbers' && set -- "$@" --linenumbers
-[ "$LINES"   -lt 20 ] && nano_has '--nohelp'      && set -- "$@" --nohelp
-
-# TODO/FIXME: we do not verify that filename doesn't exist
-[ -d "$INBOX" ] && set -- "$@" "$INBOX/$(date +'%Y-%m-%d_untitled_%H%M%S')"
-
+# finally, execute our beloved editor :)
 exec nano "$@"
