@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# Usage: $0 [-n] [EXTRA_SED_ARGS]...
+#
+# 🬦🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬂🬓
+# ▐ 🬨🬀▌🬕🬓🬧🬀 🬴🬃▌🬲🬓▌🬨🬀🬷🬀 🬏 🬰 ▐ 🬙 🬸 🬪 🬥 🬺 🬨 █ 🬬 🬏 🬋 ▌
+# ▐ 🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭 🬃 0 1 2 3 4 5 6 7 8 9 . - ▌
+# 🬉🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬭🬄
+#
+# filter that substitutes each digits with a sextant,
+# ie a "2x3 block" Unicode character from the
+# 'Block Elements' or 'Symbols for Legacy Computing'
+# blocks
+#
+# This is a toy and an experiment to see if it stays
+# readable. Of course ideally, we'd want just one
+# "pixel of space" instead of two, but that wouldn't
+# be a just a substitution. Again, this is just a
+# silly toy.
+#
+# with option -n, also substitutes . and -
+
+
+if [ "$1" = '-n' ]
+   then DOT='🬏 '; MINUS='🬋 '; shift
+   else DOT='.' ; MINUS='-'
+fi
+
+sed -e 's/0/🬰 /g'      \
+     -e 's/1/▐ /g'     \
+    -e 's/2/🬙 /g'      \
+     -e 's/3/🬸 /g'     \
+    -e 's/4/🬪 /g'      \
+     -e 's/5/🬥 /g'     \
+    -e 's/6/🬺 /g'      \
+     -e 's/7/🬨 /g'     \
+    -e 's/8/█ /g'      \
+     -e 's/9/🬬 /g'     \
+    -e "s/\./$DOT/g"   \
+     -e "s/-/$MINUS/g" \
+    "$@"
+#  🬏 🬋
