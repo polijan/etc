@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: $0 [XTERM_ARGS]...
+# launch xterm with VT340 emulation, which allows Sixels graphics
+# (if xterm has been compiled with --enable-sixel-graphics)
+
+xterm -ti vt340 "$@"
