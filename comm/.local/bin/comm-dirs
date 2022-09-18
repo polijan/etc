@@ -2,9 +2,10 @@
 
 # Usage: $0 [-r] [comm options]... DIR1 DIR2
 # compares contents in directory DIR1 and DIR2.
-# "difference" is based on filename and file size, *not* on the content of the
-# files. The tool works by using find to display filename, type, and size, and
-# running comm(1) for comparison.
+#
+# IMPORTANT: "difference" is based on the path name and file size, *NOT* on the
+#            content of the files. The tool works by using find(1) to display
+#            filename, type, and size, and running comm(1) for comparison.
 #
 # option -r for recursive.
 #
@@ -12,6 +13,8 @@
 # -1 suppress output of files "unique" to DIR1
 # -2 suppress output of files "unique" to DIR2
 # -3 suppress output of files "common" to DIR1 and DIR2
+#
+# NOTE: This tool requires GNU find(1) and bash(1).
 
 find_() { find "$@" -mindepth 1 -printf '%P [%y %s]\n'; }
 
@@ -25,7 +28,7 @@ f() {
 RECURSE=false
 [ "$1" = '-r' ] && { RECURSE=true; shift; }
 
-[ $# -ge 2 ] || usage -d
+[ $# -ge 2 ] || usage -d "$0"
 DIR2=${!#} ; set -- "${@:1:$(($#-1))}"
 DIR1=${!#} ; set -- "${@:1:$(($#-1))}"
 [ -d "$DIR1" ] || die "$DIR1: Not a directory"
