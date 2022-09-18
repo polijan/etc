@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Usage: $0 XCOMMAND [ARG]...
+# launch graphical program in background, mute output, and detach from terminal
+
+nohup "$@" >/dev/null 2>/dev/null &
