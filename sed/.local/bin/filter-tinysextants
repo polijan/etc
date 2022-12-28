@@ -1,0 +1,86 @@
+#!/bin/sed -f
+
+# Usage: tinysextants
+# a filter that transforms printable ASCII characters into 2x1 sextants
+
+# this "font" is monospace. each (printable ASCII) character is replaced by two
+# characters. Of course for a few characters, it could be better to have it as
+# non-monospace, example: 🬕🬕▌▌
+
+
+# letters
+s/[aA]/🬜🬓/g
+s/[bB]/█🬓/g
+s/[cC]/🬴🬐/g
+s/[dD]/🬴🬃/g
+s/[eE]/█🬐/g
+s/[fF]/🬝🬀/g
+s/[gG]/🬴🬓/g
+s/[hH]/🬛▌/g
+s/[iI]/🬸🬐/g
+s/[jJ]/🬱▌/g
+s/[kK]/🬛🬐/g
+s/[lL]/🬲🬏/g
+s/[mM]/🬝▌/g
+s/[nN]/🬕🬓/g
+s/[oO]/🬴▌/g
+s/[pP]/🬝🬄/g
+s/[qQ]/🬎▌/g
+s/[rR]/🬕🬀/g
+s/[sS]/🬷🬀/g
+s/[tT]/🬨🬀/g
+s/[uU]/🬲▌/g
+s/[vV]/🬲🬄/g
+s/[wW]/🬺▌/g
+s/[xX]/🬗🬐/g
+s/[yY]/🬧🬀/g
+s/[zZ]/🬨🬏/g
+
+# numbers
+s/0/🬴▌/g
+s/1/🬸🬏/g
+s/2/🬨🬏/g
+s/3/🬸🬃/g
+s/4/🬌▌/g
+s/5/🬷🬀/g
+s/6/🬺🬓/g
+s/7/🬂▌/g
+s/8/█▌/g
+s/9/🬎▌/g
+
+# punctuations
+s/ /  /g
+s/!/🬘🬏/g
+s/"/🬀🬀/g
+s/#/🬫🬛/g
+s/\$/🬷🬕/g
+s/%/🬶🬥/g
+s/&/🬻🬴/g
+s/'/🬉 /g
+s/(/🬴 /g
+s/)/🬠▌/g
+s/\*/🬗🬐/g
+s/\+/🬫🬃/g
+s/,/🬞🬃/g
+# ^--- s/,/🬦/g  # could also be:🬞🬓
+s/-/🬋🬃/g
+s/\./🬞 /g
+s:/:🬖🬀:g
+s/:/🬠 /g
+s/;/🬞🬐/g
+# ^--- s/;/🬞🬓/g
+s/</🬇🬐/g
+s/=/🬰🬐/g
+s/>/🬠🬃/g
+s/\?/🬨🬄/g
+s/@/🬴🬄/g
+s/\[/▐🬐/g
+s/\\/🬈🬏/g
+s/\]/🬸 /g
+s/\^/🬅🬃/g
+s/_/🬭🬏/g
+s/`/🬈 /g
+s/{/🬫🬐/g
+s/|/▐ /g
+s/}/🬸🬃/g
+s/~/🬚🬄/g
