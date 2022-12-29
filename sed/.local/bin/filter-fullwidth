@@ -1,0 +1,13 @@
+#!/bin/sed -f
+
+# Usage: filter-fullwidth [SED_ARGS]...
+# a sed filter that replaces printable ascii characters (except space) and the
+# following extra chars: ¢£¬¯¦¥₩ with "full width" characters from the
+# "halfwidth and fullwidth forms" Unicode block. Spaces are replaced by two
+# spaces.
+
+s/ /  /g
+y/@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\\\]\^_/＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［＼］＾＿/
+y/`abcdefghijklmnopqrstuvwxyz{|}~/｀ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝～/
+yZ!"#\$%&'()\*\+,-\./0123456789:;<=>?Z！＂＃＄％＆＇（）＊＋，－．／０１２３４５６７８９：；＜＝＞？Z
+y/¢£¬¯¦¥₩/￠￡￢￣￤￥￦/
