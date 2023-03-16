@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Usage: mark [@][name]   bookmark current directory as @name
+#        mark             list the bookmarks
+# 
+# Minimalist "directory bookmark" system for `cd`
+# It works like this:
+#   mark [@]name    # add bookmark called ,name for the current directory
+#   cd @name     # jump to the bookmarked location
+#   cd @<tab>    # list all available bookmarks
+# 
+# (setup): make sure to have this in your .bashrc:
+#   export CDPATH=.:~/.local/share/mark
+
+# totally inspired by: https://news.ycombinator.com/item?id=35122780#35123388
+
+usage() {
+   awk '/^# Usage:/ { p=1 }
+              /^# / { if (p) {print; next;} }
+                    { if (p) exit }
+       ' "$0"
+   exit 1
+}
+
+MARK_DIR=$HOME/.local/share/mark
+mkdir -pv "$MARK_DIR" || exit
+
+case $# in
+   0) printf '%s:\n' "$MARK_DIR"
+      ll "$MARK_DIR" ;;
+   1) case $1 in
+         -*) usage ;;
+          *) MARK=${1#@}
+             [ -n "$MARK" ] || usage
+             is-gnu ln && set -- -r
+             ln "$@" -s "$PWD" "$MARK_DIR/@$MARK" ;;
+      esac ;;
+   *) usage ;;
+esac
