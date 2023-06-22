@@ -1,0 +1,125 @@
+#!/bin/bash
+
+#######################################################################
+# script from https://github.com/izabera/bashflood (as on 2023-06-23) #
+# script by Isabella Bosia                                            #
+#######################################################################
+
+# README:
+# this game is awesome https://github.com/GunshipPenguin/open_flood
+# now you can play in your terminal
+
+
+if [[ $1 = -h || $1 == --help ]]; then
+  echo "press keys 1-4 to fill with that color"
+  exit
+fi
+
+cols=$(tput cols) lines=$(tput lines)
+
+if command -v resize &>/dev/null; then
+  resize -s "$((lines > 18 ? lines : 18))" "$((cols > 24 ? cols : 24))" &>/dev/null
+fi
+
+colors=(
+  "$(tput setab 1)"
+  "$(tput setab 2)"
+  "$(tput setab 3)"
+  "$(tput setab 4)"
+)
+sgr0=$(tput sgr0)
+
+cells=(
+  "${colors[0]} 1"
+  "${colors[1]} 2"
+  "${colors[2]} 3"
+  "${colors[3]} 4"
+)
+
+# only support 12x12 with 4 colors for now
+drawboard () {
+  tput cup 0
+  for i in {0..11}; do
+    for j in {0..11}; do
+      echo -n "${cells[board[i*12+j]]}"
+    done
+    echo
+  done
+  echo
+  echo "${colors[0]}      ${colors[1]}      ${colors[2]}      ${colors[3]}      "
+  echo "${colors[0]}   1  ${colors[1]}   2  ${colors[2]}   3  ${colors[3]}   4  "
+  echo "${colors[0]}      ${colors[1]}      ${colors[2]}      ${colors[3]}      "
+}
+
+drawscore () {
+  printf "\n%s%12s/%s" "$sgr0" "$times" "$limit"
+}
+
+tput smcup; tput civis; stty -echo
+trap 'tput rmcup; tput cnorm; stty sane' exit
+
+for i in {0..11}; do
+  for j in {0..11}; do
+    board[i*12+j]=$((RANDOM%4))
+  done
+done
+
+input () {
+  while :; do
+    read -rn1 || exit
+    [[ $REPLY = [1234] ]] && break
+  done
+}
+
+update () {
+  # avoid repeating over and over
+  filled=([0]=1)
+
+  # keep a stack of which cells we're updating
+  stack=(0)
+
+  while (( ${#stack[@]} )); do
+    cell=${stack[${#stack[@]}-1]}
+    unset "stack[${#stack[@]}-1]"
+
+    if (( board[cell] == target )); then
+      board[cell]=$replacement
+      (( cell > 11       )) && [[ ! ${filled[cell-12]} ]] && stack+=("$((cell-12))") filled[cell-12]=1 # up
+      (( cell < 11 * 12  )) && [[ ! ${filled[cell+12]} ]] && stack+=("$((cell+12))") filled[cell+12]=1 # down
+      (( cell % 12 != 0  )) && [[ ! ${filled[cell-1]}  ]] && stack+=("$((cell-1))")  filled[cell-1]=1  # left
+      (( cell % 12 != 11 )) && [[ ! ${filled[cell+1]}  ]] && stack+=("$((cell+1))")  filled[cell+1]=1  # right
+    fi
+  done
+}
+
+shopt -s extglob
+checkwin () {
+  printf -v string %s "${board[@]}"
+  if [[ $string = +("${string:0:1}") ]]; then
+    drawboard
+    printf '\n%s        you win!        ' "$sgr0"
+    read -rn1
+    exit
+  fi
+}
+
+limit=15
+for (( times = 1; times <= limit; times++ )) do
+  drawboard
+  drawscore
+  input
+
+  target=${board[0]}
+  replacement=$((REPLY-1))
+  if (( target == replacement )); then
+    (( times-- ))
+    continue
+  fi
+
+  update
+  checkwin
+done
+
+drawboard
+printf '\n%s        you lose        ' "$sgr0"
+read -rn1
