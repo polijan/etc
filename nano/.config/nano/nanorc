@@ -120,10 +120,6 @@ set positionlog
 # -> remember last 100 search/repalcement/excuteds commands strings
 set historylog
 
-# TODO: remove this => this is OBSOLETE option that is ignored in nano 6+
-#                      as suspension is now enabled by default (^T^Z)
-set suspendable
-
 
 ################################################################################
 ## USER INTERFACE
