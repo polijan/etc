@@ -1,0 +1,2 @@
+# Empty. This file is just so that nano doesn't complain if there are no files
+# as we tell the main nanorc to: include "~/.config/nano/include/*.nanorc"
