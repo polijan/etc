@@ -8,7 +8,7 @@ To bootstrap a new machine
 Make sure git(1) is installed, then:
 
 1) # getting 'etc'
-   $ git clone https://github.com/notevenodd/etc.git
+   $ git clone https://github.com/polijan/etc.git
 
 2) # create my "base" directories
    $ ./etc/etc-mkdirs
