@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Usage: $0
+# prints warning if tmux has too many open sessions
+# or the current session has too many open windows.
+
+warn() { printf '\033[33mADHD Warning:\033[0m %s\n' "$*"; }
+
+[ -n "$TMUX" ] || exit 0
+[ "$(tmux list-sessions | wc -l)" -lt 7 ] || warn 'more than 5 tmux sessions'
+[ "$(tmux list-clients  | wc -l)" -lt 7 ] || warn 'more than 5 ttys watching your tmux'
+[ "$(tmux list-windows  | wc -l)" -lt 7 ] || warn 'more than 5 windows in the current tmux session'
