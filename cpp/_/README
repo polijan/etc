@@ -1,0 +1,2 @@
+mock_c_headers/ contains empty/mock C header (up C23 standard).
+This is for use by cpp-cat.

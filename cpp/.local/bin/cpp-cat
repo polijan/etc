@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Usage: $0 [CPP_ARGS]... [C_FILE]
+#
+# Expands the given C source file with the preprocessor,
+# except that it does expand/include the C standard headers.
+#
+# This is useful to preview how macros expands in our own files
+# without all stuff from the standard header file.
+#
+# Hint: You might also find useful the -C option from cpp,
+#       which prevent discarding of comments.
+
+
+# use `cpp`, the C preprocessor, with mock headers:
+cpp -nostdinc -P                         \
+    -I"$(etc-home)"/cpp/_/mock_c_headers \
+    -DINCLUDE_STANDARD_C_HEADER=#include \
+    "$@"
+    # -P         no #linemarkers
+    # -nostdinc  don't search the standard system directories for header files.
+    #            IS THIS NEEDED AT ALL ?
