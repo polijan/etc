@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# Usage: $0
+# printf the Unicode codepoint of every character in stdin
+
+while IFS= read -r -d $'\000' -n 1 x; do
+      printf '%X\n' "'$x"
+done
