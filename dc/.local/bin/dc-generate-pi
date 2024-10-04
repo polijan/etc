@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Usage: $0
+# compute and print decimal of pi
+
+# An implementation of the Chudnovsky algorithm in the programming language dc.
+# The program will print better and better approximations as it runs. But as pi
+# is a transcendental number, the program will continue until interrupted or
+# resource exhaustion of the machine it is run on.
+# dc -e '_640320[0ksslk3^16lkd12+sk*-lm*lhd1+sh3^/smlxlj*sxll545140134+dsllm*lxlnk/ls+dls!=P]sP3^sj7sn[6sk1ddshsxsm13591409dsllPx10005v426880*ls/K3-k1/pcln14+snlMx]dsMx'
+#
+
+# A fast divide and conquer implementation of the same formula that doubles in
+# size each iteration. It evaluates a finite number if sums as an exact rational
+# number and only performs one large division and square root per iteration. It
+# is fast, but will still quickly slow down as the size of the fraction
+# increases.
+# dc -e '1Sk1SR13591409dSBSP426880dSQ4/3^9*SC[0r-]s-[lkE*1-k10005vlQ*lP/nAan0k]dSox[Lkd1+Skdd1+Sk3^lC*SQ2*1-d3*d*4-*dSR545140134LB+dSB*lk2%0=-SP]dszx[LRLRdLP*LPLQdLQ*SQ*+SP*SR]sc[d1-d0<yd0<yd0=z0=zlcx]sy0[lcxlox1+lyxllx]dslx'
+
+dc -e '1Sk1SR13591409dSBSP426880dSQ4/3^9*SC[0r-]s-[lkE*1-k10005vlQ*lP/nAan0k]dSox[Lkd1+Skdd1+Sk3^lC*SQ2*1-d3*d*4-*dSR545140134LB+dSB*lk2%0=-SP]dszx[LRLRdLP*LPLQdLQ*SQ*+SP*SR]sc[d1-d0<yd0<yd0=z0=zlcx]sy0[lcxlox1+lyxllx]dslx'

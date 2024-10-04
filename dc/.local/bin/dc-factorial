@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Usage (example): echo '12' | $0 ---> 479001600
+# compute and print the factorial of the previous numbers in the dc stack.
+
+dc -e '?[q]sQ[d1=Qd1-lFx*]dsFxp'

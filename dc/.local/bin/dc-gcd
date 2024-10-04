@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Usage (example): echo '36 54' | $0 ---> 18
+# compute and print the greatest common denominator (gcd)
+# of the previous two numbers in the dc stack.
+
+# implementation of the Euclidean algorithm to find the GCD:
+# dc -e '??[dSarLa%d0<a]dsax+p'                  # shortest
+# dc -e '[a=]P?[b=]P?[dSarLa%d0<a]dsax+[GCD:]Pp' # easier-to-read version
+
+dc -e '??[dSarLa%d0<a]dsax+p'

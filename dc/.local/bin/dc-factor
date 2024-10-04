@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Usage (example): echo '187' | $0 ---> 11
+#                                       17
+# compute and print the integer factorization of the previous number on the dc
+# stack.
+
+# Integer factorization with dc
+#
+# This program was also written by Michel Charpentier:
+# dc -e '[n=]P?[p]s2[lip/dli%0=1dvsr]s12sid2%0=13sidvsr[dli%0=1lrli2+dsi!>.]ds.xd1<2'
+#
+# There is a shorter version:
+# dc -e "[n=]P?[lfp/dlf%0=Fdvsr]sF[dsf]sJdvsr2sf[dlf%0=Flfdd2%+1+sflr<Jd1<M]dsMx"
+#
+# And a faster solution (try with the 200-bit number 2200-1 (input 2 200^1-):
+# dc -e "[n=]P?[lfp/dlf% 0=Fdvsr]sFdvsr2sfd2%0=F3sfd3%0=F5sf[dlf%0=Flfd4+sflr>M]sN[dlf%0=Flfd2+sflr>N]dsMx[p]sMd1<M"
+#
+# Note that the latter can be sped up even more, if the access to a constant is
+# replaced by a register access:
+# dc -e "[n=]P?[lfp/dlf%l0=Fdvsr]sF2s2dvsr2sf4s4d2%0=F3sfd3%0=F5sf[dlf%l0=Flfdl4+sflr>M]sN[dlf%l0=Flfdl2+sflr>N]dsMx[p]sMd1<M"
+
+dc -e '?[lfp/dlf%l0=Fdvsr]sF2s2dvsr2sf4s4d2%0=F3sfd3%0=F5sf[dlf%l0=Flfdl4+sflr>M]sN[dlf%l0=Flfdl2+sflr>N]dsMx[p]sMd1<M'

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Usage (example): $0
+# compute and print all the prime numbers in ascending order
+
+# This program was written by Michel Charpentier. It outputs the sequence of
+# prime numbers.
+# dc -e '2p3p[dl!d2+s!%0=@l!l^!<#]s#[s/0ds^]s@[p]s&[ddvs^3s!l#x0<&2+l.x]ds.x'
+#
+# Note that shorter implementation is possible, which needs 14 symbols fewer:
+# dc -e '2p3p[pq]s$[l!2+ds!l^<$dl!%0<#]s#[+dvs^1s!l#x2l.x]ds.x'
+
+dc -e '2p3p[pq]s$[l!2+ds!l^<$dl!%0<#]s#[+dvs^1s!l#x2l.x]ds.x'
