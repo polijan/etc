@@ -1,0 +1,11 @@
+{
+    "editor.tabSize": 3,
+    "makefile.configureOnOpen": true,
+    "editor.fontSize": 18,
+    "explorer.excludeGitIgnore": true,
+    "editor.rulers": [
+        80, 120
+    ],
+    "files.trimTrailingWhitespace": true,
+    "editor.indentSize": "tabSize"
+}
