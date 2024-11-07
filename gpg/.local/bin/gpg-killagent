@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: $0
+# Manually terminate the currently-running gpg agent.
+# ( gpg-agent is a program that runs in the background (a daemon) and stores GPG
+#   secret keys in memory (by default for 10 minutes). Its main function is to
+#   not have to type your passphrase every single time you use your key.)
+
+gpgconf --kill gpg-agent

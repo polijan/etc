@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Usage: $0 FILE
+# descrypt a file which has been encrypted with gpg-myencrypt
+
+[ $# -eq 1 ] || { usage "$0"; exit 1; }
+[ -f "$1" ]  || { usage "$0"; exit 1; } 
+gpg --no-default-keyring --decrypt "$1" 2>/dev/null

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Usage: $0 FILE
+# symmetric password encrypt the FILE to FILE.gpg using AES256 cipher
+
+[ $# -eq 1 ] || { usage "$0"; exit 1; }
+[ -f "$1" ]  || { usage "$0"; exit 1; }
+gpg --no-default-keyring  --symmetric --cipher-algo AES256 "$1"
+
+# One could add a -a option to encode the encrypted file with ASCII armor
+# (so that it is easy to copy into a message or send as an attachment.)
+# These files have the file ending .asc
