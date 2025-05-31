@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Usage: ... | $0 [EXTRA_SED_ARGS]...
+# Transform most ASCII characters into superscripts.
+# https://en.wikipedia.org/wiki/Unicode_subscripts_and_superscripts
+
+
+
+ASCII_UPPERCASE='ABCDEFGHIJKLMNOPQRTUVW'
+SUPER_UPPERCASE='ᴬᴮꟲᴰᴱꟳᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾꟴᴿᵀᵁⱽᵂ'
+# note: XYZ missing; S too, but S might come in some future Unicode version
+
+
+ASCII_LOWERCASE='abcdefghijklmnopqrstuvwxyz'
+SUPER_LOWERCASE='ᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖ𐞥ʳˢᵗᵘᵛʷˣʸᶻ'
+
+ASCII_DIGITS='0123456789'
+SUPER_DIGITS='⁰¹²³⁴⁵⁶⁷⁸⁹'
+
+ASCII_OPS='+-=()'
+SUPER_OPS='⁺⁻⁼⁽⁾'
+
+# others:
+# underscore -> minus -
+# dot -> middle dot
+# missing latin uppercase latter
+# S,X,Z -> replace with Unified Canadian Aboriginal Syllabics and its Extended blocks which contain: ᔆᕁᕽᙆ
+# Y -> replace with super script small capital 𐞲
+ASCII_OTHERS='_.SXYZ'
+SUPER_OTHERS='-·ᔆᕁ𐞲ᙆ'
+
+
+ASCII=${ASCII_UPPERCASE}${ASCII_LOWERCASE}${ASCII_DIGITS}${ASCII_OPS}${ASCII_OTHERS}
+SUPER=${SUPER_UPPERCASE}${SUPER_LOWERCASE}${SUPER_DIGITS}${SUPER_OPS}${SUPER_OTHERS}
+
+sed "y/$ASCII/$SUPER/" "$@"
