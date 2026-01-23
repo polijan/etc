@@ -16,23 +16,19 @@ run() {
 #   done
 #   [ -n "$cfile" ] || return 72
 
-   local flags=""
+   flags=""
    until [ -f "$1" ]; do
       flags="$flags $1"
       shift || break
    done
 
-   local cfile=$1
+   cfile=$1
    [ -f "$cfile" ] || return 72
    shift
 
-   local exec
    exec=$(mktemp) || return
 
-   command -v gcc >/dev/null || return
-   local cc=gcc
-   command -v colorgcc >/dev/null && cc=colorgcc
-   "$cc" -x c -o "$exec" "$cfile" $flags || return
+   gcc -x c -o "$exec" "$cfile" $flags || return
 
    echo
    "$exec" "$@"

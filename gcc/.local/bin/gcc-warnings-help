@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Usage: $0 [GCC_WARNING_OPTIONS]...
+#
+# fzf TUI proving info on GCC warning options
+#
+# HINT:
+# - Launch with warning arguments you consider to add in your project
+#   (for example: -Wall -Wextra -Wpedantic)
+# - Then type: 'disabled  in the interactive prompt line to quickly see what
+#   warnings you miss, get help on them, and decide if you want to add them.
+#
+# SEE ALSO: gcc-warnings
+
+gcc -Q --help=warning "$@"  |
+fzf --prompt 'Warning > '   \
+    --preview-window=down,3,wrap \
+    --preview 'gcc --help=warning | grep -F -- \ {1}\ '
+

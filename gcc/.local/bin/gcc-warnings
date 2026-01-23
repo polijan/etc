@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Usage: $0 [GCC_WARNING_OPTIONS]...
+#
+# Provides a list of all supported GCC warning options with information on
+# whether they are active. When warning options are given as arguments (for
+# example -Wall -Wextra -pedantic), this gives a way to find out which options
+# are (not) enabled.
+#
+# Hint: to enable all the warnings you can use some regex to extract the command
+#       line parameters:
+#       gcc-warnings | sed -e 's/^\s*\(\-\S*\)\s*\[\w*\]/\1 /gp;d' | tr -d '\n'
+
+
+# Note: This is based on a StockOverflow response in the following thread
+# https://stackoverflow.com/questions/11714827/how-can-i-turn-on-literally-all-of-gccs-warnings
+
+gcc -Q --help=warning "$@"
