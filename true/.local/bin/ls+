@@ -3,24 +3,42 @@
 # Usage: ls+ [LS_ARGS]...
 # my wrapper around ls
 
-# if we have ls from gnu coreutils, add options
-GNU=''
-#shellcheck disable=SC2010
-#shellcheck disable=SC2012
-if ls --help 2>&1 | grep -F -q 'dereference-command-line-symlink-to-dir'; then
-   GNU="--group-directories-first                 \
-        --dereference-command-line-symlink-to-dir \
-        --time-style=long-iso                     "
-   ## --sort=extension
-fi
+exists() { command -v "$@" > /dev/null; }
 
-ls_() { ls -h -F $GNU --color=auto "$@"; }
+ls_() {
+   LS='ls'
 
-# we want human output collation
+   # lsd is a "replacement" for ls with lots of added features
+   # like colors, icons, tree-view, more formatting options etc.
+   # https://github.com/lsd-rs/lsd
+   if exists lsd; then
+      LS=lsd
+      set -- --group-directories-first                 \
+             --date +'%Y-%m-%d %H:%M'                  \
+             "$@"
+
+   # ls from GNU coreutils
+   elif
+      #shellcheck disable=SC2010
+      ls --help 2>&1 | grep -qF 'dereference-command-line-symlink-to-dir'; then
+
+      set -- --group-directories-first                 \
+             --dereference-command-line-symlink-to-dir \
+             --time-style=long-iso                     \
+         "$@"
+         ## --sort=extension
+   fi
+
+   # Assume ls understands `--color` (the options works also for busybox)
+   "$LS" -h -F --color=auto "$@"
+}
+
+
+# We want "human" output collation
 export LC_COLLATE='fr_FR.UTF-8'
 
-# important particular case: if there's no arguments and we
-# are in $HOME, we dont want to see all the dotfiles "junk"
+# Particular case: if there's no argument and current directory is $HOME,
+# we dont want to see all the dotfiles "junk"
 if [ $# -eq 0 ] && [ "$PWD" = "$HOME" ]
    then ls_
    else ls_ -A "$@"
