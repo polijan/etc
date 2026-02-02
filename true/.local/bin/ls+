@@ -11,7 +11,7 @@ ls_() {
    # lsd is a "replacement" for ls with lots of added features
    # like colors, icons, tree-view, more formatting options etc.
    # https://github.com/lsd-rs/lsd
-   if exists lsd; then
+   if exists lsd && [ "$TERM" != 'linux' ] ; then
       LS=lsd
       set -- --group-directories-first                 \
              --date +'%Y-%m-%d %H:%M'                  \
