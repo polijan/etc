@@ -1,0 +1,12 @@
+#!/bin/sh
+# Usage: $0
+# display some horizontal color bar cycling through shades of gray
+
+stripe() { printf '\033[48;5;%dm\n' $i; i=$((i + $1)); sleep .01; }
+while true; do
+   i=232; while [ $i -le 255 ]; do stripe +1; done
+   i=254; while [ $i -gt 232 ]; do stripe -1; done
+done
+
+# pure-shell-ified from this one-liner:
+# yes "$(seq 232 255;seq 254 -1 233)" | while read i; do printf "\033[48;5;${i}m\n"; sleep .01; done
