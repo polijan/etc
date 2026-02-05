@@ -3,20 +3,17 @@
 # Usage: lst [LS_ARGS]...
 # list 10 last file with the most recent modification date
 
+LS='ls'
+if [ -t 1 ]; then
+   if exists lsd && ! is-linux-console; then
+      LS=lsd
+      set -- -h --color=always
+   else
+      # check if we should and can use a --color flag
+      ls --color / >/dev/null 2>/dev/null && set -- --color=auto "$@"
+      # check if we can use a -h flag (human readable size)
+      ls -h / >/dev/null 2>/dev/null && set -- -h "$@"
+   fi
+fi
 
-# check if we should and can use a --color flag
-# (should be available on GNU, BSD, busybox)
-COLOR=''
-[ -t 1 ] && ls --color / >/dev/null 2>/dev/null && COLOR='--color'
-
-# check if we can use a -h flag (human readable size -- GNU, busybox)
-HUMAN=''
-[ -t 1 ] && ls -h / >/dev/null 2>/dev/null && HUMAN='-h'
-
-
-#shellcheck disable=SC2012
-ls -A -F         \
-   $COLOR $HUMAN \
-   -l -r -t      \
-   "$@"          |
-tail
+$LS -AFlrt "$@" | tail
