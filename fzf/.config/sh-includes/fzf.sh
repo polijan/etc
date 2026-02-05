@@ -29,6 +29,6 @@ if [ -n "$FZF_SHELL" ]; then
    [ -n "$ZSH_VERSION" ]  && . "$FZF_SHELL/completion.zsh"
    # shell key bindings
    [ -n "$BASH_VERSION" ] && . "$FZF_SHELL/key-bindings.bash"
-   [ -n "$ZH_VERSION" ]   && . "$FZF_SHELL/key-bindings.bash"
+   [ -n "$ZSH_VERSION" ]  && . "$FZF_SHELL/key-bindings.zsh"
    unset FZF_SHELL
 fi
