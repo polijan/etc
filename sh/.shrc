@@ -112,9 +112,9 @@ unset i
 # IF WE HAVE A FILE NAME .sourced IN THE DIRECTORY WE START IN, SOURCE IT
 ################################################################################
 
-if [ -f .sourced ]; then
+if [ -f ./.sourced ]; then
    #shellcheck source=/dev/null
-   . .sourced
+   . ./.sourced
 fi
 
 ################################################################################
