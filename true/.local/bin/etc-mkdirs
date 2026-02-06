@@ -28,6 +28,17 @@ fi 2> /dev/null
 ################################################################################
 # USER Directories in XDG Base Directory spec.      (I use the default values) #
 ################################################################################
+# XDG_CONFIG_HOME    Where user-specific configurations should be written
+#                    (analogous to /etc). Default: ~/.config
+# XDG_CACHE_HOME     Where user-specific non-essential (cached) data should be
+#                    written (analogous to /var/cache). Default: ~/.cache.
+# XDG_DATA_HOME      Where user-specific data files should be written
+#                    (analogous to /usr/share). Default: ~/.local/share.
+# XDG_STATE_HOME     Where user-specific state files should be written
+#                    (analogous to /var/lib). Default: ~/.local/state
+# XDG_RUNTIME_DIR    Used for non-essential, user-specific data files such as
+#                    sockets, named pipes, etc. No default.
+################################################################################
 
 # ~/.cache : the default value (if XDG_CACHE_HOME isn't set) where user-specific
 #            non-essential (cached) data should be written (this isanalogous to
@@ -75,6 +86,7 @@ mkdir -pv    '.local/bin'                \
              '.local/share/icons'        \
              '.local/share/fonts'        \
              '.local/src'                \
+             '.local/state'              \
              '.local/stow'
 ln -sv       'bin' '.local/sbin'  2> /dev/null
 ln -sv       'bin' '.local/games' 2> /dev/null
@@ -82,13 +94,15 @@ ln -sv       'bin' '.local/games' 2> /dev/null
 ################################################################################
 # SYSTEM Directories in XDG Base Directory spec.          (nothing to do here) #
 ################################################################################
-
+#
 # XDG_DATA_DIRS:   list of directories separated by : (like PATH) where data
 #                  files should be searched in addition to XDG_DATA_HOME.
 #                  defaults to /usr/local/share:/usr/share if not set
-
+#
 # XDG_CONFIG_DIRS: list of directories separated by : (like PATH) where config
 #                  files should be searched in addition to XDG_CONFIG_HOME.
 #                  defaults to /etc/xdg
+################################################################################
+
 
 exit 0
