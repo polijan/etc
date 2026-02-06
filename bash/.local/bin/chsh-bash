@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Usage: $0
+# change login shell to bash
+
+requires() {
+   command -v "$@" > /dev/null && return 0
+   printf 'Cannot find %s\n' "$*" >&2
+   exit 1
+}
+
+requires chsh
+requires bash
+chsh -s "$(which bash)"
