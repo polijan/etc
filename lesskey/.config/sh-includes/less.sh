@@ -45,25 +45,18 @@ alias cat='cat+'
 #   us   |  smul  | start underline
 #   ue   |  rmul  | stop underline
 
-if [ -n "$BASH_VERSION" ]; then
-   # with bash, we can avoid spawing external processes...
-   export LESS_TERMCAP_mb=$'\E[01;33m'
-   export LESS_TERMCAP_md=$'\E[01;31m'
-   export LESS_TERMCAP_so=$'\E[01;44;33m'
-   export LESS_TERMCAP_us=$'\E[01;32m'
-   export LESS_TERMCAP_me=$'\E[0m'
-   export LESS_TERMCAP_se=$'\E[0m'
-   export LESS_TERMCAP_ue=$'\E[0m'
-else
-   LESS_TERMCAP_mb=$(printf '\033[1;33m')    ; export LESS_TERMCAP_mb
-   LESS_TERMCAP_md=$(printf '\033[1;31m')    ; export LESS_TERMCAP_md
-   LESS_TERMCAP_so=$(printf '\033[1;44;33m') ; export LESS_TERMCAP_so
-   LESS_TERMCAP_us=$(printf '\033[1;32m')    ; export LESS_TERMCAP_us
-   LESS_TERMCAP_me=$(printf '\033[0m')       ; export LESS_TERMCAP_me
-   LESS_TERMCAP_se=$LESS_TERMCAP_me          ; export LESS_TERMCAP_se
-   LESS_TERMCAP_ue=$LESS_TERMCAP_me          ; export LESS_TERMCAP_ue
+if [ -n "$BASH_VERSION" ] || [ -n "$ZSH_VERSION" ]
+   then LESS_ESC=$'\E' # avoid spawning process
+   else LESS_ESC=$(printf '\033')
 fi
-
+LESS_TERMCAP_mb="${LESS_ESC}[1;33m"    ; export LESS_TERMCAP_mb
+LESS_TERMCAP_md="${LESS_ESC}[1;31m"    ; export LESS_TERMCAP_md
+LESS_TERMCAP_so="${LESS_ESC}[1;44;33m" ; export LESS_TERMCAP_so
+LESS_TERMCAP_us="${LESS_ESC}[1;32m"    ; export LESS_TERMCAP_us
+LESS_TERMCAP_me="${LESS_ESC}[0m"       ; export LESS_TERMCAP_me
+LESS_TERMCAP_se=$LESS_TERMCAP_me       ; export LESS_TERMCAP_se
+LESS_TERMCAP_ue=$LESS_TERMCAP_me       ; export LESS_TERMCAP_ue
+unset LESS_ESC
 
 ########################################################################
 
