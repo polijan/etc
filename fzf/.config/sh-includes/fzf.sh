@@ -32,3 +32,6 @@ if [ -n "$FZF_SHELL" ]; then
    [ -n "$ZSH_VERSION" ]  && . "$FZF_SHELL/key-bindings.zsh"
    unset FZF_SHELL
 fi
+
+# aliases...
+alias env='env+'

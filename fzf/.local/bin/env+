@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Usage: $0 [...]
+# Wrapper to the `env` command:
+# - When `env` is called on a terminal with no arguments, show a fzf TUI.
+#   Note: In the TUI, ANSI escape color code are stripped from env variables.
+# - otherwise, simply invoke `env` (with the given parameters)
+
+if [ $# -eq 0 ] && [ -t 0 ] && [ -t 1 ]; then
+   ESC=$(printf '\033')
+   env                               |
+   LC_ALL='C' sort                   |
+   fzf --ansi --no-sort --filter ''  |
+   sed -e "s/^/${ESC}[33m/"          \
+       -e "s/=/${ESC}[36m=${ESC}[m/" |
+   fzf --prompt 'Environment Variables > '
+else
+   env "$@"
+fi
