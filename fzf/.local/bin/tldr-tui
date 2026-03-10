@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Usage: $0 [FZF_ARGS]...
+# a fzf TUI for tldr
+#
+# Keys:
+# Tab  : open the TLDR page in pager
+# Alt-z: toogle preview window's visibility
+# Alt-w: toogle preview window's line wrapping
+# Shift-up / Shift-down: scroll preview window (by default in fzf)
+
+tldr -l -p all |
+fzf --preview 'tldr {}'                           \
+    --preview-window 'right:80%:wrap'             \
+    --bind 'Tab:execute(tldr {} 2>&1 | less -MR)' \
+    --bind 'Alt-z:toggle-preview'                 \
+    --bind 'Alt-w:toggle-preview-wrap'            \
+    "$@"
