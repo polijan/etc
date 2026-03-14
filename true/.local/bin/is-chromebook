@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Usage: $0
+# returns 0 iff we run in a chromebook
+
+# Check for ChromeOS shared mount
+[ -d /mnt/chromeos ]
+
+# Typically, there's only one container called penguin, so this might work too:
+# [ "$(hostname)" = 'penguin' ]
