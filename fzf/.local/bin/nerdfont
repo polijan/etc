@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: $0 [QUERY]...
+# Launch a (fzf-based) character picker TUI for the nerdfonts
+
+fzf --prompt 'Nerdfont > '    \
+    --header ' Code    Name' \
+    --query "$*"              \
+    < "$(etc-home)"/fzf/_/nerdfont_data

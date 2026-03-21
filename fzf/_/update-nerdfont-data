@@ -1,0 +1,64 @@
+#!/bin/sh
+
+# Usage: $0
+# Get/Update the nerdfonts.com icon catalog
+# (Requires `gawk` and either `curl` or `wget`)
+
+#-------------------------------------------------------------------------------
+# Requirements
+#-------------------------------------------------------------------------------
+
+exists() { command -v "$@" > /dev/null; }
+die()    { printf "%s: %s\n" "$(basename "$0")" "$*" >&2; exit 1; }
+
+exists gawk || die 'Requires GNU awk (gawk)'
+
+if   exists curl; then set -- curl
+elif exists wget; then set -- wget -O -
+else die 'Requires curl or wget to download the nerdfonts.com data'
+fi
+
+#-------------------------------------------------------------------------------
+
+"$@" https://www.nerdfonts.com/cheat-sheet |
+gawk '
+  /^  "/ {  # character info are lines starting with two spaces, they
+            # are formatted like: "character_name" : "unicode_hex_codepoint",
+     gsub(/[:,"]/, "")   # <-- delete json markers
+     $2=strtonum("0x"$2) # <-- read $2 as hex number (GNU awk only)
+     printf("%05x  %c  %s\n", $2, $2, $1)
+  }' |
+sort | sed 's/^0/ /' > "$(etc-home)"/fzf/_/nerdfont_data
+
+
+
+
+
+
+
+
+
+#---------------------------------------------------------
+
+# TODO/MAYBE: trying to re-implement the awk code portably
+#             so we wouldn't depend on GNU awk.
+awk_portable() {
+   awk '
+       function hex2dec(h,    i, n, c, val) {
+          n = 0
+          for (i = 3; i <= length(h); i++) {
+             c = substr(h, i, 1)
+             if (c >= "0" && c <= "9") val = c
+             else val = 10 + index("abcdef", tolower(c)) - 1
+             n = n * 16 + val
+          }
+          return n
+       }
+
+       /^  "/ {  # character info are lines starting with two spaces, they
+                 # are formatted as: "character_name" : "unicode_hex_codepoint",
+        gsub(/[:,"]/, "")   # <-- delete json markers
+        $2=hex2dec($2)      # <-- read $2 as hex number
+        printf("%05x  %c  %s\n", $2, $2, $1)
+     }'
+}
