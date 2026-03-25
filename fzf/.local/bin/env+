@@ -13,7 +13,8 @@ if [ $# -eq 0 ] && [ -t 0 ] && [ -t 1 ]; then
    fzf --ansi --no-sort --filter ''  |
    sed -e "s/^/${ESC}[33m/"          \
        -e "s/=/${ESC}[36m=${ESC}[m/" |
-   fzf --prompt 'Environment Variables > '
+   fzf --ansi                        \
+       --prompt 'Environment > '
 else
    env "$@"
 fi
