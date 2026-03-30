@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Usage: $0 [SSH_ARGS]... [user@]hostname[:port]
+# Connect via ssh and attach to a tmux session running on the given host
+
+exec ssh -t "$@" tmux attach
