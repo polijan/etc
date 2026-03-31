@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: $0 [FOOT_ARGS]...
+# launch foot terminal as a centered floating window
+
+# Tiling Wayland compositor should be configured so that apps
+# with the id 'popup' are displayed as a centered floating window
+
+foot --app-id 'popup' "$@"
