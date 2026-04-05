@@ -2,4 +2,4 @@
 
 # Usage: tmux-reload
 # reload the config file
-exec tmux source-file "$HOME/.tmux.conf"
+exec tmux source-file ~/.config/tmux/tmux.conf
