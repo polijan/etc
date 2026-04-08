@@ -1,0 +1,82 @@
+#!/bin/sh
+
+# Usage: $0 [ncal_arguments]... [[month] year]
+# Display a calendar using the ncal(1) program
+#
+# By default:
+# * Display in the old Unix cal style
+# * Use Monday as the first day of the week
+# * When output is on a tty, highlight the current day and put some colors
+#
+# Tips / Common argument you can use:
+# * -m NAME_OR_NUMBER_OF_MONTH => Display just that month
+# * -A n => Also display n months before
+# * -B n => Also display n months after
+# * -3   => Display 3 months spanning the date
+# * `man ncal` for more options
+
+
+
+# display ncal "$@"
+# display cal "$@"
+# invoke the cal or ncal command with possible color highlighting
+display() {
+   # If we dont output on a tty, then just invoke and exit
+   [ -t 1 ] || { "$@"; return; }
+
+   # Colors Escape Sequence variables
+   ESC=$(printf '\033')
+   RESET="${ESC}[m"
+   DAYS="${RESET}${ESC}[48;5;18m"  # base01 background
+   MONTHS_OR_YEARS="${ESC}[34m"    # base0D foreground
+   printf %b "$RESET"
+
+   # Invoke the calendar command:
+   #
+   # Explanations of what we do:
+   #    faketty -> Although we're piping its output, make the calendar command
+   #               think it's a tty, to preserve the color highlighting of today
+   #    sed     -> highlight Mo..Su days with a background
+   #    awk     -> highlight lines containing a month name
+   if command -v faketty >/dev/null
+      then faketty "$@"
+      else "$@"
+   fi                                        |
+   sed "s/Mo/${DAYS}Mo/g;s/Su/Su${RESET}/g"  |
+   awk -v X="$MONTHS_OR_YEARS" -v Y="$RESET" '
+       { if ($0 ~ /(January|February|March|April|May|June|July|August|September|October|November|December)/)
+            print X $0 Y
+         else
+            print
+       }'
+}
+
+
+#-------------------------------------------------------------------------------
+
+export LC_ALL=C
+
+case $(basename "$0") in
+
+   ncal*) # ncal
+          # -M: Weeks start on Monday
+          # -b: Use oldstyle output
+          display ncal -M -b "$@" ;;
+
+    cal*) # No args => use ncal -M -b
+          if [ $# -eq 0 ]; then
+             display ncal -M -b "$@"
+
+          # Use cal and try to make it start on a Monday (not always possible)
+          # Sometimes it's done with -M, or it could be with -m (busybox), ...
+          elif cal -M >/dev/null 2>/dev/null; then
+             display cal -M "$@"
+          elif cal -m >/dev/null 2>/dev/null; then
+             display cal -m "$@"
+
+          # When start on a Monday is not supported (POSIX), just invoke cal(1)
+          else
+             cal "$@"
+          fi ;;
+
+esac
