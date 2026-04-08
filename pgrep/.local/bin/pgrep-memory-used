@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# Usage: $0 [pgrep_options]... pattern
+# Display the amount of memory (in megabytes) used by all
+# the processes found by pgrep(1)
+#
+# For example, the chromium browser creates many process and is a memory-hog,
+# so `$0 chromium` can be used to see how much RAM it consumes overall.
+
+
+# Check we have /proc files providing info about memory usage of processes
+[ -f /proc/1/smaps ] || {
+   printf '%s: Cannot find /proc/.../smaps files.\n' "$(basename "$0")" >&2
+   exit 1
+}
+
+for pid in $(pgrep "$@"); do
+    echo "/proc/${pid}/smaps"
+done | xargs awk '/Pss:/ {sum+=$2} END {printf "%.1f MB\n", sum/1024}'
+
+
+# NOTE1:
+#    At first, we may thought to do:
+#    ps -C "$*" -o rss= | awk '{sum+=$1} END {print sum/1024 " MB"}'
+#
+#    But this may over-evaluate because:
+#    RSS (Resident Set Size) = How much memory the process has in RAM
+#    RSS counts all memory pages mapped into the process => This includes
+#    the shared memory. So if 10 process share the same 100Mb, then each
+#    shows 100MB RSS and we don't want to sum 1000Mb.
+#    This is why we should use PSS (we get it from /proc/<PID>/smaps)
+#    PSS (Proportional Set Size) = How much memory this process actually *owns*
+
+# NOTE2:
+#    In our implementation, if the pgrep list is huge, xargs may split into
+#    multiple invocations and the sum would reset each time. It probably doesn't
+#    happen in practice though. We could avoid this (but it's slower)
+#
+#    for pid in $(pgrep "$@"); do
+#        awk '/Pss:/ {sum+=$2} END {print sum}' /proc/$pid/smaps
+#    done | awk '{t+=$1} END {printf "%.1f MB\n", t/1024}'
