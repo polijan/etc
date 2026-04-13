@@ -1,0 +1,40 @@
+#!/bin/sh
+
+# Usage: $0 [-t|-f] [SED_ARGUMENTS]...
+# Filter which transforms between ASCII (0x60...0x7E) and the
+# "DEC Special Graphics" characters (aka "VT100 Line Drawing set").
+#
+# The correspondance is as follow:
+# ┌───────┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐
+# │ ASCII │`│a│b│c│d│e│f│g│h│i│j│k│l│m│n│o│p│q│r│s│t│u│v│w│x│y│z│{│|│}│~│
+# ├───────┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┤
+# │  DEC  │◆│▒│␉│␌│␍│␊│°│±│␤│␋│┘│┐│┌│└│┼│⎺│⎻│─│⎼│⎽│├│┤│┴│┬│││≤│≥│π│≠│£│·│
+# └───────┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘
+#
+# Options:
+#    no option  => Two-way conversion
+#    -t, --to   => Only convert from ASCII to DEC Special Graphics chars
+#    -f, --from => Only convert from DEC Special Graphics chars to ASCII
+#
+# Extra arguments are passed to sed(1).
+#
+# Note: This filter uses Unicode UTF-8 text.
+#
+# Note: DEC Special Graphics are the (only) characters displayed when a
+#       VT100-compatible terminal (ie most terminal emulators today) is
+#       into the mode which is:
+#       - entered via the escape sequence: ESC ( 0
+#       - exited  via the escape sequence: ESC ( B
+#
+# See Also: https://en.wikipedia.org/wiki/DEC_Special_Graphics
+
+ascii='`abcdefghijklmnopqrstuvwxyz{|}~'
+vt100='◆▒␉␌␍␊°±␤␋┘┐┌└┼⎺⎻─⎼⎽├┤┴┬│≤≥π≠£·'
+
+case $1 in
+  -f|--from) shift; from=$vt100; to=$ascii;;
+    -t|--to) shift; from=$ascii; to=$vt100;;
+          *) from=$ascii$vt100;  to=$vt100$ascii;;
+esac
+
+sed -e "y/$from/$to/" "$@"
