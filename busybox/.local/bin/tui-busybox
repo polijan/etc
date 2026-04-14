@@ -1,0 +1,93 @@
+#!/bin/sh
+
+# Usage: $0 [query]...
+# (fzf-based) TUI Help Browser TUI for busybox
+
+. ~/.local/lib/sh/common.sh
+
+
+# Note: This program also supports toybox (depends on the program's name $0)
+case $0 in
+   *busybox*) BUSYBOX=busybox ;;
+    *toybox*) BUSYBOX=toybox  ;;
+           *) die 'only supports busybox or toybox' ;;
+esac
+export BUSYBOX
+
+exists fzf   || die 'requires fzf(1)'
+exists which || die 'requires which(1)'
+
+QUERY=$*
+if exists man; then
+   set -- --bind 'Alt-m:execute(if [ -z {} ]; then
+                                   man $BUSYBOX
+                                else
+                                   app={}
+                                   man $BUSYBOX       |
+                                   if [ ${#app} -lt 3 ]
+                                      then less -p "^ +$app +$app"
+                                      else less -p "^ +$app *"
+                                   fi
+                                fi )'
+fi
+
+COLUMNS=$(stty size </dev/tty | cut -f 2 -d ' ')
+[ -n "$COLUMNS" ] || COLUMNS=80
+
+
+case $BUSYBOX in
+   # List the available applets
+   busybox) busybox --list ;;
+    toybox) toybox | tr ' ' '\n';;
+esac                                                     |
+while read -r applet; do
+   # Display the applets with different colors based on
+   # their availability as system commands
+   [ -n "$applet" ] || continue
+   cmd=$(which "$applet")
+   if [ -z "$cmd" ]; then
+      printf '\033[31m' # (not available as a command)
+   elif realpath "$cmd" | grep -q $BUSYBOX; then
+      printf '\033[32m' # (command links to busybox)
+   else
+      printf '\033[35m' # (command isn't a busybox applet)
+   fi
+   printf '\n%s\033[m' "$applet"
+done                                                     |
+fzf --ansi                                               \
+    --layout=reverse --highlight-line                    \
+    --prompt "$BUSYBOX > "                               \
+    --query "$QUERY"                                     \
+    --bind 'Alt-z:toggle-preview'                        \
+    --bind 'Alt-w:toggle-preview-wrap'                   \
+    --bind 'shift-left:preview-page-up'                  \
+    --bind 'shift-right:preview-page-down'               \
+    --bind 'tab:execute(
+               if [ -z {} ]; then
+                  case $BUSYBOX in
+                     busybox) busybox --help ;;
+                      toybox) toybox --version; echo
+                              toybox; echo; echo
+                              toybox --help;;
+                  esac 2>&1
+               else
+                  $BUSYBOX --help {} 2>&1 | tail -n +3
+               fi                                        |
+               LESSOPEN="" less  )'                      \
+    "$@"                                                 \
+    --preview-window "right:$((COLUMNS - 18))"           \
+    --preview 'if [ -z {} ]; then
+                  printf "\033[33mColor legend (system commands vs $BUSYBOX applets)\n"
+                  printf "\033[42m  \033[m system command is provided by $BUSYBOX\n"
+                  printf "\033[41m  \033[m system provides a non-$BUSYBOX command\n"
+                  printf "\033[45m  \033[m system does not provide this command\n"
+                  printf "\033[34m_________________________________________________\033[m\n\n"
+                  case $BUSYBOX in
+                     busybox) busybox --help ;;
+                      toybox) toybox --version; echo
+                              toybox; echo; echo
+                              toybox --help;;
+                  esac 2>&1
+               else
+                  $BUSYBOX --help {} 2>&1 | tail -n +3
+               fi'

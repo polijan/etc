@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: $0 [query]...
+# (fzf-based) TUI Help Browser TUI for toybox
+
+# tui-busybox supports both busybox and toybox (depends on $0)
+. "$(etc-home)"/busybox/.local/bin/tui-busybox
