@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# Usage: $0 [--line-number] [fzf_options]...
+# Display paragraphs and select one using fzf(1)
+#
+# OPTION:
+#   * By default the selected paragraph is printed out,
+#   * but with --line-number, what's printed instead is the line number
+#     at which the selected paragraph starts.
+#
+# TIPS:
+#   * For a nicer presentation, fzf --gap option is used.
+#     To override, use -no-gap
+#   * Multiple selection doesn't work (ie. no fzf --multi)
+#   * No fzf --preview is given, but you can provide one.
+#   * Within fzf, you can use the following fields (for example, this
+#     is useful if you create a --preview)
+#        {1}    is  the line at the paragraph starts
+#        {2..}  is  the whole paragraph
+
+
+case $1 in
+   --line-number) FIELDS=1 ; shift ;;
+               *) FIELDS=2.. ;;
+esac
+
+# Here is some details how this pipeline works:
+#
+# 1. awk detects paragraph (lines separated by empty lines) an outputs them
+#    as NULL-separated entries like this: <line_number>:<paragraph>\0
+#    Internally, awk tracks:
+#    * start        => starting line number of the paragraph
+#    * paragraph    => full multi-line paragraph
+#
+# 2. The output is then fed to fzf. It works like this:
+#    --read0         => reads NULL-separated entries
+#    --delimiter=':' => splits metadata from content
+#    --with-nth=2..  => only show the paragraph (hide line number)
+#    --bind    ...   => the fzf result becomes field {1} (starting line number)
+#                                                 or {2} (the paragraph)
+#
+#     --preview ...   => shows the full paragraph nicely
+awk '
+    BEGIN { ORS="\0" }
+
+          { if ($0 == "") {
+               if (paragraph != "") {
+                  printf "%d:%s", start, paragraph ORS
+                  paragraph=""
+               }
+            } else {
+               if (paragraph == "") start=NR
+               paragraph = paragraph $0 "\n"
+            }
+          }
+
+    END   { if (paragraph != "")  printf "%d:%s", start, paragraph ORS }
+'                                                  |
+fzf --read0                                        \
+    --with-nth=2.. --delimiter=':'                 \
+    --bind "enter:become(printf '%s\n' {$FIELDS})" \
+    --gap                                          \
+    "$@"
+    # ^ you could add --preview 'printf %s {2..}'
+    #   to preview the paragraph
