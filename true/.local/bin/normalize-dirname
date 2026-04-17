@@ -1,9 +1,9 @@
 #!/bin/sh
 
 # Usage: $0 directory
-# clean-up and then print the directroy name (in $*) to remove
+# clean-up and then print the directory name (in $*) to remove
 # extra multiples slashes, '..', and '.' parts. operates
-# on string only, the directroy doesn't need to exist.
+# on string only, the directory doesn't need to exist.
 
 exists() { command -v "$@" > /dev/null ;}
 
@@ -40,7 +40,7 @@ D=$(printf %s "$D/" |
     sed 's://*:/:g' |
                     \
     tr '/\n' '\n/'  |
-    portably-tac    |
+    poorman-tac     |
                     \
     awk '  /^$/     { skip=0; printf "\n"; exit; }
            /^\.$/   { next; }
@@ -48,7 +48,7 @@ D=$(printf %s "$D/" |
                     { if (skip>0) skip--; else print; }
            END      { for(; skip>0; skip--) printf "..\n"; }
         '           |
-    portably-tac    |
+    poorman-tac     |
     tr '/\n' '\n/'  )
 
 # D is now the normalized directory name with a final / (or D is null
