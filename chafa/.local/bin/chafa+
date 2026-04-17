@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Usage: $0
+# Wrapper around chafa
+
+
+exists() { command -v "$@" > /dev/null; }
+
+# When using chafa in a fzf preview window, specify the size
+if [ -n "$FZF_PREVIEW_COLUMNS" ] && [ -n "$FZF_PREVIEW_LINES" ]; then
+   set -- --view-size "${FZF_PREVIEW_COLUMNS}x${FZF_PREVIEW_LINES}" "$@"
+fi
+
+# chafa checks that the terminal can support displaying images and may display
+# images instead of characters art, but when we're in TMUX it does not know, so
+# we do it manually via the --format flag for terminal we know can support
+# sixels or kitty image protocol.
+if [ -n "$TMUX" ] && exists tmux; then
+   term=$(tmux display-message -p '#{client_termname}')
+   case $term in
+        foot) set -- --format sixels "$@" ;;
+      *kitty) set -- --format kitty  "$@" ;;
+   esac
+fi
+
+exec chafa "$@"
