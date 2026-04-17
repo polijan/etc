@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Usage: $0 [string]...
+# Print the number of columns needed for the fixed-size given string.
+# This functions should give similar result as wcswdith(3)
+
+
+# -L, --max-line-length option is specific to wc from GNU coreutils
+printf %s "$*" | wc --max-line-length
