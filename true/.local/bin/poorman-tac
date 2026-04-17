@@ -1,19 +1,18 @@
 #!/bin/sh
 
-# Usage: ... | $0 [FILE]
-# prints lines in reverse
-# this is a basic tac(1) in a portably-manner
+# Usage: $0 [FILE]...
+# poorman's version of tac(1) (does not support options)
 #
-# tac: GNU and busybox have tac(1)
-#      BSD has 'tail -r' instead
-#      POSIX doesn't have it
+# Display and concatenate files with lines in reversed order
+# With no FILE, or when FILE is -, read standard input.
 
-if   exists tac; then
-     tac
-elif exists fzf; then
-     # I find it fun to use fzf in this way :)
-     FZF_DEFAULT_OPTS='' fzf -f '^' --tac --no-sort
+ ~/.local/lib/sh/poorman.sh
+poorman_try tac "$@"
+
+if exists fzf; then
+   # I find it fun to use fzf in this way :)
+   cat "$@" | FZF_DEFAULT_OPTS='' fzf --filter '^' --tac --no-sort
 else
-     # slow: https://unix.stackexchange.com/questions/233014/how-does-the-command-sed-1ghd-reverse-the-contents-of-a-file
-     sed '1!G;h;$!d'
+   # slow: https://unix.stackexchange.com/questions/233014/how-does-the-command-sed-1ghd-reverse-the-contents-of-a-file
+   sed '1!G;h;$!d' "$@"
 fi
