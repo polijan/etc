@@ -4,10 +4,6 @@
 # preview my 'etc' directory
 
 ########################################################################
-ansi() { printf '\033[%sm' "$1"; }
-HIGH=$(ansi 33)
-RESET=$(ansi 0)
-
 exists() { command -v "$@" > /dev/null; }
 die()    { printf '%s\n' "$*" >&2; exit 1; }
 
@@ -24,25 +20,48 @@ if [ -n "$ETC_HOME" ]; then
 elif exists etc-home; then
    cd "$(etc-home)"
 fi          || die "cannot find where 'etc' is located"
+
 exists fzf  || die 'requires fzf(1)'
-exists tree || die 'requires tree(1)'
+
+if exists lsd; then
+   TREE='lsd --tree -ahF --color=always --icon=always'
+elif exists tree; then
+   TREE='tree -aFC'
+else
+   die 'requires tree(1) or lsd(1)'
+fi
+export TREE
+
+BAT_ARGS='--style=plain --paging=never --color=always --theme=ansi'
+if exists bat; then
+   CAT="bat $BAT_ARGS"
+elif exists batcat; then
+   CAT="batcat $BAT_ARGS"
+else
+   CAT=cat
+fi
+export CAT
+
 
 COLUMNS=$(stty size | cut -f2 -d' ')
 
-#find -maxdepth 1                              |
-find ./* -type d -prune                        |
-sed -e 's:\./::' -e 's:^\.$::'                 |
+#find -maxdepth 1 |
+#sed -e 's:\./::' -e 's:^\.$::'
+find ./* -prune 2>/dev/null                    |
+sed 's:^\./::'                                 |
 while IFS= read -r i; do
-   if [ -d "$i" ] && is_installed "$i"
-      then printf '%s\n' "${HIGH}${i}${RESET}"
-      else printf '%s\n' "$i"
+   if ! [ -d "$i" ]; then
+      printf '\033[34m%s\033[m\n' "$i"
+   elif is_installed "$i"; then
+      printf '\033[33m%s\033[m\n' "$i"
+   else
+      printf '%s\n' "$i"
    fi
 done                                           |
 fzf --ansi                                     \
-    --bind 'Alt-Z:toggle-preview'              \
     --preview-window "right:$((COLUMNS - 22))" \
     --preview 'if [ -d {} ]
-                  then tree -aFC {}
-                  else cat {}
+                  then $TREE {}
+                  else $CAT  {}
                fi'                             \
     --query "$*"
