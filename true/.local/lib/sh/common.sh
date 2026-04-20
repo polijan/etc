@@ -17,16 +17,27 @@ exists() { command -v "$@" >/dev/null; }
 # * Print the error message (or "Abort" if message is missing or empty)
 # * Exit the program with the given error (or by default 1)
 die() {
-   EXIT_CODE=1
+   # As this function is `exit`-ing and not returning, global variables can be
+   # used without fear of polluting the environment
+   DIE_EXIT_CODE=1
+   DIE_START=''
+   DIE_END=''
+
    case $1 in
                --) shift ;;
       -|-*[!0-9]*) ;; # not a number
-                *) EXIT_CODE=${1#-}; shift;;
+                *) DIE_EXIT_CODE=${1#-}; shift;;
    esac
 
    [ -n "$*" ] || set -- 'Abort...'
-   printf '%s: %s\n' "$(basename "$0")" "$*" >&2
-   exit "$EXIT_CODE"
+
+   if [ -t 2 ]; then
+      DIE_START='\033[1;38;5;9m'
+      DIE_END='\033[0m'
+   fi
+   printf '%b%s%b: %s\n' "$DIE_START" "$(basename "$0")" "$DIE_END" "$*" >&2
+
+   exit "$DIE_EXIT_CODE"
 }
 
 # Usage: requires COMMAND
