@@ -51,11 +51,11 @@ find ./* -prune 2>/dev/null                    |
 sed 's:^\./::'                                 |
 while IFS= read -r i; do
    if ! [ -d "$i" ]; then
-      printf '\033[34m%s\033[m\n' "$i"
-   elif is_installed "$i"; then
-      printf '\033[33m%s\033[m\n' "$i"
-   else
       printf '%s\n' "$i"
+   elif is_installed "$i"; then
+      printf '\033[%sm%s\033[m\n' '33' "$i"
+   else
+      printf '\033[38;5;8m%s\033[m\n' "$i"
    fi
 done                                           |
 fzf --ansi                                     \
