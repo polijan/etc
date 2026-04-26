@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: $0
+# my nano keeps backups in ~/.cache/nano
+# show usage of this directory (du -h ~/.cache/nano)
+
+du -h ~/.cache/nano

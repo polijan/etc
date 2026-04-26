@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Usage: $0
+# my nano keeps backups in ~/.cache/nano
+# ERASE all content save in that directory.
+
+printf "Erase nano's cache content [y/n]? "
+IFS= read -r ANSWER
+[ "$ANSWER" = 'y' ] || exit 0
+rm -f ~/.cache/nano/*
