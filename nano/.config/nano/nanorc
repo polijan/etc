@@ -64,9 +64,10 @@
 # ^--- well, perhaps I want this, perhaps I don't :)
 
 
-# When reading a file with ^R (on Insert), create a new buffer
-# Hmmm, If I want to insert it into same buffer, ^T cat ....
-set multibuffer
+# Initially, I thought it may be a good idea to use multi-buffers by default,
+# but it's no so: (when using ^T to run a command, I want to insert the result
+# into the current buffer, not somewhere else).
+# set multibuffer
 
 # don't convert files from DOS/MAC format
 # (explicitely use dos2unix(1) or something if you need)
@@ -195,7 +196,7 @@ set numbercolor lightblack,black
 # * locally: (for example because distro has a too-old version of nano), then
 #   syntax files would be in ~/.local/share/nano
 # In any case, we can include this as long as 'etc' create such empty dir
-include "~/.local/share/nano/*.nanorc"
+#include "~/.local/share/nano/*.nanorc"
 
 # include any extra custom syntax files (if any) from ~/.config/nano/include
 include "~/.config/nano/include/*.nanorc"
