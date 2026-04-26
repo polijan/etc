@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Usage: $0 [OPTIONS] [FILE]...
+# prints the syntax-highlighted content of the given FILE(s)
+# (for more info, man batcat)
+
+exec batcat "$@"

@@ -1,0 +1,5 @@
+bat is a program to display file or stdin with syntax highlighting.
+https://github.com/sharkdp/bat
+
+In debian, it is named 'batcat' because of a conflict with some other package
+(bacula) which I'm unlikely to use. So here, I make batcat accessible as bat.
