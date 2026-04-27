@@ -12,6 +12,7 @@ MV() { mv -i "$@"; exit; }
 
 [ $# -ne 1 ] && MV "$@"
 case $1 in -*)  MV "$@";; esac
+[ -e "$1" ] ||  MV "$@"
 
 IFS= read -r -e -p 'move to: ' -i "$1"
 [ $? -eq 0 ]        || exit
