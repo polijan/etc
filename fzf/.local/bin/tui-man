@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# Usage: $0 [FZF_ARGS]...
+# a fzf TUI for man
+#
+# Tab or Enter: open the man page
+# Esc to exit
+
+. ~/.local/lib/sh/common.sh
+requires fzf
+requires man
+
+PREVIEW='
+   if command -v bat >/dev/null 2>/dev/null; then
+      man {1} 2>/dev/null |
+      bat -p -lman --color=always
+   else
+      man {1}
+   fi'
+
+man -k .                                    |
+sort                                        |
+sed -e "s/^/$(printf '\033[36m')/"          \
+    -e "s/(/$(printf '\033[34m(')/"         \
+    -e "s/)/$(printf ')\033[37m')/"         \
+    -e 's/- / /'                            |
+fzf --ansi                                  \
+    --ghost 'What manual page do you want?' \
+    --input-label 'man'                     \
+    --preview-window 'down:66%'             \
+    --preview "$PREVIEW"                    \
+    --bind "tab:execute($PREVIEW)"          \
+    --bind "enter:execute($PREVIEW)"        \
+    "$@" >/dev/null
