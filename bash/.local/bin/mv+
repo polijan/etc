@@ -1,21 +1,27 @@
 #!/usr/bin/env bash
 
 # Usage: $0 [...]
-# with no, or several, or -* argument(s): 'mv -i'
-# with one argument (non -*):
-#  - interactively prompt the destination
-#    (by default the , useful if you want to change
-#    a few letters of the name)
-#  - and then 'mv -i "$1" <destination>'
+# interactive wrapper to mv
+#
+# * With a single (non -*) argument which is an existing filename:
+#   1. Interactively prompt a destination (the prompt is initially populated
+#      with the given filename which is useful if you only want to change a few
+#      letters of the name)
+#   2. Call 'mv -i "$1" <destination>'
+#
+# * Otherwise, call 'mv -i'
 
 MV() { mv -i "$@"; exit; }
 
-[ $# -ne 1 ] && MV "$@"
+{ [ -t 0 ] && [ -t 1 ]; } || MV "$@"
+[ $# -eq 1 ] || MV "$@"
 case $1 in -*)  MV "$@";; esac
 [ -e "$1" ] ||  MV "$@"
 
-IFS= read -r -e -p 'move to: ' -i "$1"
-[ $? -eq 0 ]        || exit
+
+color=$(printf '\033[34m')
+reset=$(printf '\033[0m')
+IFS= read -r -e -p "${color}move to:${reset} " -i "$1" || exit
 [ -z "$REPLY" ]     && exit 1
 [ "$REPLY" = "$1" ] && exit 1
 MV "$1" "$REPLY"

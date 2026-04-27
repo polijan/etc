@@ -1,26 +1,31 @@
 #!/usr/bin/env bash
 
 # Usage: $0 [...]
-# with no, or several, or -* argument(s): 'cp -i'
-# with one argument (non -*) specifying an existing FILE:
-#  - first, interactively prompts for the destination
-#    (defaults the name of FILE with its modification date)
-#  - and then 'cp -i -a "$1" <destination>'
+# interactive wrapper to cp
+#
+# * With a single (non -*) argument which is an existing filename:
+#   1. Interactively prompt the destination (the prompt is initially populated
+#      with the given filename prefixed with its modification date)
+#   2. Call 'cp -i -a "$1" <destination>'
+#
+# * Otherwise, call 'cp -i'
 
 CP() { cp -i "$@"; exit; }
 
-[ $# -ne 1 ] && CP "$@"
+{ [ -t 0 ] && [ -t 1 ]; } || CP "$@"
+[ $# -eq 1 ] || CP "$@"
 case $1 in -*)  CP "$@";; esac
 [ -e "$1" ]  || CP "$@"
 
-# get modification time (using GNU date(1))
+# Note: date(1) from GNU coreutils, busybox, or toybox all have the -r option to
+#       get the modification date of a file, but let's use the current date in
+#       case date doesn't support the -r option.
 FMT='%Y-%m-%d_%H%M%S'
-if is-gnu date
-   then MTIME=$(date -r "$1" +"$FMT")
-   else MTIME=$(date +"$FMT")
-fi
+MTIME=$(date -r "$1" +"$FMT" 2>/dev/null) || MTIME=$(date +"$FMT")
 
-IFS= read -r -e -p 'copy to: ' -i "$1.$MTIME" || exit
+color=$(printf '\033[34m')
+reset=$(printf '\033[0m')
+IFS= read -r -e -p "${color}copy to:${reset} " -i "$1.$MTIME" || exit
 [ -z "$REPLY" ]     && exit 1
-[ "$REPLY" = "$1" ] && exit 1
+# [ "$REPLY" = "$1" ] && exit 1
 CP -a "$1" "$REPLY"
