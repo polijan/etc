@@ -1,6 +1,11 @@
 #!/bin/sh
 
 # Usage: $0 [FILE...]
-# grep what is *not* PRINTABLE ASCII
+# grep what is *NOT* PRINTABLE ASCII
 
-LC_ALL=C grep -v '[ -~]*' "$@"
+if echo | grep -q --color=auto '' 2>/dev/null
+   then COLOR=--color=auto
+   else COLOR=''
+fi
+
+LC_ALL=C grep $COLOR '[^ -~]' "$@"
