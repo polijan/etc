@@ -1,9 +1,15 @@
 #!/bin/sh
 
-# Usage: $0 [QUERY]...
+# Usage: $0 [fzf_arguments]...
+#        $0 [query...]
 # Launch a (fzf-based) character picker TUI for the nerdfonts
+
+# return 0 iff the arguments are valid arguments to fzf
+is_fzf_args() { echo 'x' | fzf "$@" --filter='x' >/dev/null 2>/dev/null; }
+
+is_fzf_args "$@" || set -- --query "$*"
 
 fzf --prompt 'Nerdfont > '    \
     --header ' Code    Name' \
-    --query "$*"              \
+    "$@"                      \
     < "$(etc-home)"/fzf/_/nerdfont_data
