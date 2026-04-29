@@ -1,6 +1,7 @@
 #!/bin/sh
 
-# Usage: $0 [FZF_ARGS]...
+# Usage: $0 [fzf_arguments]...
+#        $0 [query...]
 # a fzf TUI for man
 #
 # Tab or Enter: open the man page
@@ -9,6 +10,12 @@
 . ~/.local/lib/sh/common.sh
 requires fzf
 requires man
+
+# return 0 iff the arguments are valid arguments to fzf
+is_fzf_args() { echo 'x' | fzf "$@" --filter='x' >/dev/null 2>/dev/null; }
+
+is_fzf_args "$@" || set -- --query "$*"
+
 
 PREVIEW='
    if command -v bat >/dev/null 2>/dev/null; then

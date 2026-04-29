@@ -1,9 +1,15 @@
 #!/bin/sh
 
-# Usage: $0 [FZF_ARGS]...
+# Usage: $0 [fzf_arguments]...
+#        $0 [query...]
 # a fzf TUI for tldr
 #
-# Tab  : open the TLDR page in pager
+# Tab: open the TLDR page in pager
+
+# return 0 iff the arguments are valid arguments to fzf
+is_fzf_args() { echo 'x' | fzf "$@" --filter='x' >/dev/null 2>/dev/null; }
+
+is_fzf_args "$@" || set -- --query "$*"
 
 { echo
   tldr -l -p all |
@@ -15,6 +21,7 @@
   done
 }                                                 |
 fzf --ansi                                        \
+    --preview-label 'tldr'                        \
     --preview-window 'right:80%:wrap'             \
     --preview 'if [ -z {} ]
                   then tldr </dev/tty 2>&1
