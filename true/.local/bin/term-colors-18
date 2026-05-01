@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Usage: $0
+#
+# Print a preview of the "tty18" palette,
+# i.e. the terminal colors 0-15 and the default foreground/background colors
+#      organized as 6 tones + 6 (regular) accents + 6 (brights) accents.
+
+colors() { for i; do printf '\033[%sm  \033[0m ' "$i"; done; }
+
+printf '\033[0m b  0  8  f  7 15\n'
+colors 0 40 '48;5;8' '7;39' '47' '48;5;15'
+printf '\n\n 1  3  2  6  4  5\n'
+colors 41 43 42 46 44 45
+printf '\n\n'
+colors '48;5;9' '48;5;11' '48;5;10' '48;5;14' '48;5;12' '48;5;13'
+printf '\n 9 11 10 14 12 13\n'
