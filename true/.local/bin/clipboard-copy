@@ -1,23 +1,34 @@
 #!/bin/sh
 
-usage()  {
-  echo 'Usage: ... | cli‍pboard-copy  => copy stdin to clipboard' >&2
-  echo '       cli‍pboard-paste       => paste clipboard content to stdout' >&2
-  exit 1
-}
-exists() { command -v "$@" > /dev/null; }
-die()    { printf '%s\n' "$*" >&2; exit 1; }
+# Usage: ... | cli‍pboard-copy  => copy stdin to clipboard
+#        cli‍pboard-paste       => paste clipboard content to stdout
+#
+
+. ~/.local/lib/sh/common.sh
 
 case $0 in
-   *copy) if   exists xclip ; then xclip -i -selection clipboard
-          elif exists xsel  ; then xsel  -i --clipboard
-          else die 'requires xclip(1) or xsel(1) to copy to clipboard'
-          fi ;;
-
-  *paste) if   exists xclip ; then xclip -o -selection clipboard
-          elif exists xsel  ; then xsel  -o --clipboard
-          else die 'requires xclip(1) or xsel(1) to paste from clipboard'
-          fi ;;
-
+   *copy) MODE_COPY=true  ;;
+  *paste) MODE_COPY=false ;;
        *) usage ;;
 esac
+
+if [ -n "$WAYLAND_DISPLAY" ]; then # <-- wayland: use wl-copy/wl-paste
+   if $MODE_COPY
+      then requires wl-copy ; wl-copy
+      else requires wl-paste; wl-paste
+   fi
+elif [ -n "$DISPLAY" ]; then # <-- x11: use xclip or xsel
+   if $MODE_COPY; then
+      if   exists xclip ; then xclip -i -selection clipboard
+      elif exists xsel  ; then xsel  -i --clipboard
+      else die 'requires xclip(1) or xsel(1)'
+      fi
+   else
+      if   exists xclip ; then xclip -o -selection clipboard
+      elif exists xsel  ; then xsel  -o --clipboard
+      else die 'requires xclip(1) or xsel(1)'
+      fi
+   fi
+else # <-- not wayland or x11: no can do!
+   die 'need to run on wayland or x11'
+fi
