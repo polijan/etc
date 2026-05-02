@@ -49,13 +49,13 @@ if [ -n "$BASH_VERSION" ] || [ -n "$ZSH_VERSION" ]
    then LESS_ESC=$'\E' # avoid spawning process
    else LESS_ESC=$(printf '\033')
 fi
-LESS_TERMCAP_mb="${LESS_ESC}[1;33m"    ; export LESS_TERMCAP_mb
-LESS_TERMCAP_md="${LESS_ESC}[1;31m"    ; export LESS_TERMCAP_md
-LESS_TERMCAP_so="${LESS_ESC}[1;44;33m" ; export LESS_TERMCAP_so
-LESS_TERMCAP_us="${LESS_ESC}[1;32m"    ; export LESS_TERMCAP_us
-LESS_TERMCAP_me="${LESS_ESC}[0m"       ; export LESS_TERMCAP_me
-LESS_TERMCAP_se=$LESS_TERMCAP_me       ; export LESS_TERMCAP_se
-LESS_TERMCAP_ue=$LESS_TERMCAP_me       ; export LESS_TERMCAP_ue
+LESS_TERMCAP_mb="${LESS_ESC}[1;33m"        ; export LESS_TERMCAP_mb
+LESS_TERMCAP_md="${LESS_ESC}[31m"          ; export LESS_TERMCAP_md
+LESS_TERMCAP_so="${LESS_ESC}[1;44;38;5;15m"; export LESS_TERMCAP_so
+LESS_TERMCAP_us="${LESS_ESC}[32m"          ; export LESS_TERMCAP_us
+LESS_TERMCAP_me="${LESS_ESC}[0m"           ; export LESS_TERMCAP_me
+LESS_TERMCAP_se=$LESS_TERMCAP_me           ; export LESS_TERMCAP_se
+LESS_TERMCAP_ue=$LESS_TERMCAP_me           ; export LESS_TERMCAP_ue
 unset LESS_ESC
 
 ########################################################################
