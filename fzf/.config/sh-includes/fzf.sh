@@ -1,13 +1,73 @@
 #!/bin/sh
 
-# default appearance and behaviour for fzf
-export FZF_DEFAULT_OPTS='--ansi --reverse --inline-info --pointer=► --marker=» --ellipsis=… --color=dark,bg+:4,fg+:3'
-#export FZF_DEFAULT_OPTS='--color=info:4,bg+:4,header:2 --ansi --reverse --inline-info'
-# export FZF_DEFAULT_OPTS='--color=16,info:4,bg+:4,header:2 --ansi --reverse --inline-info'
+# ███████╗███████╗███████╗
+# ██╔════╝╚══███╔╝██╔════╝
+# █████╗    ███╔╝ █████╗
+# ██╔══╝   ███╔╝  ██╔══╝
+# ██║     ███████╗██║
+# ╚═╝     ╚══════╝╚═╝
+
+#-------------------------------------------------------------------------------
+# Color options for fzf
+#-------------------------------------------------------------------------------
+
+FZF_DEFAULT_OPTS='--color=base16,list-bg:0'
+[ -z "$THEME_BASE02" ] || FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --color=bg+:#${THEME_BASE02}"
+
+#-------------------------------------------------------------------------------
+# Non-color default options for fzf
+#-------------------------------------------------------------------------------
+
+# * General     => ansi (required to pass colors to fzf) + layout=reverse
+# * Options for each fzf sections:
+#   - Input     => border + inline-right + the following key-bindings:
+#                  - ctrl-k=kill-line <-- ctrl-j/k is up/down by default to give
+#                                         a "vi"-vibe, but it's more important
+#                                         for me to have input behave like
+#                                         default "readline")
+#                  - alt-j/k <-- remap to up/down as we change ctrl-k
+#   - Header    => note: --header-lines could have its own separate border
+#   - List      => highlight-line (so much prettier) + ellipsis=…
+#   - Preview   => * provide a default "adaptative" (right, but alternatively
+#                    down) preview window.
+#                  * bind some keys to control the preview window
+#   - Footer    => put border, etc.
+FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS             \
+   \
+   --ansi                                       \
+   --layout=reverse                             \
+   \
+   --highlight-line                             \
+   --ellipsis=…                                 \
+   \
+   --input-border                               \
+   --info=inline-right                          \
+   --bind 'ctrl-k:kill-line'                    \
+   --bind 'alt-j:down'                          \
+   --bind 'alt-k:up'                            \
+   \
+   --header-border=none                         \
+   \
+   --preview-window 'right:66%,<62(bottom,66%)' \
+   --bind 'alt-z:toggle-preview'                \
+   --bind 'alt-w:toggle-preview-wrap'           \
+   --bind 'shift-left:preview-page-up'          \
+   --bind 'shift-right:preview-page-down'       \
+   \
+   --footer-border                              \
+   --footer-label-pos=-3:Top                    "
+
+export FZF_DEFAULT_OPTS
 
 
-# sort of solarized dark...
-# --color=fg+:234,bg+:241,hl:136,hl+:166,border:235,prompt:33,pointer:61,marker:160,spinner:37,header:64
+#-------------------------------------------------------------------------------
+# Integration of fzf with the shell
+#-------------------------------------------------------------------------------
+# The integrations provided by the fzf project are:
+# * Ctrl-r: Access command history and paste them into the command line
+# * Ctrl-t: Choose file paths and paste them into the command line
+# * Alt-c : Choose a directory with fzf and cd into it
+#-------------------------------------------------------------------------------
 
 if   [ -d "$HOME/.local/src/fzf/.git" ]; then
      FZF_SHELL="$HOME/.local/src/fzf/shell"
@@ -33,5 +93,25 @@ if [ -n "$FZF_SHELL" ]; then
    unset FZF_SHELL
 fi
 
-# aliases...
+
+#-------------------------------------------------------------------------------
+# Aliases and Functions for wrappers
+#-------------------------------------------------------------------------------
+
 alias env='env+'
+
+if exists man; then
+man() {
+   if [ $# -eq 0 ] && [ -t 0 ] && [ -t 1 ]
+      then tui-man
+      else command man "$@"
+   fi
+}
+fi
+
+tldr() {
+   if [ $# -eq 0 ] && [ -t 0 ] && [ -t 1 ]
+      then tui-tldr
+      else command tldr "$@"
+   fi
+}
