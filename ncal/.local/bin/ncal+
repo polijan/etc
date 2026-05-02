@@ -26,9 +26,9 @@ display() {
 
    # Colors Escape Sequence variables
    ESC=$(printf '\033')
-   RESET="${ESC}[m"
-   DAYS="${RESET}${ESC}[48;5;18m"  # base01 background
-   MONTHS_OR_YEARS="${ESC}[34m"    # base0D foreground
+   RESET="${ESC}[0m"
+   DAYS="${RESET}${ESC}[40m"
+   MONTHS_OR_YEARS="${ESC}[34m"
    printf %b "$RESET"
 
    # Invoke the calendar command:
