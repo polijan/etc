@@ -26,36 +26,45 @@ FZF_DEFAULT_OPTS='--color=base16,list-bg:0'
 #                                         for me to have input behave like
 #                                         default "readline")
 #                  - alt-j/k <-- remap to up/down as we change ctrl-k
+#                  - more keys (alt-home/end <-- first/last, ...)
 #   - Header    => note: --header-lines could have its own separate border
 #   - List      => highlight-line (so much prettier) + ellipsis=…
 #   - Preview   => * provide a default "adaptative" (right, but alternatively
 #                    down) preview window.
 #                  * bind some keys to control the preview window
 #   - Footer    => put border, etc.
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS             \
+FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS                           \
    \
-   --ansi                                       \
-   --layout=reverse                             \
+   --ansi                                                     \
+   --layout=reverse                                           \
    \
-   --highlight-line                             \
-   --ellipsis=…                                 \
+   --highlight-line                                           \
+   --ellipsis=…                                               \
    \
-   --input-border                               \
-   --info=inline-right                          \
-   --bind 'ctrl-k:kill-line'                    \
-   --bind 'alt-j:down'                          \
-   --bind 'alt-k:up'                            \
+   --input-border                                             \
+   --prompt '❯ '                                              \
+   --info=inline-right                                        \
+   --bind 'ctrl-k:kill-line'                                  \
+   --bind 'alt-j:down'                                        \
+   --bind 'alt-k:up'                                          \
+   --bind 'alt-home:first'                                    \
+   --bind 'alt-end:last'                                      \
    \
-   --header-border=none                         \
+   --header-border=none                                       \
    \
-   --preview-window 'right:66%,<62(bottom,66%)' \
-   --bind 'alt-z:toggle-preview'                \
-   --bind 'alt-w:toggle-preview-wrap'           \
-   --bind 'shift-left:preview-page-up'          \
-   --bind 'shift-right:preview-page-down'       \
+   --preview-window 'right:66%,<62(bottom,66%)'               \
+   --bind 'alt-z:toggle-preview'                              \
+   --bind 'alt-x:change-preview-window(right:66%|bottom,66%)' \
+   --bind 'alt-w:toggle-preview-wrap'                         \
+   --bind 'shift-home:preview-top'                            \
+   --bind 'shift-end:preview-bottom'                          \
+   --bind 'shift-page-up:preview-page-up'                     \
+   --bind 'shift-page-down:preview-page-down'                 \
+   --bind 'shift-left:preview-half-page-up'                   \
+   --bind 'shift-right:preview-half-page-down'                \
    \
-   --footer-border                              \
-   --footer-label-pos=-3:Top                    "
+   --footer-border                                            \
+   --footer-label-pos=-3:Top                                  "
 
 export FZF_DEFAULT_OPTS
 
