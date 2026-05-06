@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# Usage: $0 [...]
+# Print a handy ASCII chart
+
+[ $# -ne 0 ] && command -v ascii >/dev/null && exec ascii "$@"
+
+r=''; c='Dec Hex'; e=''
+[ -t 1 ] && { r='\033[0m'; c="\033[37;40m$c"; e=" $r"; }
+printf %b "$r$c   $r $c   $r $c $r $c $r $c $r $c $r  $c $r  $c$e\n"
+
+cat << EOF
+  0 00 NUL  16 10 DLE  32 20    48 30 0  64 40 @  80 50 P   96 60 \`  112 70 p
+  1 01 SOH  17 11 DC1  33 21 !  49 31 1  65 41 A  81 51 Q   97 61 a  113 71 q
+  2 02 STX  18 12 DC2  34 22 "  50 32 2  66 42 B  82 52 R   98 62 b  114 72 r
+  3 03 ETX  19 13 DC3  35 23 #  51 33 3  67 43 C  83 53 S   99 63 c  115 73 s
+  4 04 EOT  20 14 DC4  36 24 $  52 34 4  68 44 D  84 54 T  100 64 d  116 74 t
+  5 05 ENQ  21 15 NAK  37 25 %  53 35 5  69 45 E  85 55 U  101 65 e  117 75 u
+  6 06 ACK  22 16 SYN  38 26 &  54 36 6  70 46 F  86 56 V  102 66 f  118 76 v
+  7 07 BEL  23 17 ETB  39 27 '  55 37 7  71 47 G  87 57 W  103 67 g  119 77 w
+  8 08 BS   24 18 CAN  40 28 (  56 38 8  72 48 H  88 58 X  104 68 h  120 78 x
+  9 09 HT   25 19 EM   41 29 )  57 39 9  73 49 I  89 59 Y  105 69 i  121 79 y
+ 10 0a NL   26 1a SUB  42 2a *  58 3a :  74 4a J  90 5a Z  106 6a j  122 7a z
+ 11 0b VT   27 1b ESC  43 2b +  59 3b ;  75 4b K  91 5b [  107 6b k  123 7b {
+ 12 0c FF   28 1c FS   44 2c ,  60 3c <  76 4c L  92 5c \  108 6c l  124 7c |
+ 13 0d CR   29 1d GS   45 2d -  61 3d =  77 4d M  93 5d ]  109 6d m  125 7d }
+ 14 0e SO   30 1e RS   46 2e .  62 3e >  78 4e N  94 5e ^  110 6e n  126 7e ~
+ 15 0f SI   31 1f US   47 2f /  63 3f ?  79 4f O  95 5f _  111 6f o  127 7f DEL
+EOF
