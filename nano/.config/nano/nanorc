@@ -69,6 +69,12 @@
 # into the current buffer, not somewhere else).
 # set multibuffer
 
+# autoindent (use alt-i to disable)
+# Automatically indent a newly created line to the same number of
+# tabs and/or spaces as the previous line (or as the next line if
+# the previous line is the beginning of a paragraph).
+set autoindent
+
 # don't convert files from DOS/MAC format
 # (explicitely use dos2unix(1) or something if you need)
 set noconvert
