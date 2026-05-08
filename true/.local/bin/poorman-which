@@ -1,0 +1,61 @@
+#!/bin/sh
+
+# Usage: $0 [-a] COMMAND...
+# Search $PATH for executable files matching the COMMAND name(s).
+#
+# OPTION
+#    -a   Show all matches, not just one.
+#
+# NOTE
+#    This is a shell implementation of the classic which(1) command, which might
+#    already be present already on your system, but is NOT part of POSIX, and
+#    thus not portable.
+
+
+findcmd() {
+    cmd=$1
+
+    case $cmd in */*)
+       if [ -x "$cmd" ] && [ ! -d "$cmd" ]
+          then printf '%s\n' "$cmd"; return 0
+          else return 1
+       fi ;;
+    esac
+
+    oldifs=$IFS
+    IFS=:
+
+    found=1
+    for dir in $PATH; do
+        [ -n "$dir" ] || dir=.
+        path=$dir/$cmd
+
+        if [ -x "$path" ] && [ ! -d "$path" ]; then
+           printf '%s\n' "$path"
+           found=0
+           $OPTION_A || break
+        fi
+    done
+
+    IFS=$oldifs
+    return $found
+}
+
+
+
+if [ $# -eq 0 ]; then
+   . ~/.local/lib/sh/common.sh
+   usage
+fi
+
+if [ "$1" = '-a' ]
+   then OPTION_A=true; shift
+   else OPTION_A=false
+fi
+
+status=0
+for cmd do
+    findcmd "$cmd" || status=1
+done
+
+exit $status
