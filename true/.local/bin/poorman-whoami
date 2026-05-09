@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Usage: $0
+# Print the user name associated with the current effective user id
+#
+# Note: This is the classic whoami(1) command ... which isn't POSIX.
+#       In portable POSIX terms, it is simply equivalent to: id -un
+
+. ~/.local/lib/sh/common.sh
+[ $# -eq 0 ] || usage
+
+exec id -u -n
