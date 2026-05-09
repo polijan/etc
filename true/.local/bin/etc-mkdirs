@@ -85,6 +85,7 @@ mkdir -pv    '.local/bin'                \
              '.local/share/applications' \
              '.local/share/icons'        \
              '.local/share/fonts'        \
+             '.local/share/licenses'     \
              '.local/src'                \
              '.local/state'              \
              '.local/stow'
