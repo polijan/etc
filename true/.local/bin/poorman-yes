@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Usage: $0 [STRING]...
+# Repeatedly print a line with the given string(s) (or by default 'y')
+#
+# Note: This is a pure POSIX implementation of the classic command yes(1),
+#       which is commonly used to answer yes to every prompt by install
+#       commands (such as apt-get).
+
+# echo might(?) be faster than printf as a shell builtin
+[ $# -eq 0 ] && while :; do echo y; done
+# ... but anyway, here we go when a string is specified:
+s=$*; while :; do printf '%s\n' "$s"; done
