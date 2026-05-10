@@ -104,10 +104,8 @@ fi
 
 
 #-------------------------------------------------------------------------------
-# Aliases and Functions for wrappers
+# Functions for tui wrappers
 #-------------------------------------------------------------------------------
-
-alias env='env+'
 
 if exists man; then
 man() {

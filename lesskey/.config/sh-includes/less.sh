@@ -11,8 +11,6 @@ export LESS=-MR#2
 # doesn't display on alternate screen and quit away if text fits on one screen
 alias less-FX='less -FX'
 
-alias cat='cat+'
-
 
 ########################################################################
 
