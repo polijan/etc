@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Usage: cat+ [> FILE]
+#    When using no argument and input is a terminal (presumably cat+ is being
+#    used as a quick "editor", maybe to to add a few lines to a file), invoke
+#    cat(1) wrapped with readline(3) capabilities (this needs rlwrap(1)).
+#
+# Usage: cat+ FILE
+#    When invoked on a terminal and with a single readable filename as argument,
+#    try to display that file with the less(1) pager (if available).
+#    less(1) will then be invoked so that:
+#    - raw control characters are displayed as-is (-r)
+#    - initialization/deinitializing sring aren't used on the terminal (-X)
+#    - less will exit if the entire file can be displayed on one screen (-F)
+#    - the LESSOPEN input preprocessor is ignored (-L)
+#
+# If the above fails or when usage is
+# Usage: cat+ [OPTIONS]... [FILE]...
+#    => Invoke cat(1) with the given options and files.
+
+
+exists() { command -v "$@" > /dev/null; }
+
+# cat > file => use rlwrap on cat
+[ $# -eq 0 ] && [ -t 0 ] && exists rlwrap &&
+   exec rlwrap cat
+
+# cat file, on the terminal => use less(1) to display the file
+[ $# -eq 1 ] && [ -t 0 ] && [ -t 1 ] && [ -r "$1" ] && exists less
+   : | less -rLFX 2>/dev/null && exec LESSOPEN='' less -rLFX "$1"
+
+exec cat "$@"
