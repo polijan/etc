@@ -7,7 +7,19 @@
 #
 # This script requires the 'manpages-posix' package installed.
 
+. ~/.local/lib/sh/common.sh
+requires fzf
+
 COLUMNS=$(stty size </dev/tty | cut -d' ' -f2)
+
+PREVIEW='
+   if command -v bat >/dev/null 2>/dev/null; then
+      man 1p {1} 2>/dev/null |
+      bat -p -lman --color=always
+   else
+      man 1p {1}
+   fi
+'
 
 ls /usr/share/man/man1/*.1posix.gz                     |
 sed -e 's:.*/::'                                       \
@@ -25,8 +37,8 @@ while IFS= read -r STR; do
     esac
 done                                                   |
 fzf --ansi                                             \
-    --prompt 'POSIX '                                  \
-    --preview-window "right:$((COLUMNS - 15))"         \
-    --preview 'man 1p {}'                              \
-    --bind    'tab:execute(man 1p {} 2>/dev/null)'     \
+    --input-label 'POSIX '                             \
+    --preview-window "right:$((COLUMNS - 17))"         \
+    --preview "$PREVIEW"                               \
+    --bind    "tab:execute($PREVIEW)"                  \
     "$@"
