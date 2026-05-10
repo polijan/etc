@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Usage: $0 [arguments]...
+# invoke dash
+#
+# If     : - launched without any arguments, on a terminal.
+#          - and the rlwrap(1) readline wrapper command is available,
+# => Then: invoke rlwrap dash
+# => Else: invoke dash with the given arguments
+#
+# Note/Rationale: sh is dash in Debian and other distros. Dash is meant
+# to be used as as a fast POSIX-compliant shell interpreter, not really
+# as an interactive shell, however it can be quite useful to be able to
+# launch it interactively just for testing. Dash typically doesn't have
+# readline support.
+
+if [ $# -eq 0 ] && [ -t 0 ] && [ -t 1 ] &&
+   command -v rlwrap >/dev/null
+then
+   printf '%b%s%b\n' '\033[1;38;5;15;48;5;8m'                           \
+                     'Wrapping dash with rlwrap(1) for interactive use' \
+                     '\033[0m'
+   exec rlwrap dash
+else
+   exec dash "$@"
+fi
