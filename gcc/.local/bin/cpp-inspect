@@ -4,10 +4,13 @@
 # display typedefs, structs, unions and functions provided by a header file
 
 show() {
-   if which pygmentize >/dev/null; then
-      pygmentize -l c++ | less -FX
+   PAGER='less -FX'
+   if exists bat; then
+      bat -p -l cpp | $PAGER
+   elif exists pygmentize; then
+      pygmentize -l c++ | $PAGER
    else
-      less -FX
+      $PAGER
    fi
 }
 

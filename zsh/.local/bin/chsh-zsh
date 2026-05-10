@@ -3,12 +3,8 @@
 # Usage: $0
 # change login shell to zsh
 
-requires() {
-   command -v "$@" > /dev/null && return 0
-   printf 'Cannot find %s\n' "$*" >&2
-   exit 1
-}
-
+. ~/.local/lib/sh/common.sh
 requires chsh
 requires zsh
-chsh -s "$(which zsh)"
+
+chsh -s "$(poorman-which zsh)"

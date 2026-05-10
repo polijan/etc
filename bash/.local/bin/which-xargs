@@ -20,8 +20,7 @@ set -- "${@:1:$(($#-1))}"
 # So the end result is that the argument list is replaced with a new list, where the new list is the original list except for the last argument.How it works:
 
 
-which "$last" | xargs -r "$@"
-
+poorman-which "$last" | xargs -r "$@"
 
 case ${PIPESTATUS[0]} in
   0) exit "${PIPESTATUS[1]}" ;;
