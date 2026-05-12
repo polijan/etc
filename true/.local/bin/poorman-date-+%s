@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Usage: $0
+# Return the number of seconds since the Epoch (1970-01-01 00:00 UTC)
+#
+# With many implementatons of date(1), this is equivalent to: date +%s
+# However, the %s format for date(1) is not part of POSIX.
+
+
+# This is from: https://www.etalabs.net/sh_tricks.html
+#
+# The only magic number in here is 135140, the number of days between 1600-01-01
+# and 1970-01-01 treating both as Gregorian dates. 1600 is used as the
+# multiple-of-400 epoch here instead of 2000 since C-style division behaves
+# badly with negative dividends.
+secs=$((`TZ=GMT0 date \
++"((%Y-1600)*365+(%Y-1600)/4-(%Y-1600)/100+(%Y-1600)/400+1%j-1000-135140)\
+*86400+(1%H-100)*3600+(1%M-100)*60+(1%S-100)"`))
+
+
+printf '%s\n' "$secs"
