@@ -1,0 +1,60 @@
+#!/bin/sh
+
+# Usage: $0 [-d] codepoint
+# Print a sequence that can be used in "printf"'s format string or %b directive
+# to output the UTF-8 encoded character corresponding to the given Unicode
+# codepoint.
+#
+# With -d, the codepoint is given as a decimal number
+# Otherwise, it is given as hexadecimal.
+#
+# Examples:
+#   printf '%b\n' "$(char 20AC)" # euro sign
+#   printf '%b\n' "$(char -d 955)" # lambda
+
+char() {
+
+   # Check arg(s) and set up $1 to contain the codepoint as a decimal number
+   if [ "$1" = '-d' ]; then
+      # ensure positive decimal integer
+      case ${2#+} in ''|*[!0-9]*) return 2;; esac
+      shift
+   else
+      # remove possible (useless) prefixes: U[+|-] or [0]x,
+      # ensure hex number,
+      # and convert to decimal.
+      case $1 in
+          u*|U*) set -- "${1#[u|U]}"; set -- "${1#[+|-]}";;
+        0x*|0X*) set -- "${1#0[x|X]}";;
+          x*|X*) set -- "${1#[x|X]}";;
+      esac
+      case $1 in ''|*[!0-9A-Fa-f]*) return 2;; esac
+      set -- "$(printf %d "0x$1")"
+   fi
+
+   # Encode codepoint to a UTF8 sequence of 1,2,3,or 4 bytes
+   # and output the sequence in \octal... format for POSIX printf
+   if [ "$1" -le 127 ]; then
+      printf '\%03o' "$1"
+   elif [ "$1" -le 2047 ]; then
+      printf '\%03o\%03o'                \
+             $((192 + $1 / 64))          \
+             $((128 + $1 % 64))
+   elif [ "$1" -le 65535 ]; then
+      printf '\%03o\%03o\%03o'           \
+             $((224 + $1 / 4096))        \
+             $((128 + ($1 / 64) % 64))   \
+             $((128 + $1 % 64))
+   elif [ "$1" -le 1114111 ]; then # (0x10FFFF = last valid codepoint)
+      printf '\%03o\%03o\%03o\%03o'      \
+             $((240 + $1 / 262144))      \
+             $((128 + ($1 / 4096) % 64)) \
+             $((128 + ($1 / 64) % 64))   \
+             $((128 + $1 % 64))
+   else
+      return 2
+   fi
+}
+
+char "$@"
+echo
