@@ -26,7 +26,7 @@ exists() { command -v "$@" > /dev/null; }
    exec rlwrap cat
 
 # cat file, on the terminal => use less(1) to display the file
-[ $# -eq 1 ] && [ -t 0 ] && [ -t 1 ] && [ -r "$1" ] && exists less
+[ $# -eq 1 ] && [ -t 0 ] && [ -t 1 ] && [ -r "$1" ] && exists less &&
    : | less -rLFX 2>/dev/null && exec LESSOPEN='' less -rLFX "$1"
 
 exec cat "$@"
