@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# Usage: $0 FROM TO
+# translate characters
+#
+# This command translates characters positionally, like tr(1)...
+# but the big difference to tr(1) is that FROM and TO are interpreted as
+# sequences of characters/codepoints (as per your locale), not just bytes.
+#
+# NOTES:
+#
+# - IMPORTANT: Extra characters in FROM with no corresponding character
+#              in TO are DELETED.
+#
+# - Useful addition to tr(1) for UTF-8 locales
+#
+# - This requires awk(1) to have proper character support (most modern awks
+#   such as, gawk, mawk2, or even busybox awk, may have proper UTF-8
+#   support enabled nowadays)
+#
+# - sed y/.../.../ can be an alternative to this tool, but some sed(1)
+#   don't have specific UTF-8 support in y.
+#
+# - echo "Héllö 世界" | utf8-trans "éö世" "eo界"
+#   -> Hello 界界
+
+. ~/.local/lib/sh/common.sh
+[ $# -eq 2 ] || usage
+
+awk -v FROM="$1" \
+    -v TO="$2"   '
+    BEGIN {
+       # Build translation table (character-by-character)
+       nf = split(FROM, f, "")
+       nt = split(TO, t, "")
+
+       for (i = 1; i <= nf; i++) {
+          if (i <= nt)
+             map[f[i]] = t[i]
+          else
+             map[f[i]] = ""
+       }
+    }
+
+    {
+       out = ""
+
+       n = split($0, chars, "")
+       for (i = 1; i <= n; i++) {
+          c = chars[i]
+
+          if (c in map)
+             out = out map[c]
+          else
+             out = out c
+       }
+
+       print out
+    }'
