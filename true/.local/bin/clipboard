@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# Usage: ... | cli‍pboard-copy  => copy stdin to clipboard
+#        cli‍pboard-paste       => paste clipboard content to stdout
+#
+
+. ~/.local/lib/sh/common.sh
+
+case $0 in
+   *copy) COPY=true  ;;
+  *paste) COPY=false ;;
+       *) if [ -t 0 ]
+             then COPY=false
+             else COPY=true
+          fi ;;
+esac
+
+# Solution with no dedicated system clipboard utility: Use a temporary file.
+fallback() {
+   CLIPBOARD_FILE=/tmp/clipboard-copy
+   if $COPY; then
+      cat > "$CLIPBOARD_FILE"
+   elif [ -f "$CLIPBOARD_FILE" ]; then
+      cat "$CLIPBOARD_FILE"
+   fi
+   exit
+}
+
+
+if [ -n "$WAYLAND_DISPLAY" ]; then # <-- wayland: try wl-copy/wl-paste
+   exists wl-copy && exists wl-paste  || fallback
+   if $COPY; then wl-copy; else wl-paste; fi
+
+elif [ -n "$DISPLAY" ]; then # <-- x11: try xclip or xsel
+   if $COPY; then
+      if   exists xclip ; then xclip -i -selection clipboard
+      elif exists xsel  ; then xsel  -i --clipboard
+      else fallback
+      fi
+   else
+      if   exists xclip ; then xclip -o -selection clipboard
+      elif exists xsel  ; then xsel  -o --clipboard
+      else fallback
+      fi
+   fi
+
+elif [ "$(uname)" = 'Darwin' ]; then # <-- Mac (untested): try pbcopy/pbpaste
+   exists pbcopy && exists pbpaste  || fallback
+   if $COPY; then pbcopy; else pbpaste; fi
+
+else # <-- unknown
+   fallback
+fi
