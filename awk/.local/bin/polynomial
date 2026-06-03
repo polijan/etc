@@ -1,0 +1,142 @@
+#!/usr/bin/awk -f
+
+# Usage: pair of values... | $0
+#
+#     Given lines on the standrd input, each containing a pair of value x y,
+#     this script determines and print the polynomial interpoliting the values.
+#
+#     In math, given a set of n distinct pairs (x,y), there exists a unique
+#     polynomial P of degree <= n that interpolates the data, i.e. such that
+#     P(x) = y for every given point.
+#     See: https://en.wikipedia.org/wiki/Lagrange_polynomial
+#
+# Example:
+#     Input:
+#        0 1
+#        1 3
+#        2 2
+#     Output:
+#        P(x) = -1.5*x^2 + 3.5*x + 1
+
+
+#-------------------------------------------------------------------------------
+# Note: The algorithm runs in O(n^2) time and uses only POSIX awk features
+#
+# Disclaimer: I needed such a script, but I didn't really know how to program it
+#             and I wasn't interested in the mathematical details, thus the
+#             program below is generated with AI (ChatGPT).
+#-------------------------------------------------------------------------------
+
+
+# Read distinct x y pairs and print the unique interpolating polynomial of
+# lowest degree in expanded form.
+
+{
+    n++
+    x[n] = $1
+    dd[n] = $2
+}
+
+END {
+    if (n == 0) {
+        print "No data."
+        exit 1
+    }
+
+    # Compute divided differences.
+    for (j = 2; j <= n; j++) {
+        for (i = n; i >= j; i--) {
+            d = x[i] - x[i-j+1]
+            if (d == 0) {
+                print "Error: duplicate x-value:", x[i]
+                exit 1
+            }
+            dd[i] = (dd[i] - dd[i-1]) / d
+        }
+    }
+
+    # Result polynomial coefficients:
+    # poly[k] = coefficient of x^k.
+    for (k = 0; k < n; k++)
+        poly[k] = 0
+
+    # term = current Newton basis polynomial
+    # Initially term = 1.
+    termdeg = 0
+    term[0] = 1
+
+    for (i = 1; i <= n; i++) {
+
+        # Add dd[i] * term to result.
+        for (k = 0; k <= termdeg; k++)
+            poly[k] += dd[i] * term[k]
+
+        if (i == n)
+            break
+
+        # Multiply term by (x - x[i]).
+        for (k = 0; k <= termdeg + 1; k++)
+            newterm[k] = 0
+
+        for (k = 0; k <= termdeg; k++) {
+            newterm[k]     -= x[i] * term[k]
+            newterm[k + 1] += term[k]
+        }
+
+        termdeg++
+
+        for (k = 0; k <= termdeg; k++) {
+            term[k] = newterm[k]
+            delete newterm[k]
+        }
+    }
+
+    # Determine actual degree.
+    deg = n - 1
+    while (deg > 0 && poly[deg] == 0)
+        deg--
+
+    printf "P(x) = "
+
+    first = 1
+
+    for (k = deg; k >= 0; k--) {
+
+        c = poly[k]
+
+        if (c == 0)
+            continue
+
+        if (first) {
+            if (c < 0)
+                printf "-"
+            first = 0
+        } else {
+            if (c < 0)
+                printf " - "
+            else
+                printf " + "
+        }
+
+        a = (c < 0 ? -c : c)
+
+        if (k == 0) {
+            printf "%g", a
+        }
+        else if (k == 1) {
+            if (a != 1)
+                printf "%g*", a
+            printf "x"
+        }
+        else {
+            if (a != 1)
+                printf "%g*", a
+            printf "x^%d", k
+        }
+    }
+
+    if (first)
+        printf "0"
+
+    printf "\n"
+}
