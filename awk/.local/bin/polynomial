@@ -2,8 +2,11 @@
 
 # Usage: pair of values... | $0
 #
-#     Given lines on the standrd input, each containing a pair of value x y,
-#     this script determines and print the polynomial interpoliting the values.
+#     Given distinc lines on the standrd input, each containing a pair of value
+#     x y, this script determines and print the polynomial interpoliting the
+#     values. The polynomial is output on two lines:
+#     - first line is Newton form (sometimes preferable for numerical stability)
+#     - second line is the regular form i.e. expanded into powers of x
 #
 #     In math, given a set of n distinct pairs (x,y), there exists a unique
 #     polynomial P of degree <= n that interpolates the data, i.e. such that
@@ -16,7 +19,9 @@
 #        1 3
 #        2 2
 #     Output:
-#        P(x) = -1.5*x^2 + 3.5*x + 1
+#        P(x) = 1 +2*x -1.5*x*(x-1)    <--(Netwon's form)
+#        P(x) = -1.5*x^2 + 3.5*x + 1   <--(fully expanded form)
+
 
 
 #-------------------------------------------------------------------------------
@@ -26,10 +31,6 @@
 #             and I wasn't interested in the mathematical details, thus the
 #             program below is generated with AI (ChatGPT).
 #-------------------------------------------------------------------------------
-
-
-# Read distinct x y pairs and print the unique interpolating polynomial of
-# lowest degree in expanded form.
 
 {
     n++
@@ -43,38 +44,64 @@ END {
         exit 1
     }
 
-    # Compute divided differences.
+    # Compute divided differences in-place.
     for (j = 2; j <= n; j++) {
         for (i = n; i >= j; i--) {
             d = x[i] - x[i-j+1]
+
             if (d == 0) {
                 print "Error: duplicate x-value:", x[i]
                 exit 1
             }
+
             dd[i] = (dd[i] - dd[i-1]) / d
         }
     }
 
-    # Result polynomial coefficients:
-    # poly[k] = coefficient of x^k.
+    ########################################################
+    # Print Newton form
+    ########################################################
+
+    printf "P(x) = %g", dd[1]
+
+    for (i = 2; i <= n; i++) {
+
+        if (dd[i] == 0)
+            continue
+
+        printf " %+g", dd[i]
+
+        for (j = 1; j < i; j++) {
+            if (x[j] == 0)
+                printf "*x"
+            else
+                printf "*(x-%g)", x[j]
+        }
+    }
+
+    printf "\n"
+
+    ########################################################
+    # Expand into powers of x
+    ########################################################
+
     for (k = 0; k < n; k++)
         poly[k] = 0
 
-    # term = current Newton basis polynomial
-    # Initially term = 1.
+    # Current Newton basis polynomial.
     termdeg = 0
     term[0] = 1
 
     for (i = 1; i <= n; i++) {
 
-        # Add dd[i] * term to result.
+        # poly += dd[i] * term
         for (k = 0; k <= termdeg; k++)
             poly[k] += dd[i] * term[k]
 
         if (i == n)
             break
 
-        # Multiply term by (x - x[i]).
+        # term *= (x - x[i])
         for (k = 0; k <= termdeg + 1; k++)
             newterm[k] = 0
 
@@ -91,7 +118,6 @@ END {
         }
     }
 
-    # Determine actual degree.
     deg = n - 1
     while (deg > 0 && poly[deg] == 0)
         deg--
@@ -112,10 +138,7 @@ END {
                 printf "-"
             first = 0
         } else {
-            if (c < 0)
-                printf " - "
-            else
-                printf " + "
+            printf(c < 0 ? " - " : " + ")
         }
 
         a = (c < 0 ? -c : c)
