@@ -1,0 +1,67 @@
+#!/usr/bin/awk -f
+
+# Usage: $0 floating_point_number [max_denominator]
+#
+#     Given a floating point number, print the best rational approximation
+#     such that the denominator is inferior (or equal) to a specific size
+#     (or by default 999)
+#
+# Examples: $ $0 3.141592653589793 1000
+#           355/113
+#
+#           $ $0 1.41421356237 100
+#           140/99
+#
+
+
+#-------------------------------------------------------------------------------
+#
+# Note : Instead of limiting denominator size, sometimes we'd want to just limit
+#        the approximation error, i.e. we weant |x - p/q| < err So manually or
+#        within the program, we could do: while (abs(orig - p/q) > err) {
+#                                            ...
+#                                         }
+#
+# Disclaimer: I needed such a script, but I didn't really know how to program it
+#             and I wasn't too interested in the mathematical details, thus the
+#             program below is generated with AI (ChatGPT) and slightly adapted.
+#
+#             It uses use "continued fractions", which efficiently find the
+#             "best" rational approximations to a real number.
+#
+#-------------------------------------------------------------------------------
+
+
+BEGIN {
+    x = ARGV[1]
+    maxd = ARGV[2]
+    if (maxd == 0) maxd = 999
+
+    delete ARGV[1]
+    delete ARGV[2]
+
+    a = int(x)
+
+    p0 = 0; p1 = 1
+    q0 = 1; q1 = 0
+
+    while (1) {
+        p = a*p1 + p0
+        q = a*q1 + q0
+
+        if (q > maxd)
+            break
+
+        p0 = p1; p1 = p
+        q0 = q1; q1 = q
+
+        frac = x - a
+        if (frac == 0)
+            break
+
+        x = 1 / frac
+        a = int(x)
+    }
+
+    print p1 "/" q1
+}
